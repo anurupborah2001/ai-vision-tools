@@ -41,7 +41,7 @@ from ai_vision_tool.api_service import (
     execute_component,
 )
 
-EXAMPLE_CATEGORY_CHOICES = ["all", "preprocessing", "augmentations", "components", "template"]
+EXAMPLE_CATEGORY_CHOICES = ["all", "preprocessing", "augmentations", "components", "capture"]
 
 
 def _example_entry(category, name, summary, python_example, runtime_example=None):
@@ -234,17 +234,17 @@ def build_examples_catalog():
         (
             "image_template",
             "Display a still image with optional custom logic.",
-            "from ai_vision_tool.template.image_template import image_template\nimage_template(\n    image_path=\"path/to/image.jpg\",\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Demo\",\n    resolution=(1280, 720),\n)",
+            "from ai_vision_tool.capture.image_template import image_template\nimage_template(\n    image_path=\"path/to/image.jpg\",\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Demo\",\n    resolution=(1280, 720),\n)",
         ),
         (
             "save_screenshot",
             "Save a screenshot frame to disk from the template workflow.",
-            "from ai_vision_tool.template.video_template import save_screenshot\nsave_screenshot(frame, output_dir=\"screenshots\", prefix=\"capture\")",
+            "from ai_vision_tool.capture.video_template import save_screenshot\nsave_screenshot(frame, output_dir=\"screenshots\", prefix=\"capture\")",
         ),
         (
             "video_capture_template",
             "Run the legacy OpenCV video template with custom frame logic.",
-            "from ai_vision_tool.template.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Live\",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)",
+            "from ai_vision_tool.capture.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Live\",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)",
         ),
     ]
 

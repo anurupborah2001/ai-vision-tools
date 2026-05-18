@@ -4,13 +4,11 @@ import numpy as np
 from PIL import ImageGrab
 from typing import Callable, Optional, Union
 
-from module.fps_counter import FPSCounter
-
 import pyautogui
 from pathlib import Path
 from datetime import datetime
 
-from template.video_recorder import VideoRecorder
+from ai_vision_tool.capture.video_recorder import VideoRecorder
 
 
 def save_screenshot(frame, output_dir="screenshots", prefix="capture"):
@@ -33,11 +31,11 @@ def video_capture_template(
     center_window: bool = True,
     draw_fps: bool = True,
     fps=15,
-    
+
     # MOUSE CALLBACK OPTION
     mouse_callback: Optional[Callable] = None,
     mouse_callback_params: Optional[dict] = None,
-    
+
     # VIDEO RECORDING OPTIONS
     enable_recording: bool = False,
     record_format="mp4",   # "mp4" | "gif"
@@ -62,13 +60,13 @@ def video_capture_template(
     3. FPS counter, ESC exit, resolution control, and window centering are already handled.
 
     Parameters:
-        video_source (int or str): 
+        video_source (int or str):
             - int (e.g. 0, 1, 2...) → camera index
             - str → path to video file (mp4, avi, etc.)
         loop_forever (bool): If True, loops the video file when it ends. Default = True
         screen_capture (bool): If True, captures a portion of the screen instead of webcam/video. Default = False
         screen_capture_bbox (tuple): Bounding box for screen capture (left, top, right, bottom). Default = (300, 300, 1500, 1000)
-        custom_logic (callable, optional): 
+        custom_logic (callable, optional):
             Function that receives the frame and returns the modified frame.
             This is where you put ALL your own logic (blink detection, face detection, etc.).
         show_window (bool): If True, displays the video window. Default = True
@@ -76,26 +74,26 @@ def video_capture_template(
         resolution (tuple[int, int]): Desired camera resolution (width, height). Default = (1280, 720)
         center_window (bool): If True, automatically centers the window on screen. Default = True
         draw_fps (bool): If True, calculates and displays FPS on the video feed. Default = True
-        fps: Frame rate for recording (only applies if enable_recording is True). Default = 15  
-        
+        fps: Frame rate for recording (only applies if enable_recording is True). Default = 15
+
         # MOUSE CALLBACK OPTION
         mouse_callback (callable, optional): Function to handle mouse events. Default = None
-        mouse_callback_params (dict, optional): Additional parameters to pass to the mouse callback function. Default = None  
-        
+        mouse_callback_params (dict, optional): Additional parameters to pass to the mouse callback function. Default = None
+
         # VIDEO RECORDING OPTIONS
         enable_recording (bool): If True, records the video feed to an output file. Default = False
         record_format (str): Format for recording output ("mp4" or "gif"). Default = "mp4"
-      
+
          # SCREENSHOT OPTIONS
         enable_screenshot (bool): If True, allows taking screenshots by pressing 's'. Default = True
         screenshot_output_dir (str): Directory where screenshots will be saved. Default = "screenshots"
         screenshot_prefix (str): Prefix for screenshot filenames. Default = "capture"
         auto_screenshot_after_seconds (float, optional): If set, automatically takes a screenshot after this many seconds. Default = None (disabled)
         auto_screenshot_repeat (bool): If True and auto_screenshot_after_seconds is set, continues to take screenshots at the specified interval. Default = False
-        
-        
+
+
         Usasge:
-        
+
         1. Screenshot:
           For repeated auto screenshots every 5 seconds:
           video_capture_template(
@@ -105,8 +103,8 @@ def video_capture_template(
               auto_screenshot_after_seconds=5,
               auto_screenshot_repeat=False,
           )
-          
-        2. 
+
+        2.
     """
 
     cap = cv2.VideoCapture(video_source)
@@ -115,7 +113,7 @@ def video_capture_template(
       if enable_recording
       else None
     )
-    
+
     if not cap.isOpened():
         print(f"Error: Could not open video source '{video_source}'")
         return
@@ -126,43 +124,47 @@ def video_capture_template(
     frame_width, frame_height = resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
-    
+
     window_centered = False   # Used to center window only once
     recorder_started = False
     if draw_fps:
-      fps_counter = FPSCounter()
-      
+      _fps_tick = cv2.getTickCount()
+      _fps_value = 0.0
+
     start_time = time.time()
     last_auto_screenshot_time = start_time
     auto_screenshot_done = False
-    
+
     if show_window:
       cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
       cv2.resizeWindow(window_name, frame_width, frame_height)
 
       if mouse_callback is not None:
           cv2.setMouseCallback(window_name, mouse_callback, mouse_callback_params)
-        
+
     while True:
         ## 1. Start the timer
         # timer = cv2.getTickCount()
         if loop_forever and cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
           cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-          
+
         ## 2. Read and process the frame
         ret, frame = cap.read()
         if not ret:
             print("End of video stream or failed to read frame.")
             break
-            
-        if custom_logic is not None:
-            frame = custom_logic(frame) 
 
-        if draw_fps:  
-          # fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
-          # FPS calculation
-          frame, fps = fps_counter.update(frame)
-          
+        if custom_logic is not None:
+            frame = custom_logic(frame)
+
+        if draw_fps:
+          _tick_now = cv2.getTickCount()
+          _fps_value = cv2.getTickFrequency() / max(_tick_now - _fps_tick, 1)
+          _fps_tick = _tick_now
+          cv2.putText(frame, f"FPS: {_fps_value:.1f}", (10, 30),
+                      cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+          fps = _fps_value
+
         # =========================
         # RECORDER ENGINE
         # =========================
@@ -182,7 +184,7 @@ def video_capture_template(
                 (0, 0, 255),
                 2,
             )
-        
+
         # AUTO SCREENSHOT AFTER N SECONDS
         if enable_screenshot and auto_screenshot_after_seconds is not None:
             now = time.time()
@@ -215,7 +217,7 @@ def video_capture_template(
             window_centered = True
 
         key = cv2.waitKey(1) & 0xFF
-      
+
         # ESC exits
         if key == 27:
             break
