@@ -106,3 +106,45 @@ Run the full hook suite manually:
 ```bash
 pre-commit run --all-files
 ```
+
+---
+
+## Quickstart
+
+Install the package and run this to process your first image through a pipeline in under
+30 seconds. The example loads a real image, runs four components in sequence, and prints
+the output shape.
+
+```python
+import cv2
+from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.components.preprocessing import AutoOrient, AutoAdjustContrast
+from ai_vision_tool.components.augmentations import Flip, GaussianBlur
+
+# Load image
+image = cv2.imread("images/github/sample.jpg")
+
+# Build a pipeline
+pipeline = AIVisionPipeline()
+pipeline.add(AutoOrient(rotation=90))
+pipeline.add(AutoAdjustContrast(method="adaptive_equalization", clip_limit=2.0))
+pipeline.add(Flip(horizontal=True))
+pipeline.add(GaussianBlur(kernel_size=5, sigma_x=1.0))
+
+# Execute
+result = pipeline.execute(
+    initial_data={"frame": image},
+    global_config={},
+)
+
+output = result["frame"]
+print(output.shape)  # (height, width, 3)
+```
+
+You can also import any component directly from the top-level namespace:
+
+```python
+from ai_vision_tool import AutoOrient, Flip, GaussianBlur, AIVisionPipeline
+```
+
+All imports use lazy loading, so only the modules you actually use are loaded.
