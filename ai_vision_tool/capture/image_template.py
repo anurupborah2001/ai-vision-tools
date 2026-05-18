@@ -28,8 +28,8 @@ def image_template(
   image = cv2.imread(image_path)
   print(image_path)
   if custom_logic is not None:
-    image = custom_logic(image) 
-    
+    image = custom_logic(image)
+
 
   if image is None:
     raise ValueError("Image is None. Check file path or loading logic.")
@@ -43,7 +43,7 @@ def image_template(
   # Resize image
   hWIDTH, hHEIGHT = resolution
   resized_img = cv2.resize(image, (hWIDTH, hHEIGHT))
-    
+
   # ======================
   # NEW: Auto-center window on screen (only once)
   # ======================

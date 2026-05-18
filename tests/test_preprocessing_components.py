@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from visionflow.components.preprocessing import (
+from ai_vision_tool.components.preprocessing import (
     AdaptiveThreshold,
     AspectRatioFilter,
     AutoAdjustContrast,

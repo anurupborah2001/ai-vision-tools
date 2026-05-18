@@ -181,7 +181,7 @@ Core component and template lookups:
 # The actual CLI implementation lives inside the packaged library.
 # Keeping this wrapper thin makes the project runnable both from source
 # and after installation via the console script entrypoint.
-from visionflow.cli import main
+from ai_vision_tool.cli import main
 
 
 # Delegate directly to the packaged CLI.

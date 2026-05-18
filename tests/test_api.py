@@ -3,7 +3,7 @@ import base64
 import cv2
 from fastapi.testclient import TestClient
 
-from visionflow.api import create_app
+from ai_vision_tool.api import create_app
 
 
 def _encode_frame(frame):

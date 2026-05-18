@@ -3,8 +3,8 @@ import json
 import numpy as np
 import pytest
 
-from visionflow.cli import load_profile_components
-from visionflow.components.augmentations import (
+from ai_vision_tool.cli import load_profile_components
+from ai_vision_tool.components.augmentations import (
     Blur,
     Brightness,
     CameraGain,

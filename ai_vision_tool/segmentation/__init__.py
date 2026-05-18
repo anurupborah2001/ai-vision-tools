@@ -1,0 +1,1 @@
+"""Segmentation — future phase placeholder."""

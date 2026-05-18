@@ -3,14 +3,14 @@ import json
 import cv2
 import numpy as np
 
-from visionflow.components.auto_labeller import AutoLabeller
-from visionflow.components.base import AIVisionComponent
-from visionflow.components.dataset_collector import DatasetCollector
-from visionflow.components.frame_annotator import FrameAnnotator
-from visionflow.components.frame_enhancer import FrameEnhancer
-from visionflow.components.frame_resizer import FrameResizer
-from visionflow.components.motion_detector import MotionDetector
-from visionflow.components.time_lapse import TimeLapseCapture
+from ai_vision_tool.components.auto_labeller import AutoLabeller
+from ai_vision_tool.components.base import AIVisionComponent
+from ai_vision_tool.components.dataset_collector import DatasetCollector
+from ai_vision_tool.components.frame_annotator import FrameAnnotator
+from ai_vision_tool.components.frame_enhancer import FrameEnhancer
+from ai_vision_tool.components.frame_resizer import FrameResizer
+from ai_vision_tool.components.motion_detector import MotionDetector
+from ai_vision_tool.components.time_lapse import TimeLapseCapture
 
 
 class RecordingComponent(AIVisionComponent):
@@ -222,7 +222,7 @@ def test_dataset_collector_passthrough_when_not_saving(tmp_path, sample_frame):
 
 def test_time_lapse_capture_saves_on_interval(monkeypatch, tmp_path, sample_frame, created_files, stub_imwrite):
     times = iter([100.0, 102.0, 108.5])
-    monkeypatch.setattr("visionflow.components.time_lapse.time.time", lambda: next(times))
+    monkeypatch.setattr("ai_vision_tool.components.time_lapse.time.time", lambda: next(times))
     component = TimeLapseCapture(output_dir=tmp_path / "timelapse", interval_seconds=5, prefix="snap")
 
     payload = {"frame": sample_frame.copy()}

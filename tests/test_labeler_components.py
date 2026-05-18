@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from visionflow.components.darknet_auto_labeler import DarknetAutoLabeler
-from visionflow.components.tensorflow_auto_labeler import TensorFlowAutoLabeler
+from ai_vision_tool.components.darknet_auto_labeler import DarknetAutoLabeler
+from ai_vision_tool.components.tensorflow_auto_labeler import TensorFlowAutoLabeler
 
 
 def test_darknet_auto_labeler_missing_file_returns_error():

@@ -1,3 +1,25 @@
+# README.md and CLAUDE.md Rewrite Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Rewrite README.md with correct `ai_vision_tool` imports, verbose per-module examples using `images/github/sample.jpg`, and create CLAUDE.md covering package identity, module architecture, design patterns, and dev workflow.
+
+**Architecture:** Complete file replacement for README.md (existing file has stale `visionflow.*` imports throughout — all broken after rename to `ai_vision_tool`). New CLAUDE.md created from scratch. No code changes — documentation only. Split into one commit per major section to keep diffs reviewable.
+
+**Tech Stack:** Markdown, Python code examples using `ai_vision_tool`, OpenCV (`cv2`), NumPy.
+
+---
+
+### Task 1: README — Header, Badges, and Installation
+
+**Files:**
+- Modify: `README.md` (replace entire file — start fresh to avoid stale content)
+
+- [ ] **Step 1: Write README.md from scratch with header, badges, feature list, and installation**
+
+Replace `README.md` with this content (Tasks 2–9 will append to it):
+
+```markdown
 # ai-vision-tool
 
 [![PyPI version](https://img.shields.io/pypi/v/ai-vision-tool)](https://pypi.org/project/ai-vision-tool/)
@@ -22,7 +44,6 @@ and an HTTP service layer — all usable from Python, the command line, or a Fas
 - [Capture Templates](#capture-templates)
 - [FastAPI Service](#fastapi-service)
 - [CLI Reference](#cli-reference)
-- [Component Index](#component-index)
 - [Output Structure](#output-structure)
 - [Testing](#testing)
 - [Build and Publish](#build-and-publish)
@@ -106,7 +127,31 @@ Run the full hook suite manually:
 ```bash
 pre-commit run --all-files
 ```
+```
 
+- [ ] **Step 2: Verify**
+
+Confirm the file starts with `# ai-vision-tool`, badges use `ai-vision-tool` (not `ai-vision-flow`), and all three package managers are covered.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: rewrite README header, badges, and installation section"
+```
+
+---
+
+### Task 2: README — 30-Second Quickstart
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append the Quickstart section**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Quickstart
@@ -148,7 +193,27 @@ from ai_vision_tool import AutoOrient, Flip, GaussianBlur, AIVisionPipeline
 ```
 
 All imports use lazy loading, so only the modules you actually use are loaded.
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add quickstart section to README"
+```
+
+---
+
+### Task 3: README — Preprocessing
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append the Preprocessing section**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Preprocessing
@@ -587,7 +652,27 @@ payload = {"frame": image}
 result = MinSizeFilter(min_width=320, min_height=320).run(payload)
 result = MaxSizeFilter(max_width=2048, max_height=2048).run(payload)
 ```
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add preprocessing section with geometry, intensity, quality examples"
+```
+
+---
+
+### Task 4: README — Augmentation (Geometric and Color/Weather)
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append augmentation intro and geometric/color sub-sections**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Augmentation
@@ -928,7 +1013,27 @@ from ai_vision_tool.components.augmentations import InvertImage
 
 result = InvertImage().run(image)
 ```
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add augmentation section — geometric and color/weather examples"
+```
+
+---
+
+### Task 5: README — Augmentation (Blur/Compression, Noise/Dropout, Multi-Image, Batch, Profile)
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append blur/compression, noise/dropout, multi-image, batch, and profile sub-sections**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ### Blur, Compression, and Texture
@@ -1168,9 +1273,9 @@ result = Cutout(x=30, y=30, width=60, height=60, fill_value=(0, 0, 0)).run(image
 **`Mosaic`** — Compose a 2×2 mosaic from four images (YOLO-style data augmentation).
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import Mosaic
 
+import cv2
 image_a = cv2.imread("images/github/sample.jpg")
 image_b = cv2.imread("images/github/sample.jpg")
 image_c = cv2.imread("images/github/sample.jpg")
@@ -1193,7 +1298,6 @@ result = Mosaic9(mosaic_images=tiles, output_size=(640, 640)).run(image)
 **`MixUp`** — Blend a frame with a partner image at a given alpha.
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import MixUp
 
 image_b = cv2.imread("images/github/sample.jpg")
@@ -1204,7 +1308,6 @@ result = MixUp(alpha=0.5).run(payload)
 **`CutMix`** — Replace a random patch in the frame with the same patch from a partner image.
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import CutMix
 
 image_b = cv2.imread("images/github/sample.jpg")
@@ -1215,7 +1318,6 @@ result = CutMix(alpha=0.5).run(payload)
 **`CopyPaste`** — Paste an overlay image at a target position.
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import CopyPaste
 
 overlay = cv2.imread("images/github/sample.jpg")
@@ -1226,7 +1328,6 @@ result = CopyPaste(x=10, y=10).run(payload)
 **`ObjectPaste`** — Insert a cropped object image at a target position.
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import ObjectPaste
 
 obj = cv2.imread("images/github/sample.jpg")
@@ -1259,9 +1360,9 @@ Every augmentation component supports batch execution. Pass a list of NumPy arra
 receive a list of processed results:
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import Flip
 
+import cv2
 image_a = cv2.imread("images/github/sample.jpg")
 image_b = cv2.imread("images/github/sample.jpg")
 image_c = cv2.imread("images/github/sample.jpg")
@@ -1274,7 +1375,6 @@ results = augmenter.run([image_a, image_b, image_c])
 Chain multiple augmenters over a batch:
 
 ```python
-import cv2
 from ai_vision_tool.components.augmentations import (
     ColorJitter, GaussianBlur, JPEGCompression, RandomResizedCrop,
 )
@@ -1341,7 +1441,27 @@ Use with the CLI:
 ```bash
 ai-vision-tool --augmentation-config examples/augmentation_profile.json
 ```
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add augmentation section — blur, noise, multi-image, batch, profile"
+```
+
+---
+
+### Task 6: README — Pipeline
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append Pipeline section**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Pipeline
@@ -1351,12 +1471,12 @@ the output of the previous one as its input, allowing preprocessing, augmentatio
 runtime components to be composed freely in a single execution graph.
 
 ```python
-import cv2
 from ai_vision_tool.pipeline import AIVisionPipeline
 from ai_vision_tool.components.preprocessing import AutoOrient, AutoAdjustContrast, Resize
 from ai_vision_tool.components.augmentations import Flip, GaussianBlur, ColorJitter
 from ai_vision_tool.components import FrameAnnotator, MotionDetector
 
+import cv2
 image = cv2.imread("images/github/sample.jpg")
 
 pipeline = AIVisionPipeline()
@@ -1392,10 +1512,6 @@ print(output_frame.shape)
 `pipeline.add()` returns `self` so calls can be chained:
 
 ```python
-from ai_vision_tool.pipeline import AIVisionPipeline
-from ai_vision_tool.components.preprocessing import AutoOrient, Resize
-from ai_vision_tool.components.augmentations import Flip
-
 pipeline = (
     AIVisionPipeline()
     .add(AutoOrient(rotation=90))
@@ -1403,7 +1519,27 @@ pipeline = (
     .add(Flip(horizontal=True))
 )
 ```
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add pipeline section with composite example"
+```
+
+---
+
+### Task 7: README — Components
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append Components section**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Components
@@ -1602,7 +1738,27 @@ from ai_vision_tool.components import TensorFlowAutoLabeler
 labeller = TensorFlowAutoLabeler()
 labeller.run({"frame": image}, {"output_dir": "output/labels"})
 ```
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add components section with frame processors, capture, dataset, labeling"
+```
+
+---
+
+### Task 8: README — Capture Templates, FastAPI, and CLI
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append Capture Templates, FastAPI, and CLI sections**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Capture Templates
@@ -1833,7 +1989,27 @@ ai-vision-tool --augmentation-config examples/augmentation_profile.json
 | `e` | Export grayscale and edge images to `output/exports` |
 | `o` | Save the configured ROI crop to `output/captures` |
 | `q` | Quit |
+```
 
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add capture templates, FastAPI, and CLI sections"
+```
+
+---
+
+### Task 9: README — Component Index Tables, Output Structure, Testing, and Build
+
+**Files:**
+- Modify: `README.md` (append)
+
+- [ ] **Step 1: Append index tables, output structure, testing, and build sections**
+
+Append to `README.md`:
+
+```markdown
 ---
 
 ## Component Index
@@ -1947,8 +2123,8 @@ ai-vision-tool --augmentation-config examples/augmentation_profile.json
 | `PixelDropout` | Pixel-level dropout |
 | `MaskDropout` | Mask dropout |
 | `Cutout` | Deterministic rectangular masking |
-| `Mosaic` | 2x2 mosaic composition |
-| `Mosaic9` | 3x3 mosaic composition |
+| `Mosaic` | 2×2 mosaic composition |
+| `Mosaic9` | 3×3 mosaic composition |
 | `MixUp` | Image mixing |
 | `CutMix` | Patch mixing |
 | `CopyPaste` | Overlay paste |
@@ -2013,3 +2189,328 @@ python -m build
 The wheel and source distribution are written to `dist/`.
 
 See `PUBLISHING.md` for the release checklist and PyPI upload commands.
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: add component index tables, output structure, testing, and build sections"
+```
+
+---
+
+### Task 10: Create CLAUDE.md
+
+**Files:**
+- Create: `CLAUDE.md`
+
+- [ ] **Step 1: Write CLAUDE.md**
+
+Create `CLAUDE.md` with this content:
+
+```markdown
+# CLAUDE.md — ai-vision-tool
+
+This file provides context for AI assistants navigating or modifying this repository.
+
+---
+
+## Package Identity
+
+| Property | Value |
+|----------|-------|
+| PyPI package | `ai-vision-tool` |
+| Python import namespace | `ai_vision_tool` |
+| CLI entrypoint (webcam app + image processing) | `ai-vision-tool` |
+| CLI entrypoint (FastAPI server) | `ai-vision-tool-api` |
+| Package version | `0.2.0` |
+| Requires Python | `>=3.10,<4.0` |
+
+> **Important:** The package was renamed from `ai-vision-flow` / `visionflow` to
+> `ai-vision-tool` / `ai_vision_tool`. All imports must use `ai_vision_tool`.
+> Never use `visionflow` or `ai_vision_flow`.
+
+---
+
+## Module Map
+
+```
+ai_vision_tool/
+│
+├── __init__.py              # Lazy import registry (_EXPORTS dict + __getattr__)
+├── __main__.py              # python -m ai_vision_tool entrypoint
+├── cli.py                   # argparse entrypoint, examples catalog, webcam loop
+├── api.py                   # FastAPI app factory (create_app, app, run)
+├── api_service.py           # encode_image_base64, decode_image_base64, execute_component
+│
+├── pipeline/
+│   └── vision_pipeline.py   # AIVisionPipeline (Chain of Responsibility)
+│
+├── components/
+│   ├── base.py              # AIVisionComponent base class
+│   ├── _image_utils.py      # Shared image helper utilities
+│   │
+│   ├── preprocessing/       # Preprocessing transforms
+│   │   ├── geometry.py      # Resize, LetterboxResize, CenterCrop, PadToSquare,
+│   │   │                    # PerspectiveCorrection, Deskew, AutoCrop, FaceAlign,
+│   │   │                    # ObjectCrop, BoundingBoxClamp, BoundingBoxNormalize, MaskResize
+│   │   ├── intensity.py     # Normalize, Standardize, RescalePixels, ConvertColorSpace,
+│   │   │                    # BGRToRGB, RGBToBGR, CLAHE, HistogramEqualization,
+│   │   │                    # GammaCorrection, WhiteBalance, Denoise, Sharpen, Deblur,
+│   │   │                    # Threshold, AdaptiveThreshold, EdgeDetection, ContourExtraction
+│   │   ├── quality.py       # ImageQualityCheck, BlurDetection, BrightnessCheck,
+│   │   │                    # DuplicateImageCheck, CorruptImageCheck, AspectRatioFilter,
+│   │   │                    # MinSizeFilter, MaxSizeFilter
+│   │   ├── segmentation.py  # RemoveBackground
+│   │   ├── auto_orient.py   # AutoOrient
+│   │   └── auto_adjust_contrast.py  # AutoAdjustContrast
+│   │
+│   ├── augmentations/       # Augmentation transforms
+│   │   ├── blur.py          # Blur
+│   │   ├── blur_artifact.py # GaussianBlur, MedianBlur, GlassBlur, DefocusBlur, ZoomBlur,
+│   │   │                    # Emboss, Posterize, Solarize, Equalize, CompressionArtifacts,
+│   │   │                    # JPEGCompression, Downscale, Superpixel, Sharpen (augmentation)
+│   │   ├── brightness.py    # Brightness
+│   │   ├── camera_gain.py   # CameraGain
+│   │   ├── composite.py     # MixUp, CutMix, CopyPaste, ObjectPaste, RandomOcclusion,
+│   │   │                    # BoundingBoxJitter, Mosaic9
+│   │   ├── crop.py          # Crop
+│   │   ├── cutout.py        # Cutout
+│   │   ├── exposure.py      # Exposure
+│   │   ├── flip.py          # Flip
+│   │   ├── geometric_random.py  # RandomResize, RandomScale, RandomCrop, RandomResizedCrop,
+│   │   │                        # RandomPadding, Translate, AffineTransform,
+│   │   │                        # PerspectiveTransform, ElasticTransform,
+│   │   │                        # GridDistortion, OpticalDistortion
+│   │   ├── greyscale.py     # Greyscale
+│   │   ├── hue.py           # Hue
+│   │   ├── mosaic.py        # Mosaic
+│   │   ├── motion_blur.py   # MotionBlur
+│   │   ├── noise.py         # Noise
+│   │   ├── noise_dropout.py # ISONoise, MultiplicativeNoise, SaltPepperNoise,
+│   │   │                    # CoarseDropout, GridDropout, RandomErasing,
+│   │   │                    # PixelDropout, MaskDropout
+│   │   ├── rotate90.py      # Rotate90
+│   │   ├── rotation.py      # Rotation
+│   │   ├── saturation.py    # Saturation
+│   │   ├── shear.py         # Shear
+│   │   ├── weather_light.py # RandomShadow, RandomSunFlare, RandomFog, RandomRain,
+│   │   │                    # RandomSnow, RandomGamma, ColorJitter, ChannelShuffle,
+│   │   │                    # RGBShift, HSVShift, ToSepia, InvertImage,
+│   │   │                    # RandomBrightnessContrast
+│   │   └── common.py        # parse_component_profile (JSON profile loader)
+│   │
+│   ├── frame_enhancer.py    # FrameEnhancer
+│   ├── frame_resizer.py     # FrameResizer
+│   ├── frame_annotator.py   # FrameAnnotator
+│   ├── frame_grabber.py     # FrameGrabber
+│   ├── motion_detector.py   # MotionDetector
+│   ├── picture_taker.py     # PictureTaker
+│   ├── burst_picture_taker.py  # BurstPictureTaker
+│   ├── roi_capture.py       # ROICapture
+│   ├── video_taker.py       # VideoTaker
+│   ├── time_lapse_capture.py   # TimeLapseCapture
+│   ├── time_lapse.py        # TimeLapse
+│   ├── dataset_collector.py # DatasetCollector
+│   ├── image_exporter.py    # ImageExporter
+│   ├── auto_labeller.py     # AutoLabeller
+│   ├── darknet_auto_labeler.py   # DarknetAutoLabeler
+│   └── tensorflow_auto_labeler.py  # TensorFlowAutoLabeler
+│
+├── capture/
+│   ├── image_template.py    # image_template()
+│   └── video_template.py    # video_capture_template(), save_screenshot()
+│
+├── config/                  # Configuration stubs (future phases)
+├── core/                    # Core stubs (future phases)
+├── detection/               # Stub (future phases)
+├── enhancement/             # Stub (future phases)
+├── io/                      # Stub (future phases)
+├── models/                  # Stub (future phases)
+├── pipelines/               # Stub (future phases)
+├── segmentation/            # Stub (future phases)
+├── streaming/               # Stub (future phases)
+├── tracking/                # Stub (future phases)
+├── utils/                   # Stub (future phases)
+└── visualization/           # Stub (future phases)
+```
+
+---
+
+## Design Patterns
+
+### Lazy Imports
+
+`__init__.py` uses a `_EXPORTS` dict and `__getattr__` to load modules only when first
+accessed. When adding a new top-level export:
+
+1. Add an entry to `_EXPORTS` in `ai_vision_tool/__init__.py`:
+   ```python
+   "MyNewClass": ("ai_vision_tool.components.my_module", "MyNewClass"),
+   ```
+2. Do **not** add a direct `from ... import ...` at the top of `__init__.py`.
+
+### Payload Convention
+
+Every component accepts either:
+- A raw NumPy array: `component.run(image)`
+- A payload dict: `component.run({"frame": image, "bboxes": [...], "mask": ..., ...})`
+
+When a component returns a payload dict, the `"frame"` key always holds the processed
+NumPy array. Downstream components receive the full dict as their input.
+
+### Component Interface
+
+All components subclass `AIVisionComponent` from `ai_vision_tool.components.base` and
+implement:
+
+```python
+def run(self, data, config=None):
+    ...
+```
+
+`config` is optional; some components only read constructor arguments.
+`cleanup()` is available for components that hold resources (e.g., video writers).
+
+### Pipeline Execution
+
+`AIVisionPipeline.execute()` chains `processor.run(data, config)` calls. The output of
+each processor becomes the `data` input of the next. `global_config` is passed unchanged
+to every processor.
+
+### Top-Level Namespace Exports
+
+Only stable, commonly used classes are exported from `ai_vision_tool`. All classes are
+also importable from their specific submodule paths.
+
+---
+
+## Dev Workflow
+
+### Install Dependencies
+
+```bash
+# uv (recommended)
+uv sync --dev
+
+# Poetry
+poetry install --with dev
+```
+
+### Run Tests
+
+```bash
+pytest                                          # all tests
+pytest tests/test_preprocessing_components.py
+pytest tests/test_basic_augmentations.py
+pytest tests/test_advanced_augmentations.py
+pytest tests/test_capture_components.py
+pytest tests/test_core_components.py
+pytest tests/test_labeler_components.py
+pytest tests/test_api.py
+pytest tests/test_cli_file_processing.py
+```
+
+### Lint and Format
+
+```bash
+ruff check .
+black .
+isort .
+```
+
+### Pre-Commit Hooks
+
+```bash
+# Install all hook types
+pre-commit install
+pre-commit install --hook-type pre-push
+pre-commit install --hook-type commit-msg
+
+# Run all hooks manually
+pre-commit run --all-files
+```
+
+Hooks enforce: `ruff`, `isort`, `black`, `pre-commit-hooks`, Conventional Commits,
+and `pytest` on pre-push.
+
+### Commit Message Convention
+
+This repository uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add fog and rain augmentation coverage
+fix: correct augmentation profile parameter names
+docs: update publishing workflow
+test: add missing unit tests for basic augmentations
+chore: rename template → capture module
+```
+
+---
+
+## Release
+
+See `PUBLISHING.md` for the full release checklist and PyPI upload commands.
+
+Key steps:
+1. Bump version in `pyproject.toml` (`[project].version` and `[tool.poetry].version`)
+2. Update `__version__` in `ai_vision_tool/__init__.py`
+3. Run `python -m build`
+4. Run `twine upload dist/*`
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add CLAUDE.md
+git commit -m "docs: create CLAUDE.md with package identity, module map, patterns, and dev workflow"
+```
+
+---
+
+## Self-Review
+
+### Spec Coverage
+
+| Spec Requirement | Task |
+|-----------------|------|
+| pip install `ai-vision-tool` | Task 1 |
+| uv install | Task 1 |
+| poetry install | Task 1 |
+| TensorFlow optional extra | Task 1 |
+| Dev setup + pre-commit | Task 1 |
+| 30-second quickstart | Task 2 |
+| Preprocessing — geometry | Task 3 |
+| Preprocessing — intensity/color | Task 3 |
+| Preprocessing — quality checks | Task 3 |
+| Augmentation — geometric | Task 4 |
+| Augmentation — lighting/color/weather | Task 4 |
+| Augmentation — blur/compression | Task 5 |
+| Augmentation — noise/dropout | Task 5 |
+| Augmentation — multi-image | Task 5 |
+| Batch example | Task 5 |
+| Augmentation profile JSON | Task 5 |
+| Pipeline section | Task 6 |
+| Components — frame processors | Task 7 |
+| Components — capture helpers | Task 7 |
+| Components — dataset/export | Task 7 |
+| Components — auto-labeling | Task 7 |
+| Capture templates | Task 8 |
+| FastAPI service | Task 8 |
+| CLI — process-image-path | Task 8 |
+| CLI — show-examples | Task 8 |
+| CLI — webcam flags | Task 8 |
+| Component index tables | Task 9 |
+| Output structure | Task 9 |
+| Testing commands | Task 9 |
+| Build and publish | Task 9 |
+| CLAUDE.md — package identity | Task 10 |
+| CLAUDE.md — module map | Task 10 |
+| CLAUDE.md — design patterns | Task 10 |
+| CLAUDE.md — dev workflow | Task 10 |
+| CLAUDE.md — release pointer | Task 10 |
+
+All spec requirements covered. No TBDs or placeholders. Import paths consistent
+(`ai_vision_tool` throughout). Image source `images/github/sample.jpg` used in every
+Python example. Install command `ai-vision-tool` consistent in all sections.

@@ -1,4 +1,4 @@
-from visionflow.cli import main
+from ai_vision_tool.cli import main
 
 
 if __name__ == "__main__":
