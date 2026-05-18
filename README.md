@@ -1341,3 +1341,675 @@ Use with the CLI:
 ```bash
 ai-vision-tool --augmentation-config examples/augmentation_profile.json
 ```
+
+---
+
+## Pipeline
+
+`AIVisionPipeline` implements a Chain of Responsibility pattern. Each component receives
+the output of the previous one as its input, allowing preprocessing, augmentation, and
+runtime components to be composed freely in a single execution graph.
+
+```python
+import cv2
+from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.components.preprocessing import AutoOrient, AutoAdjustContrast, Resize
+from ai_vision_tool.components.augmentations import Flip, GaussianBlur, ColorJitter
+from ai_vision_tool.components import FrameAnnotator, MotionDetector
+
+image = cv2.imread("images/github/sample.jpg")
+
+pipeline = AIVisionPipeline()
+
+# Preprocessing stage
+pipeline.add(AutoOrient(rotation=90))
+pipeline.add(AutoAdjustContrast(method="adaptive_equalization", clip_limit=2.0))
+pipeline.add(Resize(width=640, height=640))
+
+# Augmentation stage
+pipeline.add(Flip(horizontal=True))
+pipeline.add(GaussianBlur(kernel_size=5, sigma_x=1.0))
+pipeline.add(ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=5))
+
+# Runtime components
+pipeline.add(MotionDetector())
+pipeline.add(FrameAnnotator())
+
+# Execute
+result = pipeline.execute(
+    initial_data={"frame": image, "annotations": []},
+    global_config={
+        "min_area": 800,
+        "draw_motion": True,
+        "annotations": [{"type": "text", "text": "Pipeline Demo", "pos": (20, 30)}],
+    },
+)
+
+output_frame = result["frame"]
+print(output_frame.shape)
+```
+
+`pipeline.add()` returns `self` so calls can be chained:
+
+```python
+from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.components.preprocessing import AutoOrient, Resize
+from ai_vision_tool.components.augmentations import Flip
+
+pipeline = (
+    AIVisionPipeline()
+    .add(AutoOrient(rotation=90))
+    .add(Resize(width=640, height=640))
+    .add(Flip(horizontal=True))
+)
+```
+
+---
+
+## Components
+
+Components are higher-level building blocks that go beyond single-transform operations.
+They manage state across frames (motion detection, time-lapse), coordinate I/O (capture,
+export, recording), or wrap external model inference (auto-labeling).
+
+```python
+import cv2
+image = cv2.imread("images/github/sample.jpg")
+```
+
+### Frame Processors
+
+**`FrameEnhancer`** — Apply brightness, contrast, sharpening, denoising, and grayscale
+conversion in a single pass. Intended for webcam and live-video pipelines.
+
+```python
+from ai_vision_tool.components import FrameEnhancer
+
+enhancer = FrameEnhancer()
+result = enhancer.run(
+    {"frame": image},
+    {
+        "brightness": 10,
+        "contrast": 1.15,
+        "sharpen": True,
+        "denoise": False,
+        "grayscale": False,
+    },
+)
+output = result["frame"]
+```
+
+**`FrameResizer`** — Resize frames using the classic component pipeline interface.
+
+```python
+from ai_vision_tool.components import FrameResizer
+
+resizer = FrameResizer()
+result = resizer.run(
+    {"frame": image},
+    {"size": (640, 480), "keep_aspect": True},
+)
+output = result["frame"]
+```
+
+**`MotionDetector`** — Detect motion regions across sequential frames using background
+subtraction. Returns bounding boxes for regions above a minimum contour area.
+
+```python
+from ai_vision_tool.components import MotionDetector
+
+detector = MotionDetector()
+result = detector.run(
+    {"frame": image},
+    {"min_area": 800, "draw_motion": True},
+)
+# result["motion_boxes"] contains detected regions
+```
+
+**`FrameAnnotator`** — Render payload-driven annotations (text, rectangles) onto frames.
+
+```python
+from ai_vision_tool.components import FrameAnnotator
+
+annotator = FrameAnnotator()
+result = annotator.run(
+    {
+        "frame": image,
+        "annotations": [
+            {"type": "text", "text": "Demo Label", "pos": (20, 30)},
+        ],
+    },
+    {},
+)
+output = result["frame"]
+```
+
+---
+
+### Capture Helpers
+
+**`PictureTaker`** — Interactive still-image capture from a webcam.
+
+```python
+from ai_vision_tool.components import PictureTaker
+
+taker = PictureTaker()
+taker.run(None, {"imgdir": "output/stills", "resolution": "1280x720", "camera_id": 0})
+```
+
+**`BurstPictureTaker`** — Capture a rapid sequence of frames.
+
+```python
+from ai_vision_tool.components import BurstPictureTaker
+
+taker = BurstPictureTaker(burst_count=5, interval_seconds=0.2)
+```
+
+**`ROICapture`** — Save a crop defined by a region-of-interest rectangle.
+
+```python
+from ai_vision_tool.components import ROICapture
+
+capture = ROICapture(roi=(100, 100, 300, 300))
+```
+
+**`VideoTaker`** — Interactive webcam recording.
+
+```python
+from ai_vision_tool.components import VideoTaker
+
+taker = VideoTaker()
+taker.run(None, {"viddir": "output/videos", "resolution": "1280x720", "camera_id": 0, "fps": 30.0})
+```
+
+**`FrameGrabber`** — Extract still frames from a video file at a configurable skip rate.
+
+```python
+from ai_vision_tool.components import FrameGrabber
+
+grabber = FrameGrabber()
+grabber.run("path/to/video.mp4", {"output_folder": "output/frames", "skip_frames": 90})
+```
+
+---
+
+### Dataset and Export
+
+**`DatasetCollector`** — Persist labelled dataset samples with metadata.
+
+```python
+from ai_vision_tool.components import DatasetCollector
+
+collector = DatasetCollector()
+collector.run(
+    {"frame": image},
+    {
+        "save_sample": True,
+        "output_dir": "output/dataset",
+        "label": "forklift",
+        "save_metadata": True,
+        "metadata": {"source": "webcam"},
+    },
+)
+```
+
+**`TimeLapseCapture`** — Periodically save frames for time-lapse workflows.
+
+```python
+from ai_vision_tool.components import TimeLapseCapture
+
+timelapse = TimeLapseCapture(output_dir="output/timelapse", interval_seconds=5)
+timelapse.run({"frame": image}, {})
+```
+
+**`ImageExporter`** — Export grayscale and edge images from a payload frame.
+
+```python
+from ai_vision_tool.components import ImageExporter
+
+exporter = ImageExporter(output_dir="output/exports")
+exporter.run({"frame": image}, {"export_gray": True, "export_edges": True})
+```
+
+---
+
+### Auto-Labeling
+
+**`AutoLabeller`** — Base entrypoint for downstream auto-labeling integrations.
+
+```python
+from ai_vision_tool.components import AutoLabeller
+
+labeller = AutoLabeller()
+labeller.run(image)
+```
+
+**`DarknetAutoLabeler`** — Darknet/YOLO-powered labeling workflow.
+
+```python
+from ai_vision_tool.components import DarknetAutoLabeler
+
+labeller = DarknetAutoLabeler()
+labeller.run({"frame": image}, {"output_dir": "output/labels"})
+```
+
+**`TensorFlowAutoLabeler`** — TensorFlow Object Detection API labeling workflow.
+Requires `pip install "ai-vision-tool[tensorflow]"`.
+
+```python
+from ai_vision_tool.components import TensorFlowAutoLabeler
+
+labeller = TensorFlowAutoLabeler()
+labeller.run({"frame": image}, {"output_dir": "output/labels"})
+```
+
+---
+
+## Capture Templates
+
+Capture templates are standalone helper functions for quick image display or live video
+loops without building a full pipeline.
+
+**`image_template`** — Display a still image with optional custom frame logic.
+
+```python
+from ai_vision_tool.capture.image_template import image_template
+
+image_template(
+    image_path="images/github/sample.jpg",
+    custom_logic=lambda frame: frame,
+    window_name="Preview",
+    resolution=(1280, 720),
+)
+```
+
+**`video_capture_template`** — Run a live webcam loop with custom per-frame logic.
+
+```python
+from ai_vision_tool.capture.video_template import video_capture_template
+
+video_capture_template(
+    video_source=0,
+    custom_logic=lambda frame: frame,
+    window_name="Live",
+    resolution=(1280, 720),
+    enable_recording=False,
+    enable_screenshot=True,
+)
+```
+
+**`save_screenshot`** — Save a frame to disk from within a template loop.
+
+```python
+from ai_vision_tool.capture.video_template import save_screenshot
+
+save_screenshot(frame, output_dir="output/screenshots", prefix="capture")
+```
+
+---
+
+## FastAPI Service
+
+`ai-vision-tool` ships a FastAPI layer that exposes preprocessing, augmentation, and
+component execution over HTTP. This is useful for integrating vision transforms into
+microservice architectures or calling them from non-Python clients.
+
+### Starting the Server
+
+From Python:
+
+```bash
+python main.py --serve-api
+```
+
+With a custom host and port:
+
+```bash
+python main.py --serve-api --api-host 127.0.0.1 --api-port 8300
+```
+
+Using the installed CLI entrypoint directly:
+
+```bash
+ai-vision-tool-api
+```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Liveness check |
+| `GET` | `/api/v1/catalog` | List all available components |
+| `GET` | `/api/v1/catalog/{category}/{name}` | Describe one component |
+| `POST` | `/api/v1/{category}/{name}` | Execute a component |
+
+Supported categories: `preprocessing`, `augmentations`, `components`.
+
+### Standard Image Request
+
+Send a base64-encoded PNG and optional constructor/config arguments:
+
+```json
+{
+  "image_base64": "<base64-encoded-png>",
+  "init_args": {
+    "rotation": 90
+  },
+  "config": {}
+}
+```
+
+Example — rotate using `AutoOrient`:
+
+```bash
+curl -X POST http://localhost:8300/api/v1/preprocessing/AutoOrient \
+  -H "Content-Type: application/json" \
+  -d '{"image_base64": "<base64>", "init_args": {"rotation": 90}, "config": {}}'
+```
+
+### Payload-Style Request
+
+For components that operate on payload dicts (bounding boxes, masks, metadata):
+
+```json
+{
+  "payload": {
+    "frame_base64": "<base64-encoded-png>",
+    "bboxes": [[10, 20, 120, 80]]
+  },
+  "config": {}
+}
+```
+
+Example — normalise bounding boxes:
+
+```bash
+curl -X POST http://localhost:8300/api/v1/preprocessing/BoundingBoxNormalize \
+  -H "Content-Type: application/json" \
+  -d '{"payload": {"frame_base64": "<base64>", "bboxes": [[10, 20, 120, 80]]}, "config": {}}'
+```
+
+---
+
+## CLI Reference
+
+### Process a Local Image File
+
+The `--process-image-path` flag loads an image from disk, converts it to base64 internally,
+and runs it through any registered component.
+
+```bash
+# Apply AutoOrient (preprocessing)
+ai-vision-tool \
+  --process-image-path \
+  --component-category preprocessing \
+  --component-name AutoOrient \
+  --image-path images/github/sample.jpg \
+  --init-args-json '{"rotation": 90}' \
+  --save-output-image output/oriented.png
+
+# Apply Flip (augmentation)
+ai-vision-tool \
+  --process-image-path \
+  --component-category augmentations \
+  --component-name Flip \
+  --image-path images/github/sample.jpg \
+  --init-args-json '{"horizontal": true}' \
+  --save-output-image output/flipped.png
+
+# Payload-aware component — BoundingBoxNormalize
+ai-vision-tool \
+  --process-image-path \
+  --component-category preprocessing \
+  --component-name BoundingBoxNormalize \
+  --image-path images/github/sample.jpg \
+  --payload-json '{"bboxes": [[10, 20, 120, 80]]}'
+```
+
+### Browse Built-In Examples
+
+```bash
+# List all examples
+ai-vision-tool --show-examples
+
+# Filter by category
+ai-vision-tool --show-examples --example-category preprocessing
+ai-vision-tool --show-examples --example-category augmentations
+ai-vision-tool --show-examples --example-category components
+ai-vision-tool --show-examples --example-category capture
+
+# Filter by class name
+ai-vision-tool --show-examples --example-name AutoOrient
+ai-vision-tool --show-examples --example-name GaussianBlur
+ai-vision-tool --show-examples --example-name FrameEnhancer
+```
+
+### Webcam Application
+
+Run an interactive webcam session with a processing pipeline:
+
+```bash
+# Basic session
+ai-vision-tool
+
+# Enhancement + resize
+ai-vision-tool \
+  --enhance --brightness 12 --contrast 1.15 --sharpen \
+  --resize --width 1280 --height 720 --keep-aspect
+
+# Auto-orientation + contrast preprocessing
+ai-vision-tool \
+  --auto-orient --auto-orient-rotation 90 \
+  --auto-adjust-contrast --contrast-method adaptive_equalization --clip-limit 2.5
+
+# Augmentation flags
+ai-vision-tool \
+  --flip-horizontal \
+  --rotation-angle 12 --rotation-expand \
+  --blur --blur-kernel-size 7 \
+  --noise --noise-mode gaussian --noise-stddev 8
+
+# Motion detection + annotation
+ai-vision-tool --motion --motion-area 1200 --annotate
+
+# Time-lapse
+ai-vision-tool --timelapse --timelapse-interval 10
+
+# Dataset collection
+ai-vision-tool --dataset --label forklift --enhance --resize
+
+# Load augmentation profile from JSON
+ai-vision-tool --augmentation-config examples/augmentation_profile.json
+```
+
+#### Webcam Hotkeys
+
+| Key | Action |
+|-----|--------|
+| `p` | Capture a single processed frame to `output/captures` |
+| `b` | Capture a burst of frames to `output/captures` |
+| `r` | Start or stop video recording to `output/videos` |
+| `d` | Save a dataset sample to `output/dataset/<label>` |
+| `e` | Export grayscale and edge images to `output/exports` |
+| `o` | Save the configured ROI crop to `output/captures` |
+| `q` | Quit |
+
+---
+
+## Component Index
+
+### Preprocessing
+
+| Component | Purpose |
+|-----------|---------|
+| `AutoOrient` | EXIF or explicit rotation correction |
+| `AutoAdjustContrast` | Adaptive, histogram, or stretch contrast |
+| `Resize` | Exact spatial resize |
+| `LetterboxResize` | Aspect-preserving resize with padding |
+| `CenterCrop` | Centre crop for model inputs |
+| `PadToSquare` | Square canvas padding |
+| `Normalize` | Normalise pixel range |
+| `Standardize` | z-score standardisation |
+| `RescalePixels` | Explicit pixel scale and offset |
+| `ConvertColorSpace` | Color-space conversion |
+| `BGRToRGB` | OpenCV BGR to RGB |
+| `RGBToBGR` | RGB to OpenCV BGR |
+| `CLAHE` | Local contrast enhancement |
+| `HistogramEqualization` | Histogram equalisation |
+| `GammaCorrection` | Gamma-based exposure tuning |
+| `WhiteBalance` | Colour cast correction |
+| `Denoise` | Sensor or compression noise reduction |
+| `Sharpen` | Edge sharpening |
+| `Deblur` | Unsharp-mask deblur |
+| `RemoveBackground` | Foreground isolation |
+| `Threshold` | Binary thresholding |
+| `AdaptiveThreshold` | Local adaptive thresholding |
+| `EdgeDetection` | Edge extraction |
+| `ContourExtraction` | Contour metadata generation |
+| `PerspectiveCorrection` | Document or planar rectification |
+| `Deskew` | Skew correction |
+| `AutoCrop` | Trim empty borders |
+| `FaceAlign` | Face normalisation from eye landmarks |
+| `ObjectCrop` | Bounding-box crop extraction |
+| `BoundingBoxClamp` | Clamp boxes to image bounds |
+| `BoundingBoxNormalize` | Normalise bounding boxes |
+| `MaskResize` | Payload mask resizing |
+| `ImageQualityCheck` | Blur and brightness quality flags |
+| `BlurDetection` | Blur threshold check |
+| `BrightnessCheck` | Brightness range check |
+| `DuplicateImageCheck` | Duplicate detection by hash |
+| `CorruptImageCheck` | Corrupt or empty frame check |
+| `AspectRatioFilter` | Aspect-ratio validation |
+| `MinSizeFilter` | Minimum image-size validation |
+| `MaxSizeFilter` | Maximum image-size validation |
+
+### Augmentation
+
+| Component | Purpose |
+|-----------|---------|
+| `Flip` | Mirror augmentation |
+| `Rotate90` | 90-degree rotation |
+| `Crop` | Deterministic crop |
+| `Rotation` | Arbitrary-angle rotation |
+| `Shear` | Affine shear |
+| `Translate` | Spatial translation |
+| `RandomResize` | Random size jitter |
+| `RandomScale` | Random scale jitter |
+| `RandomCrop` | Random crop |
+| `RandomResizedCrop` | Random crop plus resize |
+| `RandomPadding` | Random padding |
+| `AffineTransform` | Combined affine transform |
+| `PerspectiveTransform` | Perspective warp |
+| `ElasticTransform` | Elastic distortion |
+| `GridDistortion` | Grid warp |
+| `OpticalDistortion` | Lens distortion |
+| `Greyscale` | Grayscale augmentation |
+| `Hue` | Hue shift |
+| `Saturation` | Saturation scaling |
+| `Brightness` | Brightness offset |
+| `Exposure` | Gamma/exposure augmentation |
+| `ColorJitter` | Compound color jitter |
+| `RandomGamma` | Randomised gamma |
+| `RandomBrightnessContrast` | Random brightness/contrast |
+| `RandomShadow` | Synthetic shadows |
+| `RandomSunFlare` | Flare overlay |
+| `RandomFog` | Fog or haze overlay |
+| `RandomRain` | Rain overlay |
+| `RandomSnow` | Snow overlay |
+| `ChannelShuffle` | Channel shuffle |
+| `RGBShift` | Per-channel shift |
+| `HSVShift` | HSV channel shift |
+| `ToSepia` | Sepia colour effect |
+| `InvertImage` | Image inversion |
+| `Blur` | Gaussian blur |
+| `GaussianBlur` | Explicit Gaussian blur |
+| `MedianBlur` | Median blur |
+| `GlassBlur` | Local glass blur |
+| `DefocusBlur` | Defocus blur |
+| `ZoomBlur` | Zoom blur |
+| `MotionBlur` | Directional blur |
+| `CameraGain` | Sensor gain simulation |
+| `Emboss` | Emboss effect |
+| `Posterize` | Reduce bit depth |
+| `Solarize` | Highlight inversion |
+| `Equalize` | Equalisation effect |
+| `CompressionArtifacts` | Generic compression artifacts |
+| `JPEGCompression` | JPEG recompression |
+| `Downscale` | Low-resolution simulation |
+| `Superpixel` | Superpixel rendering |
+| `Noise` | Gaussian or salt-pepper noise |
+| `ISONoise` | Sensor ISO noise |
+| `MultiplicativeNoise` | Multiplicative noise |
+| `SaltPepperNoise` | Salt-and-pepper noise |
+| `CoarseDropout` | Block dropout |
+| `GridDropout` | Grid dropout |
+| `RandomErasing` | Random erasing |
+| `PixelDropout` | Pixel-level dropout |
+| `MaskDropout` | Mask dropout |
+| `Cutout` | Deterministic rectangular masking |
+| `Mosaic` | 2x2 mosaic composition |
+| `Mosaic9` | 3x3 mosaic composition |
+| `MixUp` | Image mixing |
+| `CutMix` | Patch mixing |
+| `CopyPaste` | Overlay paste |
+| `ObjectPaste` | Object insertion |
+| `RandomOcclusion` | Synthetic occlusion |
+| `BoundingBoxJitter` | Bounding box perturbation |
+
+---
+
+## Output Structure
+
+By default, the webcam application and CLI write all outputs under a single root:
+
+```text
+output/
+├── captures/      — still images (p key, burst)
+├── dataset/       — labelled training samples (d key)
+├── exports/       — grayscale and edge exports (e key)
+├── timelapse/     — periodic time-lapse frames
+└── videos/        — recorded video files (r key)
+```
+
+Customise every directory with CLI flags:
+
+```bash
+ai-vision-tool \
+  --output-root runs/session-01 \
+  --output-dir stills \
+  --video-dir recordings \
+  --dataset-dir training-data \
+  --export-dir processed
+```
+
+---
+
+## Testing
+
+```bash
+# Run the full test suite
+pytest
+
+# Run individual suites
+pytest tests/test_preprocessing_components.py
+pytest tests/test_basic_augmentations.py
+pytest tests/test_advanced_augmentations.py
+pytest tests/test_capture_components.py
+pytest tests/test_core_components.py
+pytest tests/test_labeler_components.py
+pytest tests/test_api.py
+pytest tests/test_cli_file_processing.py
+```
+
+---
+
+## Build and Publish
+
+```bash
+python -m pip install --upgrade build
+python -m build
+```
+
+The wheel and source distribution are written to `dist/`.
+
+See `PUBLISHING.md` for the release checklist and PyPI upload commands.
