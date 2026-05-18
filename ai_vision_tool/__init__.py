@@ -267,7 +267,7 @@ __all__ = list(_EXPORTS)
 
 def __getattr__(name):
     if name not in _EXPORTS:
-        raise AttributeError(f"module 'visionflow' has no attribute {name!r}")
+        raise AttributeError(f"module 'ai_vision_tool' has no attribute {name!r}")
 
     module_name, attr_name = _EXPORTS[name]
     module = import_module(module_name)
