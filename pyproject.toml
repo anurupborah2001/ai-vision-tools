@@ -3,8 +3,8 @@ requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-name = "ai-vision-flow"
-version = "0.1.0"
+name = "ai-vision-tool"
+version = "0.2.0"
 description = "Composable computer-vision pipeline components for image enhancement, motion analysis, capture, and dataset collection."
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -35,16 +35,16 @@ dependencies = [
 tensorflow = ["tensorflow>=2.15"]
 
 [project.scripts]
-ai-vision-flow = "visionflow.cli:main"
-ai-vision-flow-api = "visionflow.api:run"
+ai-vision-tool = "ai_vision_tool.cli:main"
+ai-vision-tool-api = "ai_vision_tool.api:run"
 
 [tool.poetry]
-name = "ai-vision-flow"
-version = "0.1.0"
+name = "ai-vision-tool"
+version = "0.2.0"
 description = "Composable computer-vision pipeline components for image enhancement, motion analysis, capture, and dataset collection."
 readme = "README.md"
 authors = ["AI Vision Flow Maintainers"]
-packages = [{ include = "visionflow" }]
+packages = [{ include = "ai_vision_tool" }]
 keywords = ["computer-vision", "opencv", "image-processing", "dataset", "pipeline"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -82,8 +82,8 @@ httpx = ">=0.27"
 tensorflow = ["tensorflow"]
 
 [tool.poetry.scripts]
-ai-vision-flow = "visionflow.cli:main"
-ai-vision-flow-api = "visionflow.api:run"
+ai-vision-tool = "ai_vision_tool.cli:main"
+ai-vision-tool-api = "ai_vision_tool.api:run"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
