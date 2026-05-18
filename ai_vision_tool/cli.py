@@ -249,7 +249,7 @@ def build_examples_catalog():
     ]
 
     for name, summary, python_example in template_entries:
-        catalog.append(_example_entry("template", name, summary, python_example, None))
+        catalog.append(_example_entry("capture", name, summary, python_example, None))
 
     return catalog
 
@@ -737,7 +737,7 @@ def create_parser():
         "--example-category",
         choices=EXAMPLE_CATEGORY_CHOICES,
         default="all",
-        help="Print example usage for preprocessing, augmentations, components, template, or all.",
+        help="Print example usage for preprocessing, augmentations, components, capture, or all.",
     )
     parser.add_argument(
         "--example-name",
