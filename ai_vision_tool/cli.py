@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2
 import uvicorn
 
-from visionflow.components import (
+from ai_vision_tool.components import (
     AutoAdjustContrast,
     AutoOrient,
     Blur,
@@ -33,9 +33,9 @@ from visionflow.components import (
     Shear,
     TimeLapseCapture,
 )
-from visionflow.components.augmentations.common import parse_component_profile
-from visionflow.pipeline import AIVisionPipeline
-from visionflow.api_service import (
+from ai_vision_tool.components.augmentations.common import parse_component_profile
+from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.api_service import (
     decode_image_base64,
     encode_image_base64,
     execute_component,
@@ -114,7 +114,7 @@ def build_examples_catalog():
                 "preprocessing",
                 name,
                 summary,
-                _run_example("visionflow.components.preprocessing", name, constructor, target=target),
+                _run_example("ai_vision_tool.components.preprocessing", name, constructor, target=target),
                 runtime_example,
             )
         )
@@ -196,7 +196,7 @@ def build_examples_catalog():
                 "augmentations",
                 name,
                 summary,
-                _run_example("visionflow.components.augmentations", name, constructor, target=target),
+                _run_example("ai_vision_tool.components.augmentations", name, constructor, target=target),
                 runtime_example,
             )
         )
@@ -225,7 +225,7 @@ def build_examples_catalog():
                 "components",
                 name,
                 summary,
-                f"from visionflow.components import {name}\n{python_call}",
+                f"from ai_vision_tool.components import {name}\n{python_call}",
                 runtime_example,
             )
         )
@@ -234,17 +234,17 @@ def build_examples_catalog():
         (
             "image_template",
             "Display a still image with optional custom logic.",
-            "from visionflow.template.image_template import image_template\nimage_template(\n    image_path=\"path/to/image.jpg\",\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Demo\",\n    resolution=(1280, 720),\n)",
+            "from ai_vision_tool.template.image_template import image_template\nimage_template(\n    image_path=\"path/to/image.jpg\",\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Demo\",\n    resolution=(1280, 720),\n)",
         ),
         (
             "save_screenshot",
             "Save a screenshot frame to disk from the template workflow.",
-            "from visionflow.template.video_template import save_screenshot\nsave_screenshot(frame, output_dir=\"screenshots\", prefix=\"capture\")",
+            "from ai_vision_tool.template.video_template import save_screenshot\nsave_screenshot(frame, output_dir=\"screenshots\", prefix=\"capture\")",
         ),
         (
             "video_capture_template",
             "Run the legacy OpenCV video template with custom frame logic.",
-            "from visionflow.template.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Live\",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)",
+            "from ai_vision_tool.template.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Live\",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)",
         ),
     ]
 
@@ -271,7 +271,7 @@ def format_examples(category="all", name_filter=None):
     if not filtered:
         available = ", ".join(sorted({item["name"] for item in EXAMPLES_CATALOG}))
         return (
-            "[visionflow] No matching examples found.\n\n"
+            "[ai-vision-tool] No matching examples found.\n\n"
             f"Available example names: {available}\n"
         )
 
@@ -349,7 +349,7 @@ def process_component_from_image_path(args):
             output_path = Path(args.save_output_image)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(output_path), output_image)
-            print(f"[visionflow] Saved processed image to {output_path}")
+            print(f"[ai-vision-tool] Saved processed image to {output_path}")
         elif (
             isinstance(serialized, dict)
             and isinstance(serialized.get("frame"), dict)
@@ -360,10 +360,10 @@ def process_component_from_image_path(args):
             output_path = Path(args.save_output_image)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(output_path), output_image)
-            print(f"[visionflow] Saved processed frame to {output_path}")
+            print(f"[ai-vision-tool] Saved processed frame to {output_path}")
         else:
             print(
-                "[visionflow] --save-output-image was ignored because the component "
+                "[ai-vision-tool] --save-output-image was ignored because the component "
                 "result did not contain a serializable image."
             )
 
@@ -586,7 +586,7 @@ def load_profile_components(config_path):
             module = importlib.import_module(module_name)
             component_cls = getattr(module, class_name)
         else:
-            module = importlib.import_module("visionflow.components.augmentations")
+            module = importlib.import_module("ai_vision_tool.components.augmentations")
             component_cls = getattr(module, class_name)
         components.append(component_cls(**params))
     return components
@@ -620,19 +620,19 @@ def next_output_path(output_dir, prefix, extension):
 def save_capture(frame, output_dir, prefix="capture"):
     image_path = next_output_path(output_dir, prefix, "jpg")
     cv2.imwrite(str(image_path), frame)
-    print(f"[visionflow] Saved capture to {image_path}")
+    print(f"[ai-vision-tool] Saved capture to {image_path}")
 
 
 def save_roi(frame, output_dir, roi):
     x, y, w, h = roi
     roi_frame = frame[y:y + h, x:x + w]
     if roi_frame.size == 0:
-        print("[visionflow] ROI capture skipped because the selected area is outside the frame.")
+        print("[ai-vision-tool] ROI capture skipped because the selected area is outside the frame.")
         return
 
     image_path = next_output_path(output_dir, "roi", "jpg")
     cv2.imwrite(str(image_path), roi_frame)
-    print(f"[visionflow] Saved ROI capture to {image_path}")
+    print(f"[ai-vision-tool] Saved ROI capture to {image_path}")
 
 
 def save_exports(frame, export_dir):
@@ -644,8 +644,8 @@ def save_exports(frame, export_dir):
 
     cv2.imwrite(str(gray_path), gray)
     cv2.imwrite(str(edges_path), edges)
-    print(f"[visionflow] Exported grayscale image to {gray_path}")
-    print(f"[visionflow] Exported edge image to {edges_path}")
+    print(f"[ai-vision-tool] Exported grayscale image to {gray_path}")
+    print(f"[ai-vision-tool] Exported edge image to {edges_path}")
 
 
 def build_video_writer(frame, video_dir, fps):
@@ -883,7 +883,7 @@ def main(argv=None):
 
     if args.serve_api:
         uvicorn.run(
-            "visionflow.api:app",
+            "ai_vision_tool.api:app",
             host=args.api_host,
             port=args.api_port,
             reload=args.api_reload,
@@ -925,7 +925,7 @@ def main(argv=None):
     print("  e -> export grayscale/edges")
     print("  o -> capture ROI")
     print("  q -> quit\n")
-    print(f"[visionflow] Output root: {output_dirs['root'].resolve()}")
+    print(f"[ai-vision-tool] Output root: {output_dirs['root'].resolve()}")
 
     video_writer = None
     video_path = None
@@ -935,7 +935,7 @@ def main(argv=None):
         while True:
             ret, frame = cap.read()
             if not ret:
-                print("[visionflow] Camera frame read failed.")
+                print("[ai-vision-tool] Camera frame read failed.")
                 break
 
             annotations = add_default_annotations() if args.annotate else []
@@ -981,11 +981,11 @@ def main(argv=None):
                     video_writer, video_path = build_video_writer(
                         processed_frame, video_dir, args.fps
                     )
-                    print(f"[visionflow] Started recording to {video_path}")
+                    print(f"[ai-vision-tool] Started recording to {video_path}")
                 elif video_writer is not None:
                     video_writer.release()
                     video_writer = None
-                    print(f"[visionflow] Stopped recording. Saved to {video_path}")
+                    print(f"[ai-vision-tool] Stopped recording. Saved to {video_path}")
                     video_path = None
 
             if capture_requested:

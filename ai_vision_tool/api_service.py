@@ -10,27 +10,27 @@ import numpy as np
 
 
 COMPONENT_MODULES = {
-    "preprocessing": "visionflow.components.preprocessing",
-    "augmentations": "visionflow.components.augmentations",
+    "preprocessing": "ai_vision_tool.components.preprocessing",
+    "augmentations": "ai_vision_tool.components.augmentations",
 }
 
 DIRECT_COMPONENTS = {
     "components": {
-        "FrameEnhancer": "visionflow.components.frame_enhancer",
-        "FrameResizer": "visionflow.components.frame_resizer",
-        "MotionDetector": "visionflow.components.motion_detector",
-        "FrameAnnotator": "visionflow.components.frame_annotator",
-        "DatasetCollector": "visionflow.components.dataset_collector",
-        "TimeLapseCapture": "visionflow.components.time_lapse_capture",
-        "PictureTaker": "visionflow.components.picture_taker",
-        "BurstPictureTaker": "visionflow.components.burst_picture_taker",
-        "ROICapture": "visionflow.components.roi_capture",
-        "ImageExporter": "visionflow.components.image_exporter",
-        "FrameGrabber": "visionflow.components.frame_grabber",
-        "VideoTaker": "visionflow.components.video_taker",
-        "AutoLabeller": "visionflow.components.auto_labeller",
-        "DarknetAutoLabeler": "visionflow.components.darknet_auto_labeler",
-        "TensorFlowAutoLabeler": "visionflow.components.tensorflow_auto_labeler",
+        "FrameEnhancer": "ai_vision_tool.components.frame_enhancer",
+        "FrameResizer": "ai_vision_tool.components.frame_resizer",
+        "MotionDetector": "ai_vision_tool.components.motion_detector",
+        "FrameAnnotator": "ai_vision_tool.components.frame_annotator",
+        "DatasetCollector": "ai_vision_tool.components.dataset_collector",
+        "TimeLapseCapture": "ai_vision_tool.components.time_lapse_capture",
+        "PictureTaker": "ai_vision_tool.components.picture_taker",
+        "BurstPictureTaker": "ai_vision_tool.components.burst_picture_taker",
+        "ROICapture": "ai_vision_tool.components.roi_capture",
+        "ImageExporter": "ai_vision_tool.components.image_exporter",
+        "FrameGrabber": "ai_vision_tool.components.frame_grabber",
+        "VideoTaker": "ai_vision_tool.components.video_taker",
+        "AutoLabeller": "ai_vision_tool.components.auto_labeller",
+        "DarknetAutoLabeler": "ai_vision_tool.components.darknet_auto_labeler",
+        "TensorFlowAutoLabeler": "ai_vision_tool.components.tensorflow_auto_labeler",
     }
 }
 

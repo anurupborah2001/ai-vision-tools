@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from visionflow.api_service import execute_component, get_component, list_components
+from ai_vision_tool.api_service import execute_component, get_component, list_components
 
 
 class ComponentExecutionRequest(BaseModel):
@@ -72,4 +72,4 @@ app = create_app()
 
 
 def run(host: str = "0.0.0.0", port: int = 8300, reload: bool = False) -> None:
-    uvicorn.run("visionflow.api:app", host=host, port=port, reload=reload)
+    uvicorn.run("ai_vision_tool.api:app", host=host, port=port, reload=reload)
