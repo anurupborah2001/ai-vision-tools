@@ -1,0 +1,16 @@
+name: Security Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  security-checks:
+    uses: ./.github/workflows/reusable-security-checks.yml
+    with:
+      python-version: "3.11"
