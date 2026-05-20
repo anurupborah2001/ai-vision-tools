@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ai_vision_tool.components.base import AIVisionComponent
-from ai_vision_tool.components._image_utils import extract_frame, replace_frame
+from ai_vision_tool.core.base import AIVisionComponent
+from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 _MP_POSE_NAMES = [
     "nose", "left_eye_inner", "left_eye", "left_eye_outer", "right_eye_inner", "right_eye",

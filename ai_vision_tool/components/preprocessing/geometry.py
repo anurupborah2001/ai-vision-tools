@@ -5,14 +5,14 @@ import math
 import cv2
 import numpy as np
 
-from .._image_utils import (
+from ..utils.image_utils import (
     extract_frame,
     normalize_color_value,
     replace_frame,
     resolve_border_mode,
     rotate_bound,
 )
-from ..base import AIVisionComponent
+from ..core.base import AIVisionComponent
 
 
 def _get_bboxes(data, config):

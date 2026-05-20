@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from .._image_utils import extract_frame, normalize_color_value, replace_frame, resolve_border_mode
-from ..base import AIVisionComponent
+from ..utils.image_utils import extract_frame, normalize_color_value, replace_frame, resolve_border_mode
+from ..core.base import AIVisionComponent
 from .common import apply_affine, apply_perspective, build_translation_matrix, random_uniform
 
 

@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.components.auto_labeller import AutoLabeller
-from ai_vision_tool.components.base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.components.dataset_collector import DatasetCollector
 from ai_vision_tool.components.frame_annotator import FrameAnnotator
 from ai_vision_tool.components.frame_enhancer import FrameEnhancer

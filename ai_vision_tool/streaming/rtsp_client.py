@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import cv2
 import numpy as np
 
-from ai_vision_tool.components.base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class RTSPClient(AIVisionComponent):

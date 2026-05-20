@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .._image_utils import extract_frame, normalize_color_value, replace_frame
-from ..base import AIVisionComponent
+from ..utils.image_utils import extract_frame, normalize_color_value, replace_frame
+from ..core.base import AIVisionComponent
 
 
 class Cutout(AIVisionComponent):

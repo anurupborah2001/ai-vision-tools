@@ -1,4 +1,4 @@
-from ..components.base import AIVisionComponent
+from ..core.base import AIVisionComponent
 
 
 class AIVisionPipeline:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .._image_utils import extract_frame, replace_frame
-from ..base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame
+from ..core.base import AIVisionComponent
 
 
 class Rotate90(AIVisionComponent):

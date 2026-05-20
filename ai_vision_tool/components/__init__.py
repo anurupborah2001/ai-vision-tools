@@ -3,7 +3,7 @@
 from importlib import import_module
 
 _EXPORTS = {
-    "AIVisionComponent": ("ai_vision_tool.components.base", "AIVisionComponent"),
+    "AIVisionComponent": ("ai_vision_tool.core.base", "AIVisionComponent"),
     "AutoAdjustContrast": (
         "ai_vision_tool.components.preprocessing.auto_adjust_contrast",
         "AutoAdjustContrast",

@@ -3,8 +3,8 @@ from __future__ import annotations
 import queue
 import time
 
-from ai_vision_tool.components.base import AIVisionComponent
-from ai_vision_tool.components._image_utils import extract_frame
+from ai_vision_tool.core.base import AIVisionComponent
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class BufferedStream(AIVisionComponent):

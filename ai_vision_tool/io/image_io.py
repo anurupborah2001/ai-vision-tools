@@ -7,8 +7,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from ai_vision_tool.components.base import AIVisionComponent
-from ai_vision_tool.components._image_utils import extract_frame, replace_frame
+from ai_vision_tool.core.base import AIVisionComponent
+from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 _COLOR_MODES = {"bgr": cv2.IMREAD_COLOR, "rgb": cv2.IMREAD_COLOR, "gray": cv2.IMREAD_GRAYSCALE}
 

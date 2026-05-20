@@ -5,8 +5,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from ai_vision_tool.components.base import AIVisionComponent
-from ai_vision_tool.components._image_utils import extract_frame, replace_frame
+from ai_vision_tool.core.base import AIVisionComponent
+from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 _CODECS = {"mp4v": cv2.VideoWriter_fourcc(*"mp4v"), "avc1": cv2.VideoWriter_fourcc(*"avc1"),
            "xvid": cv2.VideoWriter_fourcc(*"XVID"), "h264": cv2.VideoWriter_fourcc(*"avc1")}

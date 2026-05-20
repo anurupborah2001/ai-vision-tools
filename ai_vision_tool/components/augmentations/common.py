@@ -8,7 +8,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .._image_utils import normalize_color_value, resolve_border_mode, to_uint8
+from ..utils.image_utils import normalize_color_value, resolve_border_mode, to_uint8
 
 
 def random_uniform(config, key_min, key_max, fallback_min, fallback_max):
