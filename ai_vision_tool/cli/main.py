@@ -1,13 +1,14 @@
 import argparse
+import base64
 import importlib
 import json
 import time
 from pathlib import Path
 
 import cv2
-import uvicorn
+import numpy as np
 
-from ai_vision_tool.components import (
+from ai_vision_tool import (
     AutoAdjustContrast,
     AutoOrient,
     Blur,
@@ -33,13 +34,8 @@ from ai_vision_tool.components import (
     Shear,
     TimeLapseCapture,
 )
-from ai_vision_tool.components.augmentations.common import parse_component_profile
+from ai_vision_tool.augmentation.common import parse_component_profile
 from ai_vision_tool.pipelines import AIVisionPipeline
-from ai_vision_tool.api_service import (
-    decode_image_base64,
-    encode_image_base64,
-    execute_component,
-)
 
 EXAMPLE_CATEGORY_CHOICES = ["all", "preprocessing", "augmentations", "components", "capture"]
 
@@ -145,7 +141,7 @@ def build_examples_catalog():
                 "preprocessing",
                 name,
                 summary,
-                _run_example("ai_vision_tool.components.preprocessing", name, constructor, target=target),
+                _run_example("ai_vision_tool.preprocessing", name, constructor, target=target),
                 runtime_example,
             )
         )
@@ -227,7 +223,7 @@ def build_examples_catalog():
                 "augmentations",
                 name,
                 summary,
-                _run_example("ai_vision_tool.components.augmentations", name, constructor, target=target),
+                _run_example("ai_vision_tool.augmentation", name, constructor, target=target),
                 runtime_example,
             )
         )
@@ -256,7 +252,7 @@ def build_examples_catalog():
                 "components",
                 name,
                 summary,
-                f"from ai_vision_tool.components import {name}\n{python_call}",
+                f"from ai_vision_tool import {name}\n{python_call}",
                 runtime_example,
             )
         )
@@ -370,10 +366,37 @@ def parse_json_argument(value, argument_name):
         ) from exc
 
 
+def _encode_image_base64(image: np.ndarray) -> str:
+    ok, encoded = cv2.imencode(".png", image)
+    if not ok:
+        raise ValueError("Unable to encode image as PNG.")
+    return base64.b64encode(encoded.tobytes()).decode("utf-8")
+
+
+def _decode_image_base64(encoded: str) -> np.ndarray:
+    content = encoded.split(",", 1)[1] if "," in encoded else encoded
+    data = base64.b64decode(content)
+    arr = np.frombuffer(data, dtype=np.uint8)
+    image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError("Unable to decode base64 image content.")
+    return image
+
+
+def _execute_component(category, name, init_args, config, image_base64, payload, data, batch):
+    module_path = f"ai_vision_tool.{category}"
+    module = importlib.import_module(module_path)
+    cls = getattr(module, name)
+    component = cls(**init_args)
+    component.setup(config)
+    input_data = payload or data or _decode_image_base64(image_base64)
+    return {"result": component.run(input_data, config)}
+
+
 def process_component_from_image_path(args):
     """Loads an image file, executes the specified component, and prints the result.
 
-    Reads ``args.image_path``, base64-encodes it, and calls ``execute_component``
+    Reads ``args.image_path``, base64-encodes it, and calls ``_execute_component``
     with the parsed CLI arguments. Optionally saves the processed image to disk.
 
     Args:
@@ -399,9 +422,9 @@ def process_component_from_image_path(args):
     payload = parse_json_argument(args.payload_json, "--payload-json")
     data = parse_json_argument(args.data_json, "--data-json")
     batch = parse_json_argument(args.batch_json, "--batch-json")
-    image_base64 = encode_image_base64(image)
+    image_base64 = _encode_image_base64(image)
 
-    result = execute_component(
+    result = _execute_component(
         category=args.component_category,
         name=args.component_name,
         init_args=init_args,
@@ -415,7 +438,7 @@ def process_component_from_image_path(args):
     if args.save_output_image:
         serialized = result.get("result")
         if isinstance(serialized, dict) and serialized.get("type") == "image" and serialized.get("base64"):
-            output_image = decode_image_base64(serialized["base64"])
+            output_image = _decode_image_base64(serialized["base64"])
             output_path = Path(args.save_output_image)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(output_path), output_image)
@@ -426,7 +449,7 @@ def process_component_from_image_path(args):
             and serialized["frame"].get("type") == "image"
             and serialized["frame"].get("base64")
         ):
-            output_image = decode_image_base64(serialized["frame"]["base64"])
+            output_image = _decode_image_base64(serialized["frame"]["base64"])
             output_path = Path(args.save_output_image)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(output_path), output_image)
@@ -685,7 +708,7 @@ def load_profile_components(config_path):
 
     Each entry in the profile must contain 'name' and optional 'params' and
     'module' keys. When 'module' is absent, the component is looked up in
-    ``ai_vision_tool.components.augmentations``.
+    ``ai_vision_tool.augmentation``.
 
     Args:
         config_path (str or None): Path to the JSON profile file, or None to
@@ -707,7 +730,7 @@ def load_profile_components(config_path):
             module = importlib.import_module(module_name)
             component_cls = getattr(module, class_name)
         else:
-            module = importlib.import_module("ai_vision_tool.components.augmentations")
+            module = importlib.import_module("ai_vision_tool.augmentation")
             component_cls = getattr(module, class_name)
         components.append(component_cls(**params))
     return components
@@ -1112,6 +1135,12 @@ def main(argv=None):
     args = parse_args(argv)
 
     if args.serve_api:
+        try:
+            import uvicorn
+        except ImportError as exc:
+            raise ImportError(
+                "API server requires: pip install ai-vision-tool[api]"
+            ) from exc
         uvicorn.run(
             "ai_vision_tool.api:app",
             host=args.api_host,
