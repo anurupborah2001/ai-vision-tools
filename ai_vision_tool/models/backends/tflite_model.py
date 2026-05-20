@@ -5,6 +5,16 @@ import time
 import cv2
 import numpy as np
 
+try:
+    import tflite_runtime.interpreter as tflite  # noqa: F401
+except ImportError:
+    try:
+        import tensorflow as tf  # noqa: F401
+    except ImportError as exc:
+        raise ImportError(
+            "TFLite backend requires: pip install ai-vision-tool[tflite]"
+        ) from exc
+
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 

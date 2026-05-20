@@ -3,6 +3,13 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
+try:
+    import torch  # noqa: F401
+except ImportError as exc:
+    raise ImportError(
+        "PyTorch backend requires: pip install ai-vision-tool[torch]"
+    ) from exc
+
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 

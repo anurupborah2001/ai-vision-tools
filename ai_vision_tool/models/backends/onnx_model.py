@@ -6,6 +6,13 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+try:
+    import onnxruntime as ort  # noqa: F401
+except ImportError as exc:
+    raise ImportError(
+        "ONNX backend requires: pip install ai-vision-tool[onnx]"
+    ) from exc
+
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
