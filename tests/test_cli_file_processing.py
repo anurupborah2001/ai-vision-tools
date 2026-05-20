@@ -2,7 +2,7 @@ import json
 
 import cv2
 
-from ai_vision_tool.cli import main
+from ai_vision_tool.cli.main import main
 
 
 def test_cli_process_image_path_saves_processed_image(sample_frame, tmp_path, capsys):

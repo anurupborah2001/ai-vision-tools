@@ -3,12 +3,12 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from ai_vision_tool.components.burst_picture_taker import BurstPictureTaker
-from ai_vision_tool.components.frame_grabber import FrameGrabber
-from ai_vision_tool.components.image_exporter import ImageExporter
-from ai_vision_tool.components.picture_taker import PictureTaker
-from ai_vision_tool.components.roi_capture import ROICapture
-from ai_vision_tool.components.video_taker import VideoTaker
+from ai_vision_tool.capture.burst_image_capture import BurstPictureTaker
+from ai_vision_tool.capture.frame_grabber import FrameGrabber
+from ai_vision_tool.io.image_exporter import ImageExporter
+from ai_vision_tool.capture.image_capture import PictureTaker
+from ai_vision_tool.capture.roi_capture import ROICapture
+from ai_vision_tool.capture.video_capture import VideoTaker
 
 
 def test_frame_grabber_returns_empty_for_missing_video(capsys):
@@ -73,7 +73,7 @@ def test_burst_picture_taker_stops_when_capture_fails(monkeypatch, sample_frame)
             return False, None
 
     monkeypatch.setattr(component, "save_frame", lambda frame: saved.append(frame.copy()) or f"saved-{len(saved)}", raising=False)
-    monkeypatch.setattr("ai_vision_tool.components.burst_picture_taker.time.sleep", lambda seconds: None)
+    monkeypatch.setattr("ai_vision_tool.capture.burst_image_capture.time.sleep", lambda seconds: None)
 
     result = component.capture_burst(FakeBurstCap())
 

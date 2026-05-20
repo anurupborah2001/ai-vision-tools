@@ -3,8 +3,8 @@ import json
 import numpy as np
 import pytest
 
-from ai_vision_tool.cli import load_profile_components
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.cli.main import load_profile_components
+from ai_vision_tool.augmentation import (
     Blur,
     Brightness,
     CameraGain,

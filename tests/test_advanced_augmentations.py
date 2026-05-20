@@ -1,6 +1,6 @@
 import numpy as np
 
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.augmentation import (
     AffineTransform,
     ChannelShuffle,
     CoarseDropout,

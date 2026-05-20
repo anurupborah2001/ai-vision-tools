@@ -1,3 +1,7 @@
+import pytest
+
+pytest.skip("API module moved to backup/; skip until re-introduced via [api] extra", allow_module_level=True)
+
 import base64
 
 import cv2
