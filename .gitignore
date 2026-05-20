@@ -13,3 +13,9 @@ wheels/
 
 # Output folders
 output/**
+
+backup/**
+.claude/
+docs/**
+!docs/superpowers/
+!docs/superpowers/**
