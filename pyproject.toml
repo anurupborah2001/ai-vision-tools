@@ -27,16 +27,33 @@ classifiers = [
 dependencies = [
   "numpy>=1.26",
   "opencv-python>=4.8",
-  "fastapi>=0.115",
-  "uvicorn>=0.30",
+  "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
-tensorflow = ["tensorflow>=2.15"]
+onnx         = ["onnxruntime>=1.18"]
+torch        = ["torch>=2.3", "torchvision>=0.18"]
+tflite       = ["tflite-runtime>=2.14"]
+websocket    = ["websockets>=12.0"]
+kafka        = ["confluent-kafka>=2.3.0"]
+streaming    = ["websockets>=12.0", "confluent-kafka>=2.3.0"]
+cloud        = ["boto3>=1.34", "google-cloud-storage>=2.16"]
+detection    = ["ultralytics>=8.0", "mediapipe>=0.10"]
+segmentation = ["ultralytics>=8.0", "segment-anything>=1.0", "torch>=2.3", "torchvision>=0.18"]
+tracking     = ["onnxruntime>=1.18"]
+api          = ["fastapi>=0.115", "uvicorn>=0.30"]
+all          = [
+  "onnxruntime>=1.18",
+  "torch>=2.3", "torchvision>=0.18",
+  "websockets>=12.0", "confluent-kafka>=2.3.0",
+  "boto3>=1.34", "google-cloud-storage>=2.16",
+  "ultralytics>=8.0", "mediapipe>=0.10",
+  "segment-anything>=1.0",
+  "fastapi>=0.115", "uvicorn>=0.30",
+]
 
 [project.scripts]
-ai-vision-tool = "ai_vision_tool.cli:main"
-ai-vision-tool-api = "ai_vision_tool.api:run"
+ai-vision-tool = "ai_vision_tool.cli.main:main"
 
 [tool.poetry]
 name = "ai-vision-tool"
@@ -63,9 +80,20 @@ classifiers = [
 python = ">=3.10,<4.0"
 numpy = ">=1.26"
 opencv-python = ">=4.8"
-fastapi = ">=0.115"
-uvicorn = ">=0.30"
-tensorflow = { version = ">=2.15", optional = true }
+pyyaml = ">=6.0"
+onnxruntime = { version = ">=1.18", optional = true }
+torch = { version = ">=2.3", optional = true }
+torchvision = { version = ">=0.18", optional = true }
+websockets = { version = ">=12.0", optional = true }
+confluent-kafka = { version = ">=2.3.0", optional = true }
+boto3 = { version = ">=1.34", optional = true }
+google-cloud-storage = { version = ">=2.16", optional = true }
+ultralytics = { version = ">=8.0", optional = true }
+mediapipe = { version = ">=0.10", optional = true }
+segment-anything = { version = ">=1.0", optional = true }
+fastapi = { version = ">=0.115", optional = true }
+uvicorn = { version = ">=0.30", optional = true }
+tflite-runtime = { version = ">=2.14", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 black = ">=24.8"
@@ -79,11 +107,23 @@ commitizen = ">=3.29"
 httpx = ">=0.27"
 
 [tool.poetry.extras]
-tensorflow = ["tensorflow"]
+onnx         = ["onnxruntime"]
+torch        = ["torch", "torchvision"]
+tflite       = ["tflite-runtime"]
+websocket    = ["websockets"]
+kafka        = ["confluent-kafka"]
+streaming    = ["websockets", "confluent-kafka"]
+cloud        = ["boto3", "google-cloud-storage"]
+detection    = ["ultralytics", "mediapipe"]
+segmentation = ["ultralytics", "segment-anything", "torch", "torchvision"]
+tracking     = ["onnxruntime"]
+api          = ["fastapi", "uvicorn"]
+all          = ["onnxruntime", "torch", "torchvision", "websockets", "confluent-kafka",
+               "boto3", "google-cloud-storage", "ultralytics", "mediapipe",
+               "segment-anything", "fastapi", "uvicorn"]
 
 [tool.poetry.scripts]
-ai-vision-tool = "ai_vision_tool.cli:main"
-ai-vision-tool-api = "ai_vision_tool.api:run"
+ai-vision-tool = "ai_vision_tool.cli.main:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
