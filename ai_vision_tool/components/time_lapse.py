@@ -3,7 +3,7 @@ from pathlib import Path
 
 import cv2
 
-from .base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class TimeLapseCapture(AIVisionComponent):

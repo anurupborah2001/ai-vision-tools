@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import glob
 import shutil
-from .base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 
 XML_BODY_1 = """<annotation>
         <folder>{FOLDER}</folder>

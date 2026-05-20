@@ -1,7 +1,7 @@
 import cv2
 import os
 
-from .base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class FrameGrabber(AIVisionComponent):

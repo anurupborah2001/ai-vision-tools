@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from .base import AIVisionComponent
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class FrameEnhancer(AIVisionComponent):
