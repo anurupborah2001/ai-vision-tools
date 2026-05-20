@@ -9,11 +9,33 @@ from .common import maybe_get_partner_frame
 
 
 class MixUp(AIVisionComponent):
+    """Blends two images using a weighted linear combination (MixUp augmentation).
+
+    Requires a 'mix_image' partner frame available via config or the input payload dict.
+
+    Args:
+        alpha (float): Weight of the primary image. The partner image is weighted (1 - alpha). Default is 0.5.
+    """
+
     def __init__(self, alpha=0.5):
+        """Initializes MixUp with a blending weight.
+
+        Args:
+            alpha (float): Primary image weight in [0.0, 1.0]. Default is 0.5.
+        """
         super().__init__()
         self.alpha = alpha
 
     def _execute(self, data, config):
+        """Blends the primary frame with a partner image.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' and optionally 'mix_image'.
+            config (dict): Runtime overrides. Supports 'alpha' and 'mix_image'.
+
+        Returns:
+            NumPy array or dict: Blended image, or copy of input if no partner is available.
+        """
         frame = extract_frame(data)
         mix_image = maybe_get_partner_frame(data, config, "mix_image")
         if mix_image is None:
@@ -25,11 +47,33 @@ class MixUp(AIVisionComponent):
 
 
 class CutMix(AIVisionComponent):
+    """Pastes a rectangular patch from a partner image onto the primary frame (CutMix augmentation).
+
+    Requires a 'mix_image' partner frame available via config or the input payload dict.
+
+    Args:
+        alpha (float): Controls the relative patch size (patch dimensions proportional to alpha * 0.5). Default is 0.5.
+    """
+
     def __init__(self, alpha=0.5):
+        """Initializes CutMix with a patch size factor.
+
+        Args:
+            alpha (float): Patch size factor. Default is 0.5.
+        """
         super().__init__()
         self.alpha = alpha
 
     def _execute(self, data, config):
+        """Pastes a randomly placed patch from the partner image into the primary frame.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' and optionally 'mix_image'.
+            config (dict): Runtime overrides. Supports 'alpha' and 'mix_image'.
+
+        Returns:
+            NumPy array or dict: Frame with the patch applied, or original if no partner available.
+        """
         frame = extract_frame(data).copy()
         mix_image = maybe_get_partner_frame(data, config, "mix_image")
         if mix_image is None:
@@ -45,12 +89,36 @@ class CutMix(AIVisionComponent):
 
 
 class CopyPaste(AIVisionComponent):
+    """Pastes an overlay image onto the primary frame at a specified position.
+
+    Requires an 'overlay_image' available via config or the input payload dict.
+
+    Args:
+        x (int): Horizontal position of the overlay's top-left corner. Default is 0.
+        y (int): Vertical position of the overlay's top-left corner. Default is 0.
+    """
+
     def __init__(self, x=0, y=0):
+        """Initializes CopyPaste with a paste position.
+
+        Args:
+            x (int): Horizontal offset. Default is 0.
+            y (int): Vertical offset. Default is 0.
+        """
         super().__init__()
         self.x = x
         self.y = y
 
     def _execute(self, data, config):
+        """Pastes the overlay image onto the primary frame at the configured position.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' and optionally 'overlay_image'.
+            config (dict): Runtime overrides. Supports 'x', 'y', and 'overlay_image'.
+
+        Returns:
+            NumPy array or dict: Frame with overlay applied, or original if no overlay available.
+        """
         frame = extract_frame(data).copy()
         overlay = maybe_get_partner_frame(data, config, "overlay_image")
         if overlay is None:
@@ -65,13 +133,37 @@ class CopyPaste(AIVisionComponent):
 
 
 class RandomOcclusion(AIVisionComponent):
+    """Fills a randomly positioned rectangle with a constant value to simulate occlusion.
+
+    Args:
+        max_width (int): Maximum width of the occlusion rectangle. Default is 20.
+        max_height (int): Maximum height of the occlusion rectangle. Default is 20.
+        fill_value (int or tuple): Fill color or intensity for the occluded region. Default is 0.
+    """
+
     def __init__(self, max_width=20, max_height=20, fill_value=0):
+        """Initializes RandomOcclusion with occlusion region bounds.
+
+        Args:
+            max_width (int): Max occlusion rectangle width. Default is 20.
+            max_height (int): Max occlusion rectangle height. Default is 20.
+            fill_value (int or tuple): Fill value for the occluded pixels. Default is 0.
+        """
         super().__init__()
         self.max_width = max_width
         self.max_height = max_height
         self.fill_value = fill_value
 
     def _execute(self, data, config):
+        """Applies a random occlusion patch to the extracted frame.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime overrides. Supports 'max_width', 'max_height', 'fill_value'.
+
+        Returns:
+            NumPy array or dict: Frame with random occlusion applied.
+        """
         frame = extract_frame(data).copy()
         width = np.random.randint(1, int(config.get("max_width", self.max_width)) + 1)
         height = np.random.randint(1, int(config.get("max_height", self.max_height)) + 1)
@@ -82,12 +174,36 @@ class RandomOcclusion(AIVisionComponent):
 
 
 class ObjectPaste(AIVisionComponent):
+    """Pastes an object image patch onto the primary frame at a fixed position.
+
+    Requires an 'object_image' available via config or the input payload dict.
+
+    Args:
+        x (int): Horizontal position of the object's top-left corner. Default is 0.
+        y (int): Vertical position of the object's top-left corner. Default is 0.
+    """
+
     def __init__(self, x=0, y=0):
+        """Initializes ObjectPaste with a paste position.
+
+        Args:
+            x (int): Horizontal offset. Default is 0.
+            y (int): Vertical offset. Default is 0.
+        """
         super().__init__()
         self.x = x
         self.y = y
 
     def _execute(self, data, config):
+        """Pastes the object image onto the primary frame at the configured position.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' and optionally 'object_image'.
+            config (dict): Runtime overrides. Supports 'x', 'y', and 'object_image'.
+
+        Returns:
+            NumPy array or dict: Frame with object pasted, or original if no object available.
+        """
         frame = extract_frame(data).copy()
         obj = maybe_get_partner_frame(data, config, "object_image")
         if obj is None:
@@ -102,13 +218,40 @@ class ObjectPaste(AIVisionComponent):
 
 
 class BoundingBoxJitter(AIVisionComponent):
+    """Applies random jitter to bounding box coordinates in a payload dict.
+
+    Perturbs x, y position and width/height of each bounding box independently.
+
+    Args:
+        x_jitter (float): Maximum horizontal jitter as a fraction of box width. Default is 0.05.
+        y_jitter (float): Maximum vertical jitter as a fraction of box height. Default is 0.05.
+        size_jitter (float): Maximum size perturbation as a fraction of box dimensions. Default is 0.1.
+    """
+
     def __init__(self, x_jitter=0.05, y_jitter=0.05, size_jitter=0.1):
+        """Initializes BoundingBoxJitter with jitter fractions.
+
+        Args:
+            x_jitter (float): Horizontal jitter fraction. Default is 0.05.
+            y_jitter (float): Vertical jitter fraction. Default is 0.05.
+            size_jitter (float): Size jitter fraction. Default is 0.1.
+        """
         super().__init__()
         self.x_jitter = x_jitter
         self.y_jitter = y_jitter
         self.size_jitter = size_jitter
 
     def _execute(self, data, config):
+        """Jitters bounding boxes in the payload dict.
+
+        Args:
+            data: Payload dict with 'bboxes' key containing list of (x, y, w, h) tuples.
+                Returns data unchanged if not a dict.
+            config (dict): Runtime overrides. Supports 'x_jitter', 'y_jitter', 'size_jitter', 'bboxes'.
+
+        Returns:
+            dict: Updated payload dict with jittered 'bboxes', or original data if not a dict.
+        """
         if not isinstance(data, dict):
             return data
         bboxes = data.get("bboxes", config.get("bboxes", []))
@@ -127,12 +270,36 @@ class BoundingBoxJitter(AIVisionComponent):
 
 
 class Mosaic9(AIVisionComponent):
+    """Tiles up to nine images in a 3x3 grid mosaic.
+
+    Uses the primary frame to fill any missing mosaic slots.
+
+    Args:
+        mosaic_images (list or None): Up to eight additional images for the mosaic grid. Default is None.
+        output_size (tuple[int, int] or None): (width, height) of the output mosaic. Default is None (3x input size).
+    """
+
     def __init__(self, mosaic_images=None, output_size=None):
+        """Initializes Mosaic9 with partner images and output size.
+
+        Args:
+            mosaic_images (list or None): Up to 8 additional NumPy images. Default is None.
+            output_size (tuple[int, int] or None): Output (width, height). Default is None.
+        """
         super().__init__()
         self.mosaic_images = mosaic_images or []
         self.output_size = output_size
 
     def _execute(self, data, config):
+        """Assembles a 3x3 mosaic from the primary frame and up to eight partner images.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime overrides. Supports 'mosaic_images' and 'output_size'.
+
+        Returns:
+            NumPy array or dict: 3x3 mosaic image in the same format as input.
+        """
         frame = extract_frame(data)
         images = [frame]
         images.extend(config.get("mosaic_images", self.mosaic_images)[:8])

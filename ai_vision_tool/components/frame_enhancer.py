@@ -2,29 +2,44 @@ import cv2
 import numpy as np
 from .base import AIVisionComponent
 
+
 class FrameEnhancer(AIVisionComponent):
     """Adjusts visual properties of a frame (brightness, contrast, noise, etc.)."""
-    
+
     def _execute(self, data, config):
-        # Allow data to be a frame or a dictionary containing a frame
+        """Applies brightness, contrast, denoising, sharpening, and grayscale conversion.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime parameters. Supports:
+                - 'brightness' (int): Additive brightness offset applied via
+                  cv2.convertScaleAbs beta. Default is 0.
+                - 'contrast' (float): Multiplicative contrast scale applied via
+                  cv2.convertScaleAbs alpha. Default is 1.0.
+                - 'sharpen' (bool): If True, applies a 3x3 Laplacian sharpening kernel.
+                  Default is False.
+                - 'denoise' (bool): If True, applies fastNlMeansDenoisingColored.
+                  Default is False.
+                - 'grayscale' (bool): If True, converts to grayscale then back to BGR
+                  to maintain 3-channel pipeline compatibility. Default is False.
+
+        Returns:
+            numpy.ndarray or dict: Enhanced image in the same format as input.
+        """
         frame = data["frame"] if isinstance(data, dict) else data
         output = frame.copy()
 
-        # Extract parameters from config with safe defaults
         brightness = config.get('brightness', 0)
         contrast = config.get('contrast', 1.0)
         sharpen = config.get('sharpen', False)
         denoise = config.get('denoise', False)
         grayscale = config.get('grayscale', False)
 
-        # Apply Brightness & Contrast
         output = cv2.convertScaleAbs(output, alpha=contrast, beta=brightness)
 
-        # Apply Denoise
         if denoise:
             output = cv2.fastNlMeansDenoisingColored(output, None, 10, 10, 7, 21)
 
-        # Apply Sharpen
         if sharpen:
             kernel = np.array([
                 [0, -1, 0],
@@ -33,12 +48,10 @@ class FrameEnhancer(AIVisionComponent):
             ])
             output = cv2.filter2D(output, -1, kernel)
 
-        # Apply Grayscale (returns as 3-channel to maintain pipeline compatibility)
         if grayscale:
             gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
             output = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-        # Reconstruct output based on input type
         if isinstance(data, dict):
             data["frame"] = output
             return data

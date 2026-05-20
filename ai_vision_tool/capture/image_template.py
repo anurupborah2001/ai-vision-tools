@@ -3,7 +3,8 @@ import numpy as np
 from typing import Callable, Optional
 import pyautogui
 
-window_centered = False   # Used to center window only once
+window_centered = False
+
 
 def image_template(
       image_path: str,
@@ -13,48 +14,52 @@ def image_template(
       show_window: bool = True,
       resolution: tuple[int, int] = (1280, 720),
 ):
-  """
-  REUSABLE TEMPLATE for displaying an image with optional custom processing.
+    """Displays a still image with optional custom processing in an OpenCV window.
 
-  Parameters:
-      image_path (str): Path to the image file.
-      custom_logic (callable, optional): Function that receives the image and returns the modified image.
-      window_name (str): Name of the OpenCV window.
-      center_window (bool): If True, automatically centers the window on screen. Default = True
-      show_window (bool): If True, displays the image window. Default = True
-      resolution (tuple[int, int]): Desired image resolution (width, height). Default = (1280, 720)
-  """
+    Loads the image from disk, optionally applies a user-supplied transform,
+    resizes to the target resolution, and shows it in a named window. Blocks
+    until any key is pressed.
 
-  image = cv2.imread(image_path)
-  print(image_path)
-  if custom_logic is not None:
-    image = custom_logic(image)
+    Args:
+        image_path (str): Path to the image file to load.
+        custom_logic (callable or None): Function that receives a BGR NumPy array
+            and returns a processed BGR array. Applied before display. Default is None.
+        window_name (str): Title of the OpenCV display window. Default is 'Demo'.
+        center_window (bool): If True, repositions the window to the center of the
+            screen using pyautogui. Default is True.
+        show_window (bool): If True, renders the image in a window. Default is True.
+        resolution (tuple[int, int]): Target display resolution as (width, height).
+            Default is (1280, 720).
 
+    Raises:
+        ValueError: If the image is None after loading or after custom_logic.
+        TypeError: If the image is not a NumPy array.
+        ValueError: If the image array is empty.
+    """
+    image = cv2.imread(image_path)
+    print(image_path)
+    if custom_logic is not None:
+        image = custom_logic(image)
 
-  if image is None:
-    raise ValueError("Image is None. Check file path or loading logic.")
+    if image is None:
+        raise ValueError("Image is None. Check file path or loading logic.")
 
-  if not isinstance(image, np.ndarray):
-      raise TypeError(f"Invalid image type: {type(image)}")
+    if not isinstance(image, np.ndarray):
+        raise TypeError(f"Invalid image type: {type(image)}")
 
-  if image.size == 0:
-      raise ValueError("Empty image array")
+    if image.size == 0:
+        raise ValueError("Empty image array")
 
-  # Resize image
-  hWIDTH, hHEIGHT = resolution
-  resized_img = cv2.resize(image, (hWIDTH, hHEIGHT))
+    hWIDTH, hHEIGHT = resolution
+    resized_img = cv2.resize(image, (hWIDTH, hHEIGHT))
 
-  # ======================
-  # NEW: Auto-center window on screen (only once)
-  # ======================
-  if center_window:
-      screen_width, screen_height = pyautogui.size()
-      x = int((screen_width - hWIDTH) / 2)
-      y = int((screen_height - hHEIGHT) / 2)
-      cv2.moveWindow(window_name, x, y)
-  # ======================
+    if center_window:
+        screen_width, screen_height = pyautogui.size()
+        x = int((screen_width - hWIDTH) / 2)
+        y = int((screen_height - hHEIGHT) / 2)
+        cv2.moveWindow(window_name, x, y)
 
-  if show_window:
-    cv2.imshow(window_name, resized_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if show_window:
+        cv2.imshow(window_name, resized_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()

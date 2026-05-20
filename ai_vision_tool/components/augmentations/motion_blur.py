@@ -8,12 +8,34 @@ from ..base import AIVisionComponent
 
 
 class MotionBlur(AIVisionComponent):
+    """Simulates linear motion blur by convolving with a rotated line kernel.
+
+    Args:
+        kernel_size (int): Length of the motion blur kernel. Must be odd. Default is 9.
+        angle (float): Angle of motion in degrees (0 = horizontal). Default is 0.0.
+    """
+
     def __init__(self, kernel_size=9, angle=0.0):
+        """Initializes MotionBlur with kernel size and direction.
+
+        Args:
+            kernel_size (int): Kernel length. Must be odd. Default is 9.
+            angle (float): Motion direction in degrees. Default is 0.0.
+        """
         super().__init__()
         self.kernel_size = kernel_size
         self.angle = angle
 
     def _execute(self, data, config):
+        """Applies motion blur to the extracted frame.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime overrides. Supports 'kernel_size' and 'angle'.
+
+        Returns:
+            NumPy array or dict: Motion-blurred image in the same format as input.
+        """
         frame = extract_frame(data)
         kernel_size = ensure_odd(config.get("kernel_size", self.kernel_size))
         angle = float(config.get("angle", self.angle))

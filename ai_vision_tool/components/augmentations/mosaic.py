@@ -8,12 +8,39 @@ from ..base import AIVisionComponent
 
 
 class Mosaic(AIVisionComponent):
+    """Tiles four images in a 2x2 grid mosaic.
+
+    Uses the primary frame to fill any missing slots when fewer than three partner images
+    are provided.
+
+    Args:
+        output_size (tuple[int, int] or None): (width, height) of the mosaic output.
+            Default is None (2x the input frame dimensions).
+        mosaic_images (list or None): Up to three additional images for the mosaic grid.
+            Default is None.
+    """
+
     def __init__(self, output_size=None, mosaic_images=None):
+        """Initializes Mosaic with optional output size and partner images.
+
+        Args:
+            output_size (tuple[int, int] or None): Output (width, height). Default is None.
+            mosaic_images (list or None): Up to 3 additional NumPy images. Default is None.
+        """
         super().__init__()
         self.output_size = output_size
         self.mosaic_images = mosaic_images or []
 
     def _execute(self, data, config):
+        """Assembles a 2x2 mosaic from the primary frame and up to three partner images.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime overrides. Supports 'output_size' and 'mosaic_images'.
+
+        Returns:
+            NumPy array or dict: 2x2 mosaic image in the same format as input.
+        """
         frame = extract_frame(data)
         output_size = config.get("output_size", self.output_size)
         extra_images = config.get("mosaic_images", self.mosaic_images)

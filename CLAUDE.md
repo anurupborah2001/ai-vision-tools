@@ -29,8 +29,8 @@ ai_vision_tool/
 ├── __init__.py              # Lazy import registry (_EXPORTS dict + __getattr__)
 ├── __main__.py              # python -m ai_vision_tool entrypoint
 ├── cli.py                   # argparse entrypoint, examples catalog, webcam loop
-├── api.py                   # FastAPI app factory (create_app, app, run)
-├── api_service.py           # encode_image_base64, decode_image_base64, execute_component
+├── backup/api.py            # FastAPI app factory (moved to backup/)
+├── backup/api_service.py    # encode_image_base64, decode_image_base64 (moved to backup/)
 │
 ├── pipeline/
 │   └── vision_pipeline.py   # AIVisionPipeline (Chain of Responsibility)
@@ -110,18 +110,90 @@ ai_vision_tool/
 │   ├── image_template.py    # image_template()
 │   └── video_template.py    # video_capture_template(), save_screenshot()
 │
-├── config/                  # Configuration stubs (future phases)
-├── core/                    # Core stubs (future phases)
-├── detection/               # Stub (future phases)
-├── enhancement/             # Stub (future phases)
-├── io/                      # Stub (future phases)
-├── models/                  # Stub (future phases)
-├── pipelines/               # Stub (future phases)
-├── segmentation/            # Stub (future phases)
-├── streaming/               # Stub (future phases)
-├── tracking/                # Stub (future phases)
-├── utils/                   # Stub (future phases)
-└── visualization/           # Stub (future phases)
+├── utils/
+│   ├── color_palette.py     # ColorPalette (golden-ratio hue, get/as_dict)
+│   ├── metrics_logger.py    # MetricsLogger, MetricsLoggerComponent
+│   ├── frame_sampler.py     # FrameSampler (count/fps/random modes)
+│   ├── image_hash.py        # ImageHash (phash/ahash/dhash, duplicate detection)
+│   └── draw_utils.py        # DrawUtils (bboxes, masks, keypoints rendering)
+│
+├── core/
+│   ├── device.py            # Device (auto CUDA/MPS/CPU, singleton default())
+│   ├── data_types.py        # BBox, Detection, Keypoint, Pose, Mask,
+│   │                        # SegmentationResult, Track (typed dataclasses)
+│   ├── batch_processor.py   # BatchProcessor (ThreadPoolExecutor, process_directory)
+│   ├── scheduler.py         # Scheduler (token bucket), RateLimiter
+│   └── memory_manager.py    # MemoryManager (buffer pool), GPUMemoryTracker
+│
+├── config/
+│   ├── yaml_config.py       # YAMLConfig (dot-notation get, merge, validate, reload)
+│   ├── json_config.py       # JSONConfig (same interface + save, from_dict)
+│   ├── registry.py          # ComponentRegistry (singleton, register decorator, build)
+│   ├── profile_loader.py    # ProfileLoader (search paths, load_pipeline)
+│   └── env_config.py        # EnvConfig (prefix-based env vars, cast, require)
+│
+├── io/
+│   ├── image_io.py          # ImageReader, ImageWriter (pattern filenames)
+│   ├── video_io.py          # VideoReader (seek, read_all), VideoWriter
+│   ├── camera_source.py     # CameraSource (webcam/RTSP/HTTP, auto-reconnect)
+│   ├── cloud_source.py      # S3Source (boto3), GCSSource (google-cloud-storage)
+│   └── dataset_exporter.py  # DatasetExporter (YOLO/COCO/VOC formats)
+│
+├── models/
+│   ├── registry.py          # ModelRegistry (JSON cache, load, from_huggingface)
+│   ├── onnx_model.py        # ONNXModel (onnxruntime, preprocess, data["model_output"])
+│   ├── torch_model.py       # TorchModel (TorchScript, device auto, half precision)
+│   ├── tflite_model.py      # TFLiteModel (tflite-runtime/tensorflow fallback)
+│   ├── downloader.py        # ModelDownloader (urllib, SHA256, HuggingFace)
+│   └── benchmark.py         # ModelBenchmark (p50/p95/p99, tracemalloc, ASCII report)
+│
+├── detection/
+│   ├── object_detector.py   # ObjectDetector (ultralytics YOLO or ONNX + greedy NMS)
+│   ├── face_detector.py     # FaceDetector (OpenCV Haar or MediaPipe)
+│   ├── keypoint_detector.py # KeypointDetector (MediaPipe pose, YOLO-pose)
+│   ├── text_detector.py     # TextDetector (EasyOCR, PaddleOCR, EAST)
+│   └── anomaly_detector.py  # AnomalyDetector (statistical/patchcore/pca)
+│
+├── tracking/
+│   ├── kalman_filter.py     # KalmanFilter (7-state SORT formulation)
+│   ├── track_manager.py     # TrackManager (IoU Hungarian, tentative/active/lost states)
+│   ├── byte_tracker.py      # ByteTracker (two-stage high/low-conf association)
+│   ├── deepsort_tracker.py  # DeepSORTTracker (HOG embedding, cosine distance)
+│   └── reid_extractor.py    # ReIDExtractor (HOG/OSNet-ONNX/CLIP, build_gallery)
+│
+├── segmentation/
+│   ├── semantic_segmenter.py    # SemanticSegmenter (ONNX/dnn/torch, VOC21 defaults)
+│   ├── instance_segmenter.py    # InstanceSegmenter (YOLO-seg masks)
+│   ├── panoptic_segmenter.py    # PanopticSegmenter (stuff/thing separation)
+│   ├── sam_segmenter.py         # SAMSegmenter (SAM point/box/auto-everything)
+│   └── mask_post_processor.py   # MaskPostProcessor (erode/dilate/fill/largest_only)
+│
+├── enhancement/
+│   ├── super_resolution.py  # SuperResolution (cv2_dnn_superres/ONNX/bicubic)
+│   ├── denoiser.py          # Denoiser (nlmeans/bilateral/gaussian/DnCNN-ONNX)
+│   ├── deblurrer.py         # Deblurrer (Wiener FFT, Richardson-Lucy, NAFNet-ONNX)
+│   ├── low_light_enhancer.py # LowLightEnhancer (CLAHE/gamma/MSR/Zero-DCE/ONNX)
+│   └── colorizer.py         # Colorizer (Zhang 2016 LAB-AB, pseudo_color, ONNX)
+│
+├── pipelines/
+│   ├── prebuilt.py          # PrebuiltPipelines (detection/augmentation/tracking/…)
+│   ├── serializer.py        # PipelineSerializer (to_dict/from_dict, YAML/JSON save)
+│   ├── async_pipeline.py    # AsyncPipeline, AsyncComponent (asyncio executor)
+│   └── parallel_pipeline.py # ParallelPipeline, FanOutPipeline (ThreadPoolExecutor)
+│
+├── streaming/
+│   ├── frame_stream.py      # FrameStream, DirectoryStream (context manager, iterator)
+│   ├── rtsp_client.py       # RTSPClient (background reader, reconnect), RTSPServer
+│   ├── websocket_sink.py    # WebSocketSink, WebSocketSource (websockets/MJPEG fallback)
+│   ├── kafka_io.py          # KafkaSource, KafkaSink (confluent-kafka/kafka-python)
+│   └── buffered_stream.py   # BufferedStream (drop policy), SlidingWindowBuffer
+│
+└── visualization/
+    ├── frame_viewer.py              # FrameViewer (FPS overlay, headless-safe)
+    ├── bbox_renderer.py             # BBoxRenderer (alpha fill, ColorPalette)
+    ├── heatmap_renderer.py          # HeatmapRenderer (Gaussian blob, motion, anomaly)
+    ├── dashboard_sink.py            # DashboardSink (Gradio or MJPEG HTTP)
+    └── video_annotation_exporter.py # VideoAnnotationExporter (burn + JSON sidecar)
 ```
 
 ---
@@ -171,6 +243,16 @@ to every processor.
 
 Only stable, commonly used classes are exported from `ai_vision_tool`. All classes are
 also importable from their specific submodule paths.
+
+The `_EXPORTS` dict in `__init__.py` registers 130+ classes across all modules. Adding a
+new export follows the same two-step pattern: add entry to `_EXPORTS`, then import via
+the lazy `__getattr__`.
+
+### Optional Heavy Dependencies
+
+Heavy deps (onnxruntime, torch, mediapipe, ultralytics, boto3, etc.) are imported inside
+`setup()` with `ImportError` + install hint if missing. Every class that can use a heavy
+dep also has a pure cv2/numpy fallback so the library works with no extras installed.
 
 ---
 

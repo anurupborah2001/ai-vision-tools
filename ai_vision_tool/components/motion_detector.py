@@ -1,17 +1,39 @@
 from .base import AIVisionComponent
 import cv2
 
+
 class MotionDetector(AIVisionComponent):
     """Detects motion by comparing the current frame to the previous frame."""
-    
+
     def __init__(self):
+        """Initializes MotionDetector with no prior frame reference."""
         super().__init__()
         self.prev_gray = None
 
     def _execute(self, data, config):
+        """Detects motion regions and optionally draws bounding boxes on the frame.
+
+        Computes a per-pixel absolute difference between the current blurred
+        grayscale frame and the previous one, thresholds and dilates the result,
+        then finds contours large enough to count as motion.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime parameters. Supports:
+                - 'min_area' (int): Minimum contour area to qualify as motion.
+                  Default is 800.
+                - 'draw_motion' (bool): If True, draws bounding boxes around
+                  motion regions on the output frame. Default is True.
+
+        Returns:
+            dict: Payload with:
+                - 'frame': BGR image with optional motion boxes drawn.
+                - 'motion_boxes': list of (x, y, w, h) tuples for each detected
+                  motion region.
+        """
         frame = data["frame"] if isinstance(data, dict) else data
         output = frame.copy()
-        
+
         min_area = config.get('min_area', 800)
         draw = config.get('draw_motion', True)
 
@@ -37,5 +59,5 @@ class MotionDetector(AIVisionComponent):
                     cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 255), 2)
 
         self.prev_gray = gray
-        
+
         return {"frame": output, "motion_boxes": motion_boxes}

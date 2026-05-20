@@ -45,6 +45,19 @@ EXAMPLE_CATEGORY_CHOICES = ["all", "preprocessing", "augmentations", "components
 
 
 def _example_entry(category, name, summary, python_example, runtime_example=None):
+    """Constructs a single entry dict for the examples catalog.
+
+    Args:
+        category (str): Component category ('preprocessing', 'augmentations', etc.).
+        name (str): Component or helper name.
+        summary (str): One-line description of what the component does.
+        python_example (str): Python code snippet demonstrating usage.
+        runtime_example (str or None): Optional CLI / main.py invocation example.
+
+    Returns:
+        dict: Catalog entry with 'category', 'name', 'summary', 'python', and
+            'runtime' keys.
+    """
     return {
         "category": category,
         "name": name,
@@ -55,6 +68,18 @@ def _example_entry(category, name, summary, python_example, runtime_example=None
 
 
 def _run_example(import_from, name, constructor, target="image", result_name="result"):
+    """Generates a two-line Python import-and-run code snippet string.
+
+    Args:
+        import_from (str): Module path to import the component from.
+        name (str): Component class name.
+        constructor (str): Constructor argument string (e.g. 'rotation=90').
+        target (str): Variable name passed to ``.run()``. Default is 'image'.
+        result_name (str): Variable name assigned the result. Default is 'result'.
+
+    Returns:
+        str: Formatted two-line Python code snippet.
+    """
     return (
         f"from {import_from} import {name}\n"
         f"{result_name} = {name}({constructor}).run({target})"
@@ -62,6 +87,12 @@ def _run_example(import_from, name, constructor, target="image", result_name="re
 
 
 def build_examples_catalog():
+    """Builds the full examples catalog for all component categories.
+
+    Returns:
+        list[dict]: List of example entry dicts covering preprocessing,
+            augmentations, components, and capture helpers.
+    """
     catalog = []
     lookup_prefix = "python main.py --show-examples --example-name"
 
@@ -258,6 +289,18 @@ EXAMPLES_CATALOG = build_examples_catalog()
 
 
 def format_examples(category="all", name_filter=None):
+    """Formats and returns a Markdown string of filtered example entries.
+
+    Args:
+        category (str): Category to filter by, or 'all' for no category filter.
+            Default is 'all'.
+        name_filter (str or None): Case-insensitive substring to match against
+            component names. Default is None (no name filter).
+
+    Returns:
+        str: Formatted Markdown string with matching examples, or a 'no results'
+            message listing all available names.
+    """
     category = (category or "all").lower()
     name_filter = (name_filter or "").strip().lower()
     filtered = []
@@ -304,6 +347,18 @@ def format_examples(category="all", name_filter=None):
 
 
 def parse_json_argument(value, argument_name):
+    """Parses a JSON string CLI argument, returning None when the value is None.
+
+    Args:
+        value (str or None): Raw JSON string from argparse, or None.
+        argument_name (str): The CLI flag name used in error messages.
+
+    Returns:
+        Any: Parsed Python object, or None if value is None.
+
+    Raises:
+        ValueError: If value is not valid JSON.
+    """
     if value is None:
         return None
 
@@ -316,6 +371,21 @@ def parse_json_argument(value, argument_name):
 
 
 def process_component_from_image_path(args):
+    """Loads an image file, executes the specified component, and prints the result.
+
+    Reads ``args.image_path``, base64-encodes it, and calls ``execute_component``
+    with the parsed CLI arguments. Optionally saves the processed image to disk.
+
+    Args:
+        args (argparse.Namespace): Parsed CLI arguments. Must include
+            ``image_path``, ``component_category``, ``component_name``,
+            and optional ``init_args_json``, ``config_json``, ``payload_json``,
+            ``data_json``, ``batch_json``, ``save_output_image``.
+
+    Raises:
+        FileNotFoundError: If the image file does not exist.
+        ValueError: If the image cannot be loaded.
+    """
     image_path = Path(args.image_path)
     if not image_path.exists():
         raise FileNotFoundError(f"Input image does not exist: {image_path}")
@@ -371,6 +441,17 @@ def process_component_from_image_path(args):
 
 
 def build_pipeline(args):
+    """Constructs an AIVisionPipeline from parsed CLI arguments.
+
+    Adds components in a fixed order based on which flags are set in args.
+
+    Args:
+        args (argparse.Namespace): Parsed CLI arguments controlling which
+            pipeline stages are active.
+
+    Returns:
+        AIVisionPipeline: Configured pipeline instance.
+    """
     pipeline = AIVisionPipeline()
 
     if args.auto_orient:
@@ -531,6 +612,18 @@ def build_pipeline(args):
 
 
 def build_runtime_config(args, save_sample=False, annotations=None):
+    """Builds the per-frame runtime config dict from parsed CLI arguments.
+
+    Args:
+        args (argparse.Namespace): Parsed CLI arguments.
+        save_sample (bool): If True, sets 'save_sample' to trigger dataset saving.
+            Default is False.
+        annotations (list or None): Annotation entries for FrameAnnotator.
+            Default is None (empty list).
+
+    Returns:
+        dict: Runtime configuration dict passed to every pipeline processor.
+    """
     output_dirs = resolve_output_dirs(args)
     return {
         "brightness": args.brightness,
@@ -552,6 +645,15 @@ def build_runtime_config(args, save_sample=False, annotations=None):
 
 
 def resolve_output_dirs(args):
+    """Resolves all output subdirectory paths relative to the output root.
+
+    Args:
+        args (argparse.Namespace): Parsed CLI arguments containing output path flags.
+
+    Returns:
+        dict[str, Path]: Mapping of directory names to Path objects:
+            'root', 'captures', 'timelapse', 'videos', 'dataset', 'exports'.
+    """
     output_root = Path(args.output_root)
     return {
         "root": output_root,
@@ -564,6 +666,12 @@ def resolve_output_dirs(args):
 
 
 def ensure_output_dirs(output_dirs):
+    """Creates all output directories, making parent directories as needed.
+
+    Args:
+        output_dirs (dict[str, Path]): Output directory mapping as returned by
+            ``resolve_output_dirs``.
+    """
     output_dirs["root"].mkdir(parents=True, exist_ok=True)
     output_dirs["captures"].mkdir(parents=True, exist_ok=True)
     output_dirs["timelapse"].mkdir(parents=True, exist_ok=True)
@@ -573,6 +681,19 @@ def ensure_output_dirs(output_dirs):
 
 
 def load_profile_components(config_path):
+    """Loads and instantiates components from a JSON augmentation profile file.
+
+    Each entry in the profile must contain 'name' and optional 'params' and
+    'module' keys. When 'module' is absent, the component is looked up in
+    ``ai_vision_tool.components.augmentations``.
+
+    Args:
+        config_path (str or None): Path to the JSON profile file, or None to
+            return an empty list.
+
+    Returns:
+        list[AIVisionComponent]: Instantiated components in profile order.
+    """
     if not config_path:
         return []
 
@@ -593,6 +714,17 @@ def load_profile_components(config_path):
 
 
 def load_mosaic_images(paths):
+    """Loads a list of image files for use as mosaic tiles.
+
+    Args:
+        paths (list[str]): File paths of images to load.
+
+    Returns:
+        list[numpy.ndarray]: BGR images in the same order as paths.
+
+    Raises:
+        ValueError: If any image file cannot be loaded.
+    """
     images = []
     for path in paths:
         image = cv2.imread(path)
@@ -603,6 +735,21 @@ def load_mosaic_images(paths):
 
 
 def run_pipeline(pipeline, frame, config, annotations=None):
+    """Wraps a frame in a payload dict and runs it through the pipeline manually.
+
+    Bypasses ``AIVisionPipeline.execute`` to allow injecting annotations into
+    the payload at the call site.
+
+    Args:
+        pipeline (AIVisionPipeline): Configured pipeline instance.
+        frame (numpy.ndarray): Current BGR camera frame.
+        config (dict): Runtime configuration dict.
+        annotations (list or None): Annotation entries for FrameAnnotator.
+            Default is None (empty list).
+
+    Returns:
+        dict or numpy.ndarray: Final processed payload from the last pipeline stage.
+    """
     current = {"frame": frame, "annotations": annotations or []}
 
     for processor in pipeline.processors:
@@ -612,18 +759,44 @@ def run_pipeline(pipeline, frame, config, annotations=None):
 
 
 def next_output_path(output_dir, prefix, extension):
+    """Returns a timestamped output file path, creating the directory if needed.
+
+    Args:
+        output_dir (Path): Directory to write the file into.
+        prefix (str): Filename prefix before the timestamp.
+        extension (str): File extension without a leading dot.
+
+    Returns:
+        Path: Full output path in the form ``{output_dir}/{prefix}_{timestamp}.{extension}``.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = int(time.time() * 1000)
     return output_dir / f"{prefix}_{timestamp}.{extension}"
 
 
 def save_capture(frame, output_dir, prefix="capture"):
+    """Saves a single frame as a timestamped JPEG to the given directory.
+
+    Args:
+        frame (numpy.ndarray): BGR image to save.
+        output_dir (Path): Directory to write the file into.
+        prefix (str): Filename prefix. Default is 'capture'.
+    """
     image_path = next_output_path(output_dir, prefix, "jpg")
     cv2.imwrite(str(image_path), frame)
     print(f"[ai-vision-tool] Saved capture to {image_path}")
 
 
 def save_roi(frame, output_dir, roi):
+    """Crops the ROI region from a frame and saves it as a JPEG.
+
+    Skips saving if the ROI is entirely outside the frame bounds.
+
+    Args:
+        frame (numpy.ndarray): BGR image to crop from.
+        output_dir (Path): Directory to write the file into.
+        roi (tuple[int, int, int, int]): Region of interest as (x, y, w, h).
+    """
     x, y, w, h = roi
     roi_frame = frame[y:y + h, x:x + w]
     if roi_frame.size == 0:
@@ -636,6 +809,12 @@ def save_roi(frame, output_dir, roi):
 
 
 def save_exports(frame, export_dir):
+    """Saves grayscale and Canny edge images of the frame to the export directory.
+
+    Args:
+        frame (numpy.ndarray): BGR image to export.
+        export_dir (Path): Directory to write the exported files into.
+    """
     gray_path = next_output_path(export_dir, "gray", "jpg")
     edges_path = next_output_path(export_dir, "edges", "jpg")
 
@@ -649,6 +828,16 @@ def save_exports(frame, export_dir):
 
 
 def build_video_writer(frame, video_dir, fps):
+    """Creates an XVID VideoWriter for recording to a timestamped AVI file.
+
+    Args:
+        frame (numpy.ndarray): Frame used to determine output dimensions.
+        video_dir (Path): Directory to write the video file into.
+        fps (int or float): Output frame rate.
+
+    Returns:
+        tuple[cv2.VideoWriter, Path]: The VideoWriter instance and the output path.
+    """
     height, width = frame.shape[:2]
     video_path = next_output_path(video_dir, "recording", "avi")
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
@@ -657,12 +846,26 @@ def build_video_writer(frame, video_dir, fps):
 
 
 def add_default_annotations():
+    """Returns the default annotation list for the live webcam overlay.
+
+    Returns:
+        list[dict]: List with one text annotation showing 'AI Vision Pipeline'.
+    """
     return [
         {"type": "text", "text": "AI Vision Pipeline", "pos": (20, 30)},
     ]
 
 
 def draw_roi_overlay(frame, roi):
+    """Draws a green ROI rectangle and 'ROI' label on the frame.
+
+    Args:
+        frame (numpy.ndarray): BGR frame to annotate in place.
+        roi (tuple[int, int, int, int]): Region as (x, y, w, h).
+
+    Returns:
+        numpy.ndarray: Annotated frame (same object, modified in place).
+    """
     x, y, w, h = roi
     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
     cv2.putText(
@@ -678,6 +881,13 @@ def draw_roi_overlay(frame, roi):
 
 
 def create_parser():
+    """Builds and returns the argument parser for the ai-vision-tool CLI.
+
+    Returns:
+        argparse.ArgumentParser: Fully configured parser covering all flags
+            for the API server, image processing, webcam pipeline, and
+            individual augmentation parameters.
+    """
     parser = argparse.ArgumentParser(prog="ai-vision-flow")
 
     parser.add_argument("--serve-api", action="store_true")
@@ -875,10 +1085,30 @@ def create_parser():
 
 
 def parse_args(argv=None):
+    """Parses command-line arguments using the ai-vision-tool parser.
+
+    Args:
+        argv (list[str] or None): Argument list to parse. Defaults to
+            ``sys.argv[1:]`` when None.
+
+    Returns:
+        argparse.Namespace: Parsed argument namespace.
+    """
     return create_parser().parse_args(argv)
 
 
 def main(argv=None):
+    """Entry point for the ai-vision-tool CLI.
+
+    Dispatches to one of four modes based on the parsed flags:
+    - ``--serve-api``: Starts the FastAPI Uvicorn server.
+    - ``--process-image-path``: Processes a single image file through a component.
+    - ``--show-examples`` / ``--example-name``: Prints the examples catalog.
+    - Default: Opens the webcam pipeline loop with the configured pipeline stages.
+
+    Args:
+        argv (list[str] or None): CLI arguments. Defaults to ``sys.argv[1:]``.
+    """
     args = parse_args(argv)
 
     if args.serve_api:

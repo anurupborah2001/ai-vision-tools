@@ -7,6 +7,16 @@ from ..base import AIVisionComponent
 
 
 class Noise(AIVisionComponent):
+    """Adds Gaussian or salt-and-pepper noise to an image.
+
+    Args:
+        mode (str): Noise type. Either 'gaussian' or 'salt_pepper'. Default is 'gaussian'.
+        mean (float): Mean of the Gaussian distribution (used when mode='gaussian'). Default is 0.0.
+        stddev (float): Standard deviation of the Gaussian distribution. Default is 10.0.
+        amount (float): Fraction of pixels affected (used when mode='salt_pepper'). Default is 0.02.
+        salt_vs_pepper (float): Ratio of salt to total noise pixels in [0, 1]. Default is 0.5.
+    """
+
     def __init__(
         self,
         mode="gaussian",
@@ -15,6 +25,15 @@ class Noise(AIVisionComponent):
         amount=0.02,
         salt_vs_pepper=0.5,
     ):
+        """Initializes Noise with noise mode and distribution parameters.
+
+        Args:
+            mode (str): Noise mode ('gaussian' or 'salt_pepper'). Default is 'gaussian'.
+            mean (float): Gaussian mean. Default is 0.0.
+            stddev (float): Gaussian standard deviation. Default is 10.0.
+            amount (float): Fraction of pixels corrupted (salt_pepper mode). Default is 0.02.
+            salt_vs_pepper (float): Salt fraction among noise pixels. Default is 0.5.
+        """
         super().__init__()
         self.mode = mode
         self.mean = mean
@@ -23,6 +42,19 @@ class Noise(AIVisionComponent):
         self.salt_vs_pepper = salt_vs_pepper
 
     def _execute(self, data, config):
+        """Applies the configured noise to the extracted frame.
+
+        Args:
+            data: Input image as NumPy array or payload dict with 'frame' key.
+            config (dict): Runtime overrides. Supports 'mode', 'mean', 'stddev',
+                'amount', 'salt_vs_pepper'.
+
+        Returns:
+            NumPy array or dict: Noisy image in the same format as input.
+
+        Raises:
+            ValueError: If mode is not 'gaussian' or 'salt_pepper'.
+        """
         frame = extract_frame(data)
         mode = config.get("mode", self.mode).lower()
         mean = float(config.get("mean", self.mean))
