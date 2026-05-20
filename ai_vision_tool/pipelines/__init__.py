@@ -1,1 +1,5 @@
-"""Pipelines — future phase placeholder."""
+"""Pipeline exports."""
+
+from .vision_pipeline import AIVisionPipeline
+
+__all__ = ["AIVisionPipeline"]

@@ -51,7 +51,7 @@ class PipelineSerializer:
             return {}
 
     def from_dict(self, d: dict):
-        from ai_vision_tool.pipeline.vision_pipeline import AIVisionPipeline
+        from ai_vision_tool.pipelines.vision_pipeline import AIVisionPipeline
         from ai_vision_tool.config.registry import ComponentRegistry
         registry = ComponentRegistry.instance()
         pipeline = AIVisionPipeline()

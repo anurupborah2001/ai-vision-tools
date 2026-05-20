@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def _make_pipeline(components: list):
-    from ai_vision_tool.pipeline.vision_pipeline import AIVisionPipeline
+    from ai_vision_tool.pipelines.vision_pipeline import AIVisionPipeline
     p = AIVisionPipeline()
     for c in components:
         p.add(c)

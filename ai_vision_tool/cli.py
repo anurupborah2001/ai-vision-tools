@@ -34,7 +34,7 @@ from ai_vision_tool.components import (
     TimeLapseCapture,
 )
 from ai_vision_tool.components.augmentations.common import parse_component_profile
-from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.pipelines import AIVisionPipeline
 from ai_vision_tool.api_service import (
     decode_image_base64,
     encode_image_base64,
