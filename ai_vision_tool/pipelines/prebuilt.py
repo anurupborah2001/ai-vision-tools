@@ -85,6 +85,6 @@ class PrebuiltPipelines:
 
     @classmethod
     def enhancement_pipeline(cls, method: str = "clahe"):
-        from ai_vision_tool.enhancement.low_light_enhancer import LowLightEnhancer
+        from ai_vision_tool.enhancement.low_light import LowLightEnhancer
         from ai_vision_tool.enhancement.denoiser import Denoiser
         return _make_pipeline([LowLightEnhancer(method=method), Denoiser()])
