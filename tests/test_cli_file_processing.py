@@ -17,7 +17,7 @@ def test_cli_process_image_path_saves_processed_image(sample_frame, tmp_path, ca
         [
             "--process-image-path",
             "--component-category",
-            "augmentations",
+            "augmentation",
             "--component-name",
             "Flip",
             "--image-path",
@@ -34,7 +34,7 @@ def test_cli_process_image_path_saves_processed_image(sample_frame, tmp_path, ca
     assert json_start >= 0
     result = json.loads(captured.out[json_start:])
 
-    assert result["category"] == "augmentations"
+    assert result["category"] == "augmentation"
     assert result["name"] == "Flip"
     assert result["result"]["frame"]["type"] == "image"
     assert output_path.exists()

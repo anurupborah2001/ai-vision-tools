@@ -15,7 +15,7 @@ class PrebuiltPipelines:
     @classmethod
     def detection_pipeline(cls, model_path: str | None = None, conf_threshold: float = 0.25,
                             iou_threshold: float = 0.45, draw: bool = True):
-        from ai_vision_tool.components.preprocessing.geometry import LetterboxResize
+        from ai_vision_tool.preprocessing.geometry import LetterboxResize
         comps = [LetterboxResize(640, 640)]
         if model_path:
             from ai_vision_tool.detection.object_detector import ObjectDetector
@@ -27,13 +27,13 @@ class PrebuiltPipelines:
 
     @classmethod
     def augmentation_pipeline(cls, profile: str = "standard"):
-        from ai_vision_tool.components.augmentations.flip import Flip
-        from ai_vision_tool.components.augmentations.brightness import Brightness
-        from ai_vision_tool.components.augmentations.noise import Noise
-        from ai_vision_tool.components.augmentations.rotation import Rotation
-        from ai_vision_tool.components.augmentations.cutout import Cutout
-        from ai_vision_tool.components.augmentations.weather_light import RandomFog, RandomBrightnessContrast
-        from ai_vision_tool.components.augmentations.geometric_random import PerspectiveTransform
+        from ai_vision_tool.augmentation.flip import Flip
+        from ai_vision_tool.augmentation.brightness import Brightness
+        from ai_vision_tool.augmentation.noise import Noise
+        from ai_vision_tool.augmentation.rotation import Rotation
+        from ai_vision_tool.augmentation.cutout import Cutout
+        from ai_vision_tool.augmentation.weather_light import RandomFog, RandomBrightnessContrast
+        from ai_vision_tool.augmentation.geometric_random import PerspectiveTransform
 
         if profile == "minimal":
             return _make_pipeline([Flip()])
@@ -46,17 +46,17 @@ class PrebuiltPipelines:
                 RandomFog(prob=0.2), RandomBrightnessContrast(prob=0.3),
             ])
         if profile == "detection":
-            from ai_vision_tool.components.augmentations.mosaic import Mosaic
-            from ai_vision_tool.components.augmentations.geometric_random import RandomScale
+            from ai_vision_tool.augmentation.mosaic import Mosaic
+            from ai_vision_tool.augmentation.geometric_random import RandomScale
             return _make_pipeline([Mosaic(), Flip(), RandomScale()])
         return _make_pipeline([Flip()])
 
     @classmethod
     def preprocessing_pipeline(cls, target_size: tuple = (640, 640), normalize: bool = True,
                                 quality_check: bool = True):
-        from ai_vision_tool.components.preprocessing.geometry import LetterboxResize
-        from ai_vision_tool.components.preprocessing.intensity import Normalize
-        from ai_vision_tool.components.preprocessing.quality import ImageQualityCheck
+        from ai_vision_tool.preprocessing.geometry import LetterboxResize
+        from ai_vision_tool.preprocessing.intensity import Normalize
+        from ai_vision_tool.preprocessing.quality import ImageQualityCheck
         comps = [LetterboxResize(*target_size)]
         if normalize:
             comps.append(Normalize())
@@ -66,14 +66,14 @@ class PrebuiltPipelines:
 
     @classmethod
     def quality_check_pipeline(cls):
-        from ai_vision_tool.components.preprocessing.quality import (
+        from ai_vision_tool.preprocessing.quality import (
             BlurDetection, BrightnessCheck, MinSizeFilter, CorruptImageCheck
         )
         return _make_pipeline([CorruptImageCheck(), BlurDetection(), BrightnessCheck(), MinSizeFilter()])
 
     @classmethod
     def tracking_pipeline(cls, model_path: str | None = None, conf_threshold: float = 0.25):
-        from ai_vision_tool.components.preprocessing.geometry import LetterboxResize
+        from ai_vision_tool.preprocessing.geometry import LetterboxResize
         from ai_vision_tool.tracking.byte_tracker import ByteTracker
         from ai_vision_tool.utils.draw_utils import DrawUtils
         comps = [LetterboxResize(640, 640)]

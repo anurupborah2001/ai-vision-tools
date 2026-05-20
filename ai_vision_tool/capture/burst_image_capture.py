@@ -1,4 +1,4 @@
-from .picture_taker import PictureTaker
+from .image_capture import PictureTaker
 import time
 
 

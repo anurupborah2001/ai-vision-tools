@@ -1,7 +1,9 @@
 import numpy as np
+import pytest
 
 from ai_vision_tool.augmentation import (
     AffineTransform,
+    BoundingBoxJitter,
     ChannelShuffle,
     CoarseDropout,
     ColorJitter,
@@ -233,8 +235,12 @@ def test_compression_downscale_and_superpixel():
     compressed = CompressionArtifacts(quality=30).run(frame, {})
     jpeg = JPEGCompression(quality=25).run(frame, {})
     downscaled = Downscale(scale=0.5).run(frame, {})
-    superpixel = Superpixel(region_size=5).run(frame, {})
     assert compressed.shape == frame.shape
     assert jpeg.shape == frame.shape
     assert downscaled.shape == frame.shape
+
+    import cv2
+    if not hasattr(getattr(cv2, "ximgproc", None), "createSuperpixelSLIC"):
+        pytest.skip("cv2 ximgproc not available in this environment")
+    superpixel = Superpixel(region_size=5).run(frame, {})
     assert superpixel.shape == frame.shape

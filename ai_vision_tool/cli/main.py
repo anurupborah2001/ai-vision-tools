@@ -383,6 +383,17 @@ def _decode_image_base64(encoded: str) -> np.ndarray:
     return image
 
 
+def _serialize_value(value):
+    """Recursively convert numpy arrays to base64 image dicts for JSON output."""
+    if isinstance(value, np.ndarray):
+        return {"type": "image", "base64": _encode_image_base64(value)}
+    if isinstance(value, dict):
+        return {k: _serialize_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_serialize_value(v) for v in value]
+    return value
+
+
 def _execute_component(category, name, init_args, config, image_base64, payload, data, batch):
     module_path = f"ai_vision_tool.{category}"
     module = importlib.import_module(module_path)
@@ -390,7 +401,12 @@ def _execute_component(category, name, init_args, config, image_base64, payload,
     component = cls(**init_args)
     component.setup(config)
     input_data = payload or data or _decode_image_base64(image_base64)
-    return {"result": component.run(input_data, config)}
+    raw = component.run(input_data, config)
+    if isinstance(raw, np.ndarray):
+        serialized = {"frame": _serialize_value(raw)}
+    else:
+        serialized = _serialize_value(raw)
+    return {"category": category, "name": name, "result": serialized}
 
 
 def process_component_from_image_path(args):
@@ -924,7 +940,7 @@ def create_parser():
     )
     parser.add_argument(
         "--component-category",
-        choices=["preprocessing", "augmentations", "components"],
+        choices=["preprocessing", "augmentation", "enhancement", "capture", "io"],
         help="Category for --process-image-path execution.",
     )
     parser.add_argument(
