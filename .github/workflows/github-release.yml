@@ -1,0 +1,31 @@
+name: GitHub Release
+
+# Triggers:
+#   v* tag push  → auto-triggered by semantic-versioning.yml after a version bump
+#   workflow_dispatch → manually create/update a release for an existing tag
+
+on:
+  push:
+    tags:
+      - "v[0-9]*"   # v0.2.1, v1.0.0, etc.  (excludes test tags like v-foo)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.2.1)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as a pre-release"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  github-release:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/reusable-github-release.yml
+    with:
+      tag:            ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      python-version: "3.11"
+      prerelease:     ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}

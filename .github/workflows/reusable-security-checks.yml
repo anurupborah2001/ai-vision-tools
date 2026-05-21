@@ -10,31 +10,138 @@ on:
         type: string
 
 jobs:
-  security-checks:
+  # ── 1. Dependency vulnerability audit ──────────────────────────────────────
+  dependency-audit:
+    name: Dependency Audit (pip-audit)
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: ${{ inputs.python-version }}
+          enable-cache: true
 
-      - name: Install Poetry
-        run: python -m pip install poetry
+      - name: Install dependencies
+        run: uv sync --dev
 
-      - name: Install project dependencies
-        run: poetry install --with dev
+      - name: Run pip-audit (OSV + PyPI Advisory DB)
+        run: |
+          uv run --with pip-audit pip-audit \
+            --format sarif \
+            --output pip-audit.sarif \
+            --skip-editable \
+            || true
 
-      - name: Install security tooling
-        run: poetry run python -m pip install pip-audit bandit
+      - name: Upload pip-audit SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: pip-audit.sarif
+          category: dependency-audit
 
-      - name: Audit dependencies
-        run: poetry run pip-audit
+      - name: Upload pip-audit SARIF artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-sarif
+          path: pip-audit.sarif
+          retention-days: 14
 
-      - name: Run Bandit
-        run: poetry run bandit -q -r visionflow
+  # ── 2. Static Application Security Testing ─────────────────────────────────
+  sast:
+    name: SAST (Bandit + Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run Bandit (Python SAST)
+        run: |
+          uv run --with bandit bandit \
+            -r ai_vision_tool \
+            -f sarif \
+            -o bandit.sarif \
+            --severity-level medium \
+            --confidence-level medium \
+            || true
+
+      - name: Upload Bandit SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: bandit.sarif
+          category: bandit-sast
+
+      - name: Run Semgrep (community rules)
+        run: |
+          uv run --with semgrep semgrep scan \
+            --config=p/python \
+            --config=p/secrets \
+            --sarif \
+            --output semgrep.sarif \
+            ai_vision_tool/ \
+            || true
+
+      - name: Upload Semgrep SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep-sast
+
+      - name: Upload SAST SARIF artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-sarif-reports
+          path: |
+            bandit.sarif
+            semgrep.sarif
+          retention-days: 14
+
+      - name: Fail on high-severity Bandit findings
+        run: |
+          uv run --with bandit bandit \
+            -r ai_vision_tool \
+            --severity-level high \
+            --confidence-level high \
+            -q
+
+  # ── 3. Secret scanning ──────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
