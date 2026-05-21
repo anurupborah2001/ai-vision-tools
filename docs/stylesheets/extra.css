@@ -1,0 +1,36 @@
+:root {
+  --md-primary-fg-color: #3F51B5;
+  --md-primary-fg-color--light: #757de8;
+  --md-primary-fg-color--dark: #002984;
+}
+
+/* Wider content area */
+.md-grid {
+  max-width: 1440px;
+}
+
+/* API reference tweaks */
+.doc-heading code {
+  font-size: 0.9em;
+}
+
+/* Badge styling for extras */
+.badge {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: 0.25em;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.badge-optional {
+  background-color: var(--md-primary-fg-color--light);
+  color: white;
+}
+
+.badge-extra {
+  background-color: #ff9800;
+  color: white;
+}
