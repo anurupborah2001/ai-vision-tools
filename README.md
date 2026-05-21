@@ -1,15 +1,72 @@
-# ai-vision-tool
+# AI Vision Tool
+### Build Scalable, Real-Time Computer Vision Systems with OpenCV, AI Models, and Hybrid Pipelines
 
-[![PyPI version](https://img.shields.io/pypi/v/ai-vision-tool)](https://pypi.org/project/ai-vision-tool/)
-[![Python](https://img.shields.io/pypi/pyversions/ai-vision-tool)](https://pypi.org/project/ai-vision-tool/)
-[![License](https://img.shields.io/pypi/l/ai-vision-tool)](https://pypi.org/project/ai-vision-tool/)
+<p align="center">
+  <a href="https://pypi.org/project/ai-vision-tool/"><img src="https://img.shields.io/pypi/v/ai-vision-tool?style=flat-square&color=blue&label=PyPI" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/ai-vision-tool/"><img src="https://img.shields.io/pypi/pyversions/ai-vision-tool?style=flat-square" alt="Python"></a>
+  <a href="https://pypi.org/project/ai-vision-tool/"><img src="https://img.shields.io/pypi/l/ai-vision-tool?style=flat-square&color=green" alt="License"></a>
+  <a href="https://pypi.org/project/ai-vision-tool/"><img src="https://img.shields.io/pypi/dm/ai-vision-tool?style=flat-square&color=orange" alt="Downloads"></a>
+</p>
 
-**ai-vision-tool** is a modular computer-vision toolkit built around composable pipeline
-components. It provides preprocessing, augmentation, object detection, multi-object tracking,
-segmentation, image enhancement, I/O adapters, streaming sources, visualization sinks, and
-configuration utilities — all usable from Python with a single unified interface.
+<p align="center">
+  <img src="images/github/ai-vision-tool.png" alt="AI Vision Tool" width="100%">
+</p>
 
-![Sample](images/github/sample.jpg)
+---
+
+**AI Vision Tool** is a modular, extensible, and production-ready computer vision framework designed for modern AI-powered image and video processing workflows.
+
+Built with a **lightweight OpenCV-first architecture**, it provides a unified ecosystem for preprocessing, augmentation, enhancement, visualization, streaming, capture pipelines, and AI model integration — enabling developers to rapidly build scalable vision applications ranging from classical computer vision systems to advanced deep learning pipelines.
+
+```python
+from ai_vision_tool.pipelines import AIVisionPipeline, PrebuiltPipelines
+from ai_vision_tool.preprocessing import AutoOrient, LetterboxResize
+from ai_vision_tool.detection import ObjectDetector
+from ai_vision_tool.tracking import ByteTracker
+from ai_vision_tool.visualization import BBoxRenderer
+
+pipeline = (
+    AIVisionPipeline()
+    .add(AutoOrient())
+    .add(LetterboxResize(width=640, height=640))
+    .add(ObjectDetector(model_path="yolov8n.pt", conf_threshold=0.25))
+    .add(ByteTracker(track_thresh=0.5))
+    .add(BBoxRenderer(show_track_id=True))
+)
+
+result = pipeline.execute(initial_data={"frame": frame}, global_config={})
+```
+
+---
+
+## Why AI Vision Tool?
+
+| Concern | How it's solved |
+|---------|----------------|
+| **Complexity** | One unified `.run(data)` interface across 130+ components |
+| **Dependencies** | Lightweight core (`numpy + opencv + pyyaml`), heavy deps are opt-in extras |
+| **Scalability** | Async, parallel, and fan-out pipelines built-in |
+| **Deployment** | CPU / CUDA / MPS / Edge — auto-detected at runtime |
+| **Extensibility** | Subclass `AIVisionComponent`, plug in anywhere |
+
+### Supported Implementation Strategies
+
+```
+Classical Computer Vision  →  Pre-trained AI Models  →  Custom Deep Learning
+         ↕                           ↕                           ↕
+   Edge AI Inference      ←→   Hybrid CV + AI Architectures   ←→  Cloud Streaming
+```
+
+The framework follows a **core + optional extensions** philosophy:
+
+- **Lightweight core** — fast install, minimal footprint, no heavy deps
+- **Optional AI runtimes** — ONNX, PyTorch, TensorFlow Lite via extras
+- **Plugin-style integrations** — cloud storage, Kafka, WebSocket, Gradio dashboards
+- **Edge and cloud deployment** — runs on Raspberry Pi through multi-GPU servers
+
+> **Build once. Deploy anywhere. Scale from classical vision pipelines to state-of-the-art AI systems.**
+
+---
 
 ## Table of Contents
 
@@ -26,7 +83,7 @@ configuration utilities — all usable from Python with a single unified interfa
 - [I/O](#io)
 - [Streaming](#streaming)
 - [Visualization](#visualization)
-- [Components](#components)
+- [Capture Components](#capture-components)
 - [Utilities](#utilities)
 - [Core](#core)
 - [Configuration](#configuration)
@@ -39,35 +96,87 @@ configuration utilities — all usable from Python with a single unified interfa
 - [Testing](#testing)
 - [Build and Publish](#build-and-publish)
 
+---
+
 ## Features
 
-- Composable pipeline via `AIVisionPipeline` — chain any mix of components with one interface
-- 40+ preprocessing transforms: geometry, intensity, color space, quality checks, segmentation
-- 70+ augmentation components: geometric, weather, blur, noise, dropout, multi-image composition
-- Object detection: YOLO (ultralytics), ONNX, with greedy NMS fallback
+<details open>
+<summary><strong>Pipelines & Architecture</strong></summary>
+
+- Composable `AIVisionPipeline` — Chain of Responsibility, one interface for all components
+- Async execution via `AsyncPipeline` (`asyncio` + `run_in_executor`)
+- Parallel branches via `ParallelPipeline` and `FanOutPipeline` (`ThreadPoolExecutor`)
+- Pipeline serialization to/from YAML/JSON via `PipelineSerializer`
+- Prebuilt factory pipelines for detection, tracking, enhancement, augmentation
+
+</details>
+
+<details open>
+<summary><strong>Preprocessing & Augmentation</strong></summary>
+
+- **40+ preprocessing transforms** — geometry, intensity, color space, quality gates
+- **70+ augmentation components** — geometric, weather, blur, noise, dropout, multi-image composition
+- Batch processing: `component.run([img_a, img_b, img_c])` → list of results
+- JSON augmentation profiles for CLI-driven training pipelines
+
+</details>
+
+<details open>
+<summary><strong>Detection, Tracking & Segmentation</strong></summary>
+
+- Object detection: YOLO (ultralytics) + ONNX with greedy NMS fallback
 - Face detection: OpenCV Haar cascade or MediaPipe
-- Keypoint / pose detection: MediaPipe 33-landmark or YOLO-pose
-- OCR / text detection: EasyOCR, PaddleOCR
-- Anomaly detection: statistical, PatchCore (HOG + nearest-neighbour), PCA
-- Multi-object tracking: ByteTracker (two-stage), DeepSORT (HOG embedding + cosine)
-- Semantic, instance, and panoptic segmentation via ONNX / YOLO-seg / TorchScript
+- Keypoint/pose detection: MediaPipe 33-landmark or YOLO-pose
+- OCR/text detection: EasyOCR, PaddleOCR
+- Anomaly detection: statistical z-score, PatchCore (HOG + kNN), PCA
+- Multi-object tracking: ByteTracker (two-stage), DeepSORT (HOG + cosine distance)
+- Semantic, instance, and panoptic segmentation: ONNX / YOLO-seg / TorchScript
 - SAM (Segment Anything Model): point, box, and auto-everything prompts
-- Mask post-processing: erode/dilate/fill holes/largest-component/remove small
-- Super-resolution: cv2 DNN SR, ONNX, bicubic fallback
-- Denoising: Non-local means, bilateral, DnCNN-ONNX
-- Deblurring: Wiener FFT, Richardson-Lucy iterative, NAFNet-ONNX
-- Low-light enhancement: CLAHE, gamma LUT, multi-scale Retinex, Zero-DCE approximation
-- Colorization: Zhang 2016 LAB-AB prediction, pseudo-color, thermal
-- Flexible I/O: local image/video files, webcam, RTSP, S3, GCS
-- Dataset export: YOLO, COCO JSON, VOC XML formats
-- Streaming: RTSP client, WebSocket sink, Kafka source/sink, buffered queues
-- Visualization: live frame viewer, bbox renderer, heatmap overlay, dashboard (Gradio/MJPEG), annotated video export
-- Configuration: YAML/JSON configs, `ComponentRegistry`, environment variables
-- Model management: ONNX, TorchScript, TFLite runners, downloader with SHA256, benchmarking
-- Async and parallel pipelines: `AsyncPipeline`, `ParallelPipeline`, `FanOutPipeline`
-- Webcam capture, burst, ROI crop, time-lapse, and video recording helpers
-- Dataset collection with label-aware folder structure
-- CLI with live augmentation profile loading from JSON
+- Mask post-processing: erode / dilate / fill holes / largest-component / remove-small
+
+</details>
+
+<details open>
+<summary><strong>Enhancement & Restoration</strong></summary>
+
+- Super-resolution: `cv2.dnn_superres`, ONNX, bicubic fallback
+- Denoising: Non-local means, bilateral, Gaussian, DnCNN-ONNX
+- Deblurring: Wiener FFT, Richardson-Lucy, NAFNet-ONNX
+- Low-light enhancement: CLAHE, gamma LUT, multi-scale Retinex, Zero-DCE
+- Colorization: Zhang 2016 LAB-AB, pseudo-color, thermal
+
+</details>
+
+<details open>
+<summary><strong>I/O, Streaming & Cloud</strong></summary>
+
+- Flexible I/O: local images/video, webcam, RTSP, HTTP, AWS S3, GCS
+- Dataset export: YOLO, COCO JSON, VOC XML
+- Real-time streaming: RTSP client, WebSocket sink/source, Kafka producer/consumer
+- Buffered queues with configurable drop policy and sliding window
+
+</details>
+
+<details open>
+<summary><strong>Visualization & Dashboards</strong></summary>
+
+- Live frame viewer with rolling FPS overlay (headless-safe)
+- BBox renderer with consistent per-class colors and semi-transparent fill
+- Heatmap renderer: detection density, anomaly maps, motion, attention
+- Dashboard sink: Gradio or MJPEG HTTP fallback
+- Annotated video export with JSON sidecar
+
+</details>
+
+<details open>
+<summary><strong>Model Management</strong></summary>
+
+- ONNX, TorchScript, TFLite runners as pipeline components
+- Model registry with JSON cache and HuggingFace download support
+- SHA256-verified downloader with progress callbacks
+- Latency benchmarking: p50 / p95 / p99 + tracemalloc memory profiling
+
+</details>
 
 ---
 
@@ -82,42 +191,49 @@ pip install ai-vision-tool
 With optional extras:
 
 ```bash
-pip install "ai-vision-tool[tensorflow]"
+# ONNX inference
+pip install "ai-vision-tool[onnx]"
+
+# YOLO detection + MediaPipe face/pose
+pip install "ai-vision-tool[detection]"
+
+# Everything
+pip install "ai-vision-tool[all]"
 ```
 
 ### uv
 
 ```bash
 uv add ai-vision-tool
+uv add "ai-vision-tool[detection]"
 ```
 
 ### Poetry
 
 ```bash
 poetry add ai-vision-tool
+poetry add "ai-vision-tool[detection]"
 ```
 
-### Optional dependencies
+### Optional extras
 
-Heavy dependencies are imported lazily inside each component's `setup()`. Missing deps
-print a clear `pip install` hint. The base package only requires OpenCV and NumPy.
+The base install (`numpy + opencv-python + pyyaml`) has no heavy deps.
+Optional extras install only the libraries each feature needs.
 
-| Extra / package | Enables |
-|----------------|---------|
-| `onnxruntime` | ONNXModel, ObjectDetector (ONNX), SuperResolution, Denoiser, Colorizer |
-| `ultralytics` | ObjectDetector (YOLO), InstanceSegmenter, KeypointDetector (YOLO-pose) |
-| `mediapipe` | FaceDetector (mediapipe), KeypointDetector (mediapipe) |
-| `easyocr` | TextDetector (easyocr) |
-| `paddleocr` | TextDetector (paddleocr) |
-| `segment_anything` | SAMSegmenter |
-| `torch` | TorchModel, SuperResolution (ONNX path uses onnxruntime) |
-| `boto3` | S3Source |
-| `google-cloud-storage` | GCSSource |
-| `confluent-kafka` or `kafka-python` | KafkaSource, KafkaSink |
-| `websockets` | WebSocketSink, WebSocketSource (MJPEG fallback always available) |
-| `gradio` | DashboardSink Gradio UI (MJPEG fallback always available) |
-| `pyyaml` | YAMLConfig |
-| `scipy` | TrackManager Hungarian algorithm (greedy IoU fallback always available) |
+| Extra | Installs | Enables |
+|-------|----------|---------|
+| `onnx` | `onnxruntime>=1.18` | `ONNXModel`, ONNX-backed detectors and enhancement |
+| `torch` | `torch>=2.3`, `torchvision>=0.18` | `TorchModel`, TorchScript inference |
+| `tflite` | `tflite-runtime>=2.14` | `TFLiteModel` inference |
+| `detection` | `ultralytics>=8.0`, `mediapipe>=0.10` | `ObjectDetector` (YOLO), `FaceDetector`/`KeypointDetector` (MediaPipe) |
+| `segmentation` | `ultralytics>=8.0`, `segment-anything>=1.0`, `torch>=2.3` | `InstanceSegmenter` (YOLO-seg), `SAMSegmenter` |
+| `tracking` | `onnxruntime>=1.18` | ONNX-backed ReID embeddings in `ReIDExtractor` |
+| `websocket` | `websockets>=12.0` | `WebSocketSink`, `WebSocketSource` |
+| `kafka` | `confluent-kafka>=2.3.0` | `KafkaSink`, `KafkaSource` |
+| `streaming` | websocket + kafka | All real-time streaming components |
+| `cloud` | `boto3>=1.34`, `google-cloud-storage>=2.16` | `S3Source`, `GCSSource` |
+| `api` | `fastapi>=0.115`, `uvicorn>=0.30` | FastAPI REST server |
+| `all` | all of the above | Full feature set |
 
 ### Development Setup
 
@@ -147,9 +263,9 @@ pre-commit run --all-files
 
 ```python
 import cv2
-from ai_vision_tool.pipeline import AIVisionPipeline
-from ai_vision_tool.components.preprocessing import AutoOrient, AutoAdjustContrast
-from ai_vision_tool.components.augmentations import Flip, GaussianBlur
+from ai_vision_tool.pipelines import AIVisionPipeline
+from ai_vision_tool.preprocessing import AutoOrient, AutoAdjustContrast
+from ai_vision_tool.augmentation import Flip, GaussianBlur
 
 image = cv2.imread("images/github/sample.jpg")
 
@@ -187,7 +303,7 @@ image = cv2.imread("images/github/sample.jpg")
 ### Import Path
 
 ```python
-from ai_vision_tool.components.preprocessing import (
+from ai_vision_tool.preprocessing import (
     AutoOrient,
     AutoAdjustContrast,
     Resize,
@@ -238,7 +354,7 @@ from ai_vision_tool.components.preprocessing import (
 **`AutoOrient`** — Correct EXIF orientation metadata or apply an explicit rotation and flip.
 
 ```python
-from ai_vision_tool.components.preprocessing import AutoOrient
+from ai_vision_tool.preprocessing import AutoOrient
 
 result = AutoOrient(rotation=90).run(image)
 result = AutoOrient(flip_horizontal=True).run(image)
@@ -250,7 +366,7 @@ result = AutoOrient(use_exif=True, exif_key="exif_orientation").run(
 **`Resize`** — Resize to an exact target size.
 
 ```python
-from ai_vision_tool.components.preprocessing import Resize
+from ai_vision_tool.preprocessing import Resize
 
 result = Resize(width=640, height=640).run(image)
 ```
@@ -258,7 +374,7 @@ result = Resize(width=640, height=640).run(image)
 **`LetterboxResize`** — Resize preserving aspect ratio, padding the shorter axis.
 
 ```python
-from ai_vision_tool.components.preprocessing import LetterboxResize
+from ai_vision_tool.preprocessing import LetterboxResize
 
 result = LetterboxResize(width=640, height=640, pad_value=(114, 114, 114)).run(image)
 ```
@@ -266,7 +382,7 @@ result = LetterboxResize(width=640, height=640, pad_value=(114, 114, 114)).run(i
 **`CenterCrop`** — Crop the centre region.
 
 ```python
-from ai_vision_tool.components.preprocessing import CenterCrop
+from ai_vision_tool.preprocessing import CenterCrop
 
 result = CenterCrop(width=224, height=224).run(image)
 ```
@@ -274,7 +390,7 @@ result = CenterCrop(width=224, height=224).run(image)
 **`PadToSquare`** — Pad a rectangular image to a square canvas.
 
 ```python
-from ai_vision_tool.components.preprocessing import PadToSquare
+from ai_vision_tool.preprocessing import PadToSquare
 
 result = PadToSquare(pad_value=(0, 0, 0)).run(image)
 ```
@@ -283,7 +399,7 @@ result = PadToSquare(pad_value=(0, 0, 0)).run(image)
 
 ```python
 import numpy as np
-from ai_vision_tool.components.preprocessing import PerspectiveCorrection
+from ai_vision_tool.preprocessing import PerspectiveCorrection
 
 source_points = np.float32([[30, 20], [310, 10], [320, 240], [20, 250]])
 result = PerspectiveCorrection(source_points=source_points, output_size=(300, 200)).run(image)
@@ -292,7 +408,7 @@ result = PerspectiveCorrection(source_points=source_points, output_size=(300, 20
 **`Deskew`** — Rotate a document back to a levelled angle.
 
 ```python
-from ai_vision_tool.components.preprocessing import Deskew
+from ai_vision_tool.preprocessing import Deskew
 
 result = Deskew().run(image)
 ```
@@ -300,7 +416,7 @@ result = Deskew().run(image)
 **`AutoCrop`** — Trim empty or near-black borders.
 
 ```python
-from ai_vision_tool.components.preprocessing import AutoCrop
+from ai_vision_tool.preprocessing import AutoCrop
 
 result = AutoCrop(threshold=10, padding=4).run(image)
 ```
@@ -308,7 +424,7 @@ result = AutoCrop(threshold=10, padding=4).run(image)
 **`FaceAlign`** — Align a face using eye landmark coordinates from a payload dict.
 
 ```python
-from ai_vision_tool.components.preprocessing import FaceAlign
+from ai_vision_tool.preprocessing import FaceAlign
 
 payload = {"frame": image, "metadata": {"left_eye": (40, 50), "right_eye": (90, 50)}}
 result = FaceAlign(output_size=(112, 112)).run(payload)
@@ -317,7 +433,7 @@ result = FaceAlign(output_size=(112, 112)).run(payload)
 **`ObjectCrop`** — Crop the region described by bounding boxes.
 
 ```python
-from ai_vision_tool.components.preprocessing import ObjectCrop
+from ai_vision_tool.preprocessing import ObjectCrop
 
 payload = {"frame": image, "bboxes": [(10, 20, 120, 80)]}
 result = ObjectCrop().run(payload)
@@ -326,7 +442,7 @@ result = ObjectCrop().run(payload)
 **`BoundingBoxClamp`** — Clamp bounding boxes that extend outside image boundaries.
 
 ```python
-from ai_vision_tool.components.preprocessing import BoundingBoxClamp
+from ai_vision_tool.preprocessing import BoundingBoxClamp
 
 payload = {"frame": image, "bboxes": [(-5, -5, 80, 90)]}
 result = BoundingBoxClamp().run(payload)
@@ -335,7 +451,7 @@ result = BoundingBoxClamp().run(payload)
 **`BoundingBoxNormalize`** — Normalise absolute pixel bounding boxes to relative coordinates.
 
 ```python
-from ai_vision_tool.components.preprocessing import BoundingBoxNormalize
+from ai_vision_tool.preprocessing import BoundingBoxNormalize
 
 payload = {"frame": image, "bboxes": [(10, 20, 120, 80)]}
 result = BoundingBoxNormalize().run(payload)
@@ -345,7 +461,7 @@ result = BoundingBoxNormalize().run(payload)
 
 ```python
 import numpy as np
-from ai_vision_tool.components.preprocessing import MaskResize
+from ai_vision_tool.preprocessing import MaskResize
 
 mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
 payload = {"frame": image, "mask": mask}
@@ -359,7 +475,7 @@ result = MaskResize(width=640, height=640).run(payload)
 **`AutoAdjustContrast`** — Adaptive equalization, histogram equalization, or contrast stretching.
 
 ```python
-from ai_vision_tool.components.preprocessing import AutoAdjustContrast
+from ai_vision_tool.preprocessing import AutoAdjustContrast
 
 result = AutoAdjustContrast(method="adaptive_equalization", clip_limit=2.0).run(image)
 result = AutoAdjustContrast(method="histogram_equalization").run(image)
@@ -371,7 +487,7 @@ result = AutoAdjustContrast(
 **`Normalize`** — Map pixel values into [0, 1].
 
 ```python
-from ai_vision_tool.components.preprocessing import Normalize
+from ai_vision_tool.preprocessing import Normalize
 
 result = Normalize().run(image)
 ```
@@ -379,7 +495,7 @@ result = Normalize().run(image)
 **`Standardize`** — z-score standardisation per channel.
 
 ```python
-from ai_vision_tool.components.preprocessing import Standardize
+from ai_vision_tool.preprocessing import Standardize
 
 result = Standardize(per_channel=True).run(image)
 ```
@@ -387,7 +503,7 @@ result = Standardize(per_channel=True).run(image)
 **`CLAHE`** — Contrast-Limited Adaptive Histogram Equalisation.
 
 ```python
-from ai_vision_tool.components.preprocessing import CLAHE
+from ai_vision_tool.preprocessing import CLAHE
 
 result = CLAHE(clip_limit=2.0, tile_grid_size=(8, 8)).run(image)
 ```
@@ -395,7 +511,7 @@ result = CLAHE(clip_limit=2.0, tile_grid_size=(8, 8)).run(image)
 **`GammaCorrection`** — Gamma-based exposure tuning.
 
 ```python
-from ai_vision_tool.components.preprocessing import GammaCorrection
+from ai_vision_tool.preprocessing import GammaCorrection
 
 result = GammaCorrection(gamma=1.4).run(image)  # brighten
 result = GammaCorrection(gamma=0.7).run(image)  # darken
@@ -404,7 +520,7 @@ result = GammaCorrection(gamma=0.7).run(image)  # darken
 **`WhiteBalance`** — Correct per-channel colour casts.
 
 ```python
-from ai_vision_tool.components.preprocessing import WhiteBalance
+from ai_vision_tool.preprocessing import WhiteBalance
 
 result = WhiteBalance(method="gray_world").run(image)
 ```
@@ -412,7 +528,7 @@ result = WhiteBalance(method="gray_world").run(image)
 **`EdgeDetection`** — Extract edges via Canny, Sobel, or Laplacian.
 
 ```python
-from ai_vision_tool.components.preprocessing import EdgeDetection
+from ai_vision_tool.preprocessing import EdgeDetection
 
 result = EdgeDetection(method="canny", threshold1=100, threshold2=200).run(image)
 ```
@@ -424,7 +540,7 @@ result = EdgeDetection(method="canny", threshold1=100, threshold2=200).run(image
 **`ImageQualityCheck`** — Compute blur and brightness quality flags.
 
 ```python
-from ai_vision_tool.components.preprocessing import ImageQualityCheck
+from ai_vision_tool.preprocessing import ImageQualityCheck
 
 result = ImageQualityCheck().run({"frame": image})
 # result["is_blurry"], result["brightness"]
@@ -433,7 +549,7 @@ result = ImageQualityCheck().run({"frame": image})
 **`BlurDetection`** — Flag frames below a Laplacian variance threshold.
 
 ```python
-from ai_vision_tool.components.preprocessing import BlurDetection
+from ai_vision_tool.preprocessing import BlurDetection
 
 result = BlurDetection().run({"frame": image})
 ```
@@ -441,7 +557,7 @@ result = BlurDetection().run({"frame": image})
 **`MinSizeFilter`** / **`MaxSizeFilter`** — Enforce pixel dimension bounds.
 
 ```python
-from ai_vision_tool.components.preprocessing import MinSizeFilter, MaxSizeFilter
+from ai_vision_tool.preprocessing import MinSizeFilter, MaxSizeFilter
 
 result = MinSizeFilter(min_width=320, min_height=320).run({"frame": image})
 result = MaxSizeFilter(max_width=2048, max_height=2048).run({"frame": image})
@@ -462,7 +578,7 @@ image = cv2.imread("images/github/sample.jpg")
 ### Import Path
 
 ```python
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.augmentation import (
     Flip, Rotate90, Crop, Rotation, Shear, Translate,
     RandomResize, RandomScale, RandomCrop, RandomResizedCrop, RandomPadding,
     AffineTransform, PerspectiveTransform, ElasticTransform,
@@ -485,7 +601,7 @@ from ai_vision_tool.components.augmentations import (
 ### Geometric and Spatial
 
 ```python
-from ai_vision_tool.components.augmentations import Flip, Rotate90, Rotation, Shear
+from ai_vision_tool.augmentation import Flip, Rotate90, Rotation, Shear
 
 result = Flip(horizontal=True).run(image)
 result = Rotate90(k=1).run(image)
@@ -496,7 +612,7 @@ result = Shear(shear_x=0.15).run(image)
 **`RandomResizedCrop`** — Random crop + resize (equivalent to torchvision).
 
 ```python
-from ai_vision_tool.components.augmentations import RandomResizedCrop
+from ai_vision_tool.augmentation import RandomResizedCrop
 
 result = RandomResizedCrop(
     output_width=224, output_height=224, scale_min=0.08, scale_max=1.0
@@ -506,7 +622,7 @@ result = RandomResizedCrop(
 **`AffineTransform`** — Combined rotate/scale/translate/shear in one pass.
 
 ```python
-from ai_vision_tool.components.augmentations import AffineTransform
+from ai_vision_tool.augmentation import AffineTransform
 
 result = AffineTransform(angle=8.0, scale=1.0, translate_x=10.0, shear_x=0.05).run(image)
 ```
@@ -514,7 +630,7 @@ result = AffineTransform(angle=8.0, scale=1.0, translate_x=10.0, shear_x=0.05).r
 **`ElasticTransform`** / **`GridDistortion`** / **`OpticalDistortion`** — Spatial warping.
 
 ```python
-from ai_vision_tool.components.augmentations import ElasticTransform, GridDistortion, OpticalDistortion
+from ai_vision_tool.augmentation import ElasticTransform, GridDistortion, OpticalDistortion
 
 result = ElasticTransform(alpha=3.0, sigma=1.0).run(image)
 result = GridDistortion(num_steps=5, distort_limit=0.2).run(image)
@@ -524,7 +640,7 @@ result = OpticalDistortion(k=0.00001).run(image)
 ### Lighting, Color, and Weather
 
 ```python
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.augmentation import (
     ColorJitter, RandomShadow, RandomFog, RandomRain
 )
 
@@ -537,7 +653,7 @@ result = RandomRain(drops=40, drop_length=12, intensity=0.25).run(image)
 ### Blur, Compression, and Texture
 
 ```python
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.augmentation import (
     GaussianBlur, MotionBlur, DefocusBlur, JPEGCompression, Superpixel
 )
 
@@ -551,7 +667,7 @@ result = Superpixel(region_size=10).run(image)
 ### Noise and Dropout
 
 ```python
-from ai_vision_tool.components.augmentations import (
+from ai_vision_tool.augmentation import (
     Noise, ISONoise, CoarseDropout, GridDropout
 )
 
@@ -565,7 +681,7 @@ result = GridDropout(ratio=0.5, unit_size=8).run(image)
 
 ```python
 import cv2
-from ai_vision_tool.components.augmentations import MixUp, CutMix, Mosaic, BoundingBoxJitter
+from ai_vision_tool.augmentation import MixUp, CutMix, Mosaic, BoundingBoxJitter
 
 image_b = cv2.imread("images/github/sample.jpg")
 
@@ -582,7 +698,7 @@ result = BoundingBoxJitter(x_jitter=0.05, y_jitter=0.05, size_jitter=0.1).run(pa
 ### Batch Processing
 
 ```python
-from ai_vision_tool.components.augmentations import Flip
+from ai_vision_tool.augmentation import Flip
 
 results = Flip(horizontal=True).run([image, image, image])  # list → list
 ```
@@ -609,10 +725,11 @@ ai-vision-tool --augmentation-config examples/augmentation_profile.json
 
 ```python
 import cv2
-from ai_vision_tool.pipeline import AIVisionPipeline
-from ai_vision_tool.components.preprocessing import AutoOrient, Resize
-from ai_vision_tool.components.augmentations import Flip, ColorJitter
-from ai_vision_tool.components import FrameAnnotator, MotionDetector
+from ai_vision_tool.pipelines import AIVisionPipeline
+from ai_vision_tool.preprocessing import AutoOrient, Resize
+from ai_vision_tool.augmentation import Flip, ColorJitter
+from ai_vision_tool.visualization import FrameAnnotator
+from ai_vision_tool.capture import MotionDetector
 
 image = cv2.imread("images/github/sample.jpg")
 
@@ -745,7 +862,7 @@ low-confidence detections vs. unmatched tracks (Zhang et al. 2022).
 ```python
 from ai_vision_tool.detection import ObjectDetector
 from ai_vision_tool.tracking import ByteTracker
-from ai_vision_tool.pipeline import AIVisionPipeline
+from ai_vision_tool.pipelines import AIVisionPipeline
 
 pipeline = (
     AIVisionPipeline()
@@ -1067,7 +1184,7 @@ cam.cleanup()
 Stream images from cloud storage as pipeline inputs.
 
 ```python
-from ai_vision_tool.io import S3Source
+from ai_vision_tool.integrations.cloud import S3Source
 
 source = S3Source(
     bucket="my-bucket",
@@ -1082,7 +1199,7 @@ print(result["s3_key"])
 ```
 
 ```python
-from ai_vision_tool.io import GCSSource
+from ai_vision_tool.integrations.cloud import GCSSource
 
 source = GCSSource(
     bucket="my-gcs-bucket",
@@ -1160,7 +1277,7 @@ Broadcast frames as base64 JPEG over WebSocket. Falls back to MJPEG HTTP when
 `websockets` is not installed.
 
 ```python
-from ai_vision_tool.streaming import WebSocketSink
+from ai_vision_tool.integrations.streaming import WebSocketSink
 
 sink = WebSocketSink(host="0.0.0.0", port=8765, quality=80)
 sink.setup({})
@@ -1170,7 +1287,7 @@ sink.cleanup()
 ```
 
 ```python
-from ai_vision_tool.streaming import WebSocketSource
+from ai_vision_tool.integrations.streaming import WebSocketSource
 
 source = WebSocketSource(url="ws://localhost:8765")
 source.setup({})
@@ -1180,11 +1297,11 @@ frame = result["frame"]
 
 ### KafkaSource / KafkaSink
 
-Stream frames as base64-JPEG JSON messages through Kafka. Supports both
-`confluent-kafka` and `kafka-python`.
+Stream frames as base64-JPEG JSON messages through Kafka. Requires the `kafka` extra
+(`pip install "ai-vision-tool[kafka]"`).
 
 ```python
-from ai_vision_tool.streaming import KafkaSink, KafkaSource
+from ai_vision_tool.integrations.streaming import KafkaSink, KafkaSource
 
 sink = KafkaSink(bootstrap_servers="localhost:9092", topic="vision_frames", quality=80)
 sink.setup({})
@@ -1324,9 +1441,9 @@ exporter.cleanup()            # flushes video + JSON
 
 ---
 
-## Components
+## Capture Components
 
-Higher-level stateful components that manage I/O or wrap external model inference.
+Stateful capture and annotation helpers. Import from their domain modules.
 
 ```python
 import cv2
@@ -1338,7 +1455,7 @@ image = cv2.imread("images/github/sample.jpg")
 **`FrameEnhancer`** — Brightness, contrast, sharpening, denoising in a single pass.
 
 ```python
-from ai_vision_tool.components import FrameEnhancer
+from ai_vision_tool.enhancement import FrameEnhancer
 
 result = FrameEnhancer().run(
     {"frame": image},
@@ -1349,16 +1466,16 @@ result = FrameEnhancer().run(
 **`MotionDetector`** — Detect motion regions using background subtraction.
 
 ```python
-from ai_vision_tool.components import MotionDetector
+from ai_vision_tool.capture import MotionDetector
 
 result = MotionDetector().run({"frame": image}, {"min_area": 800, "draw_motion": True})
 print(result["motion_boxes"])
 ```
 
-**`FrameAnnotator`** — Render payload-driven annotations.
+**`FrameAnnotator`** — Render payload-driven annotations (text, boxes, lines).
 
 ```python
-from ai_vision_tool.components import FrameAnnotator
+from ai_vision_tool.visualization import FrameAnnotator
 
 result = FrameAnnotator().run(
     {"frame": image, "annotations": [{"type": "text", "text": "Demo", "pos": (20, 30)}]},
@@ -1369,7 +1486,7 @@ result = FrameAnnotator().run(
 ### Capture Helpers
 
 ```python
-from ai_vision_tool.components import PictureTaker, BurstPictureTaker, VideoTaker, FrameGrabber
+from ai_vision_tool.capture import PictureTaker, BurstPictureTaker, VideoTaker, FrameGrabber
 
 PictureTaker().run(None, {"imgdir": "output/stills", "camera_id": 0})
 BurstPictureTaker(burst_count=5, interval_seconds=0.2)
@@ -1380,7 +1497,8 @@ FrameGrabber().run("video.mp4", {"output_folder": "output/frames", "skip_frames"
 ### Dataset and Export
 
 ```python
-from ai_vision_tool.components import DatasetCollector, TimeLapseCapture, ImageExporter
+from ai_vision_tool.io import DatasetCollector, ImageExporter
+from ai_vision_tool.capture import TimeLapseCapture
 
 DatasetCollector().run(
     {"frame": image},
@@ -1393,7 +1511,7 @@ ImageExporter(output_dir="output/exports").run({"frame": image}, {"export_gray":
 ### Auto-Labeling
 
 ```python
-from ai_vision_tool.components import DarknetAutoLabeler, TensorFlowAutoLabeler
+from ai_vision_tool.integrations.labeling import DarknetAutoLabeler, TensorFlowAutoLabeler
 
 DarknetAutoLabeler().run({"frame": image}, {"output_dir": "output/labels"})
 TensorFlowAutoLabeler().run({"frame": image}, {"output_dir": "output/labels"})
@@ -1537,8 +1655,8 @@ Process image directories or lists in parallel.
 
 ```python
 from ai_vision_tool.core import BatchProcessor
-from ai_vision_tool.pipeline import AIVisionPipeline
-from ai_vision_tool.components.preprocessing import Resize
+from ai_vision_tool.pipelines import AIVisionPipeline
+from ai_vision_tool.preprocessing import Resize
 
 pipeline = AIVisionPipeline().add(Resize(width=640, height=640))
 
@@ -1851,9 +1969,9 @@ Save and reload a pipeline configuration to/from YAML or JSON.
 
 ```python
 from ai_vision_tool.pipelines import PipelineSerializer
-from ai_vision_tool.pipeline import AIVisionPipeline
-from ai_vision_tool.components.preprocessing import Resize
-from ai_vision_tool.components.augmentations import Flip
+from ai_vision_tool.pipelines import AIVisionPipeline
+from ai_vision_tool.preprocessing import Resize
+from ai_vision_tool.augmentation import Flip
 
 pipeline = AIVisionPipeline().add(Resize(width=640, height=640)).add(Flip(horizontal=True))
 
@@ -1872,8 +1990,8 @@ Execute pipeline steps concurrently using `asyncio` + `run_in_executor`.
 ```python
 import asyncio
 from ai_vision_tool.pipelines import AsyncPipeline
-from ai_vision_tool.components.preprocessing import Resize
-from ai_vision_tool.components.augmentations import Flip
+from ai_vision_tool.preprocessing import Resize
+from ai_vision_tool.augmentation import Flip
 
 async def main():
     apipe = AsyncPipeline(
@@ -1912,7 +2030,7 @@ parallel = ParallelPipeline(
 result = parallel.execute({"frame": image})
 
 # Shared preprocessing → parallel branches
-from ai_vision_tool.components.preprocessing import Resize
+from ai_vision_tool.preprocessing import Resize
 
 fanout = FanOutPipeline(
     shared=[Resize(width=640, height=640)],
@@ -1984,7 +2102,7 @@ ai-vision-tool \
 
 ai-vision-tool \
   --process-image-path \
-  --component-category augmentations \
+  --component-category augmentation \
   --component-name Flip \
   --image-path images/github/sample.jpg \
   --init-args-json '{"horizontal": true}' \
@@ -2277,3 +2395,10 @@ python -m build
 The wheel and source distribution are written to `dist/`.
 
 See `PUBLISHING.md` for the release checklist and PyPI upload commands.
+
+---
+
+<p align="center">
+  <strong>Build once. Deploy anywhere.</strong><br>
+  Scale from classical vision pipelines to state-of-the-art AI systems.
+</p>
