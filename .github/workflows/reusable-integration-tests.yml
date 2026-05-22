@@ -33,7 +33,7 @@ jobs:
       - name: Verify package installs and CLI works in clean environment
         run: |
           uv venv .venv-integration
-          .venv-integration/bin/pip install dist/*.whl
+          uv pip install --python .venv-integration/bin/python dist/*.whl
           .venv-integration/bin/python -c "import ai_vision_tool; print(ai_vision_tool.__version__)"
           .venv-integration/bin/ai-vision-tool --show-examples --example-name AutoOrient
           .venv-integration/bin/python -m ai_vision_tool --show-examples --example-category preprocessing

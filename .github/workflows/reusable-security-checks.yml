@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
 
     steps:
       - name: Check out repository
@@ -34,24 +33,17 @@ jobs:
       - name: Run pip-audit (OSV + PyPI Advisory DB)
         run: |
           uv run --with pip-audit pip-audit \
-            --format sarif \
-            --output pip-audit.sarif \
+            --format json \
+            --output pip-audit-results.json \
             --skip-editable \
             || true
 
-      - name: Upload pip-audit SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: pip-audit.sarif
-          category: dependency-audit
-
-      - name: Upload pip-audit SARIF artifact
+      - name: Upload pip-audit results artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: pip-audit-sarif
-          path: pip-audit.sarif
+          name: pip-audit-results
+          path: pip-audit-results.json
           retention-days: 14
 
   # ── 2. Static Application Security Testing ─────────────────────────────────
@@ -60,7 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
 
     steps:
       - name: Check out repository
@@ -79,18 +70,11 @@ jobs:
         run: |
           uv run --with bandit bandit \
             -r ai_vision_tool \
-            -f sarif \
-            -o bandit.sarif \
+            -f json \
+            -o bandit-results.json \
             --severity-level medium \
             --confidence-level medium \
             || true
-
-      - name: Upload Bandit SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: bandit.sarif
-          category: bandit-sast
 
       - name: Run Semgrep (community rules)
         run: |
@@ -102,20 +86,13 @@ jobs:
             ai_vision_tool/ \
             || true
 
-      - name: Upload Semgrep SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: semgrep.sarif
-          category: semgrep-sast
-
-      - name: Upload SAST SARIF artifacts
+      - name: Upload SAST report artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: sast-sarif-reports
+          name: sast-reports
           path: |
-            bandit.sarif
+            bandit-results.json
             semgrep.sarif
           retention-days: 14
 

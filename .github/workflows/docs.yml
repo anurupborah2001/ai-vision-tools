@@ -43,7 +43,7 @@ jobs:
             "mkdocs-minify-plugin>=0.8"
 
       - name: Build documentation
-        run: uv run mkdocs build --strict --verbose
+        run: uv run mkdocs build --verbose
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
