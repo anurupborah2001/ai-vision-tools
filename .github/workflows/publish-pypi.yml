@@ -1,4 +1,4 @@
-name: Publish To PyPI
+name: Publish to PyPI
 
 on:
   push:
@@ -7,13 +7,16 @@ on:
   workflow_dispatch:
     inputs:
       repository_url:
-        description: Optional repository URL, for example TestPyPI
+        description: "Optional repository URL (e.g. https://test.pypi.org/legacy/ for TestPyPI)"
         required: false
         default: ""
         type: string
 
 jobs:
   publish:
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/reusable-pypi-publish.yml
     with:
       python-version: "3.11"

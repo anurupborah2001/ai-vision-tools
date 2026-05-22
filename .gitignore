@@ -16,6 +16,10 @@ output/**
 
 backup/**
 .claude/
-docs/**
-!docs/superpowers/
-!docs/superpowers/**
+
+# MkDocs build output
+site/
+
+# Internal docs (planning, design specs)
+docs/superpowers/
+docs/kami-overview-en.html

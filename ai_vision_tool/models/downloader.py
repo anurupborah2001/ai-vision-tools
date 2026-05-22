@@ -58,7 +58,7 @@ class ModelDownloader:
 
     @staticmethod
     def checksum_md5(path: str) -> str:
-        h = hashlib.md5()
+        h = hashlib.md5(usedforsecurity=False)
         with open(path, "rb") as f:
             for chunk in iter(lambda: f.read(65536), b""):
                 h.update(chunk)

@@ -1,4 +1,4 @@
-from ai_vision_tool.cli import main
+from ai_vision_tool.cli.main import main
 
 
 if __name__ == "__main__":
