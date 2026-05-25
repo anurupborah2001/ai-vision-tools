@@ -40,10 +40,8 @@ jobs:
           python-version: ${{ inputs.python-version }}
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --dev
-
       # ── Derive version string from tag ────────────────────────────────────
+      # Done before build so VERSION is available for checksum filename.
       - name: Derive version from tag
         id: version
         run: |
@@ -52,7 +50,6 @@ jobs:
           echo "tag=${TAG}"         >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-          # Detect pre-release by convention or explicit input
           PRERELEASE="${{ inputs.prerelease }}"
           if [ "$PRERELEASE" = "true" ] || echo "$TAG" | grep -qE '\-(alpha|beta|rc|dev)'; then
             echo "prerelease=true"  >> "$GITHUB_OUTPUT"
@@ -61,32 +58,37 @@ jobs:
           fi
 
       # ── Build distribution artifacts ──────────────────────────────────────
+      # uv build manages its own isolated build env and installs the build
+      # backend (poetry-core) automatically — no uv sync needed here.
       - name: Build sdist and wheel
         run: uv build
 
       - name: List built artifacts
         run: ls -lh dist/
 
+      # ── Validate distribution with twine ──────────────────────────────────
+      - name: Validate distributions
+        run: |
+          uv tool install twine
+          uv tool run twine check dist/*
+
       # ── Generate SHA-256 checksums ─────────────────────────────────────────
       - name: Generate SHA-256 checksums
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
           cd dist
-          sha256sum * | tee ../checksums-${{ steps.version.outputs.version }}.sha256
+          sha256sum * | tee "../checksums-${VERSION}.sha256"
           cd ..
           echo "Checksums:"
-          cat checksums-${{ steps.version.outputs.version }}.sha256
-
-      # ── Validate distribution with twine ──────────────────────────────────
-      - name: Validate distributions
-        run: uv run twine check dist/*
+          cat "checksums-${VERSION}.sha256"
 
       # ── Extract release notes from CHANGELOG.md ───────────────────────────
       - name: Extract release notes from CHANGELOG.md
         id: notes
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG:     ${{ steps.version.outputs.tag }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          TAG="${{ steps.version.outputs.tag }}"
-
           NOTES=$(python3 - <<'PYEOF'
           import re, os, sys
 
@@ -99,7 +101,6 @@ jobs:
               print("No CHANGELOG.md found.")
               sys.exit(0)
 
-          # Split on ## headings and find the section for this version/tag
           sections = re.split(r"\n(?=## )", content)
           target = next(
               (s for s in sections
@@ -119,9 +120,6 @@ jobs:
             echo "$NOTES"
             echo "RELEASE_NOTES_DELIMITER"
           } >> "$GITHUB_OUTPUT"
-        env:
-          RELEASE_VERSION: ${{ steps.version.outputs.version }}
-          RELEASE_TAG:     ${{ steps.version.outputs.tag }}
 
       # ── Create or update the GitHub release ───────────────────────────────
       - name: Create GitHub release
@@ -134,11 +132,9 @@ jobs:
           TITLE="Release ${TAG}"
           NOTES="${{ steps.notes.outputs.notes }}"
 
-          # Pre-release flag
           PR_FLAG=""
           [ "$PRERELEASE" = "true" ] && PR_FLAG="--prerelease"
 
-          # Create the release; if it already exists, update it instead
           if gh release view "$TAG" &>/dev/null; then
             echo "Release $TAG already exists — updating notes."
             gh release edit "$TAG" \
@@ -165,7 +161,7 @@ jobs:
 
           gh release upload "$TAG" \
             dist/* \
-            checksums-${VERSION}.sha256 \
+            "checksums-${VERSION}.sha256" \
             --clobber
 
       # ── Job summary ───────────────────────────────────────────────────────
@@ -179,7 +175,7 @@ jobs:
           RELEASE_URL=$(gh release view "$TAG" --json url -q .url 2>/dev/null || echo "N/A")
 
           {
-            echo "## GitHub Release: ${TAG}"
+            echo "## GitHub Release: ${TAG:-unknown}"
             echo ""
             echo "| Field | Value |"
             echo "|-------|-------|"
@@ -190,7 +186,8 @@ jobs:
             echo ""
             echo "### Artifacts"
             echo "\`\`\`"
-            ls -lh dist/ checksums-${VERSION}.sha256
+            [ -d dist ] && ls -lh dist/ || echo "dist/ not found — build may have failed"
+            [ -f "checksums-${VERSION}.sha256" ] && cat "checksums-${VERSION}.sha256" || echo "checksums file not found"
             echo "\`\`\`"
             echo ""
             echo "### Release Notes"
