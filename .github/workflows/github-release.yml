@@ -1,7 +1,9 @@
 name: GitHub Release
 
 # Triggers:
-#   v* tag push  → auto-triggered by semantic-versioning.yml after a version bump
+#   v* tag push       → for manually pushed tags (not from semantic-versioning.yml,
+#                        which calls reusable-github-release.yml directly due to
+#                        GITHUB_TOKEN tag pushes not triggering new workflow runs)
 #   workflow_dispatch → manually create/update a release for an existing tag
 
 on:
