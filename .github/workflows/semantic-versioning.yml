@@ -1,18 +1,16 @@
 name: Semantic Versioning
 
-# Responsibilities: version bump only.
+# Responsibilities:
 #   1. Analyses conventional commits since the last tag
 #   2. Bumps version in pyproject.toml + ai_vision_tool/__init__.py
 #   3. Updates CHANGELOG.md
 #   4. Commits + pushes the bump commit and the vX.Y.Z annotated tag
+#   5. Explicitly calls downstream release and publish jobs
 #
-# Downstream workflows triggered by the v* tag push:
-#   github-release.yml  → creates GitHub release, attaches sdist/wheel assets
-#   publish-pypi.yml    → builds and publishes to PyPI via OIDC
-#
-# NOTE: If main is a protected branch with required status checks, set
-# secrets.RELEASE_TOKEN to a PAT with repo write access and replace
-# `secrets.GITHUB_TOKEN` in the checkout step below.
+# NOTE: GITHUB_TOKEN-authenticated tag pushes do NOT trigger other workflow runs.
+# Downstream jobs are therefore called explicitly via `uses:` instead of relying
+# on the tag push event. github-release.yml / publish-pypi.yml retain their
+# tag-push triggers for manually created tags only.
 
 on:
   push:
@@ -54,8 +52,6 @@ jobs:
       released: ${{ steps.bump.outputs.released }}
       version:  ${{ steps.bump.outputs.version }}
       tag:      ${{ steps.bump.outputs.tag }}
-      # Downstream: github-release.yml and publish-pypi.yml are triggered
-      # automatically by the v* tag push — no explicit call needed here.
 
     steps:
       # ── Checkout ───────────────────────────────────────────────────────────
@@ -88,14 +84,12 @@ jobs:
           BUMP_INPUT="${{ inputs.bump }}"
 
           if [ "$BUMP_INPUT" = "major" ] || [ "$BUMP_INPUT" = "minor" ] || [ "$BUMP_INPUT" = "patch" ]; then
-            # ── Forced bump (workflow_dispatch with explicit type) ──
             echo "Forced bump: ${BUMP_INPUT}"
             uv run cz bump \
               --increment "$(echo "$BUMP_INPUT" | tr '[:lower:]' '[:upper:]')" \
               --yes \
               --changelog
           else
-            # ── Auto bump: analyse conventional commits since last tag ──
             echo "Auto bump: analysing commits since last tag..."
             if ! uv run cz bump --dry-run &>/dev/null; then
               echo "released=false" >> "$GITHUB_OUTPUT"
@@ -112,9 +106,6 @@ jobs:
           echo "Bumped to: v${VERSION}"
 
       # ── Push commit + tag ─────────────────────────────────────────────────
-      # This tag push triggers two downstream workflows automatically:
-      #   • github-release.yml  (creates GitHub release + uploads dist assets)
-      #   • publish-pypi.yml    (builds + publishes to PyPI)
       - name: Push version commit and tag
         if: steps.bump.outputs.released == 'true'
         run: git push origin HEAD:main --follow-tags
@@ -131,8 +122,8 @@ jobs:
               echo "|------|--------|"
               echo "| Version bump commit | pushed to \`main\` |"
               echo "| Git tag | \`${{ steps.bump.outputs.tag }}\` pushed |"
-              echo "| GitHub release | triggered → **GitHub Release** workflow |"
-              echo "| PyPI publish | triggered → **Publish to PyPI** workflow |"
+              echo "| GitHub release | → **github-release** job below |"
+              echo "| PyPI publish | → **publish-pypi** job below |"
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
@@ -140,3 +131,29 @@ jobs:
               echo "No releasable conventional commits found since the last tag."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  # ── GitHub Release ─────────────────────────────────────────────────────────
+  # Called explicitly because GITHUB_TOKEN tag pushes don't trigger new runs.
+  github-release:
+    name: Create GitHub Release
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/reusable-github-release.yml
+    with:
+      tag:            ${{ needs.release.outputs.tag }}
+      python-version: "3.11"
+      prerelease:     false
+
+  # ── PyPI Publish ───────────────────────────────────────────────────────────
+  publish-pypi:
+    name: Publish to PyPI
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/reusable-pypi-publish.yml
+    with:
+      python-version: "3.11"
