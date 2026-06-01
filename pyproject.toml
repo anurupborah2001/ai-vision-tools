@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "ai-vision-tool"
-version = "0.3.1"
+version = "0.4.0"
 description = "Composable computer-vision pipeline components for image enhancement, motion analysis, capture, and dataset collection."
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -57,7 +57,7 @@ ai-vision-tool = "ai_vision_tool.cli.main:main"
 
 [tool.poetry]
 name = "ai-vision-tool"
-version = "0.3.1"
+version = "0.4.0"
 description = "Composable computer-vision pipeline components for image enhancement, motion analysis, capture, and dataset collection."
 readme = "README.md"
 authors = ["AI Vision Flow Maintainers"]
@@ -145,7 +145,7 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.3.1"
+version = "0.4.0"
 version_scheme = "semver"
 version_provider = "commitizen"
 tag_format = "v$version"
