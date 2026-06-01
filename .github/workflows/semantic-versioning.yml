@@ -86,16 +86,7 @@ jobs:
             echo "Semver tags found — no bootstrap needed."
             exit 0
           fi
-          INIT_VERSION=$(python3 - <<'PYEOF'
-import re, sys
-content = open("pyproject.toml").read()
-m = re.search(r'\[tool\.commitizen\][^\[]*\nversion\s*=\s*"([^"]+)"', content, re.DOTALL)
-if m:
-    print(m.group(1))
-else:
-    sys.exit(1)
-PYEOF
-          )
+          INIT_VERSION=$(grep -A20 '^\[tool\.commitizen\]' pyproject.toml | grep '^version' | head -1 | sed 's/version = "\(.*\)"/\1/')
           FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
           echo "Bootstrapping v${INIT_VERSION} at first commit ${FIRST_COMMIT}."
           git tag -a "v${INIT_VERSION}" "$FIRST_COMMIT" \
