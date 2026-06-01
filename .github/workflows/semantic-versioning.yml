@@ -106,19 +106,20 @@ jobs:
               --changelog
           else
             echo "Auto bump: analysing commits since last tag..."
-            # Exit code 3 = NoneIncrementExit (no releasable commits) → skip gracefully.
-            # Any other non-zero exit is a real error and must fail the job.
-            set +e
-            uv run cz bump --dry-run 2>&1
-            DRY_EXIT=$?
-            set -e
-            if [ "$DRY_EXIT" -eq 3 ]; then
+            # cz bump --dry-run launches a prompt_toolkit TUI which raises EOFError
+            # in non-TTY CI environments. Use git log directly instead.
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$LAST_TAG" ]; then
+              COMMIT_RANGE="${LAST_TAG}..HEAD"
+            else
+              COMMIT_RANGE="HEAD"
+            fi
+            RELEASABLE=$(git log "$COMMIT_RANGE" --pretty=format:"%s" \
+              | grep -cE "^(feat|fix|perf|refactor)(\(.+\))?(!)?: |^BREAKING CHANGE:" || true)
+            if [ "$RELEASABLE" -eq 0 ]; then
               echo "released=false" >> "$GITHUB_OUTPUT"
               echo "No releasable commits since last tag. Skipping release."
               exit 0
-            elif [ "$DRY_EXIT" -ne 0 ]; then
-              echo "cz bump --dry-run failed (exit ${DRY_EXIT}). Aborting."
-              exit "$DRY_EXIT"
             fi
             uv run cz bump --yes --changelog
           fi
