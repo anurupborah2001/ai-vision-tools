@@ -103,8 +103,7 @@ jobs:
             echo "Forced bump: ${BUMP_INPUT}"
             uv run cz bump \
               --increment "$(echo "$BUMP_INPUT" | tr '[:lower:]' '[:upper:]')" \
-              --yes \
-              --changelog
+              --yes
           else
             echo "Auto bump: analysing commits since last tag..."
             # cz bump --dry-run launches a prompt_toolkit TUI which raises EOFError
@@ -122,7 +121,7 @@ jobs:
               echo "No releasable commits since last tag. Skipping release."
               exit 0
             fi
-            uv run cz bump --yes --changelog
+            uv run cz bump --yes
           fi
 
           VERSION=$(uv run cz version --project)
