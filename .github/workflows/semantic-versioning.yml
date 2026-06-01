@@ -176,13 +176,41 @@ jobs:
       prerelease:     false
 
   # ── PyPI Publish ───────────────────────────────────────────────────────────
+  # Inlined (not reusable workflow) because PyPI trusted publishing does not
+  # support reusable workflows — the job_workflow_ref must equal the calling
+  # workflow ref for the OIDC claim to match the configured trusted publisher.
   publish-pypi:
     name: Publish to PyPI
     needs: release
     if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ai-vision-tool/
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/reusable-pypi-publish.yml
-    with:
-      python-version: "3.11"
+
+    steps:
+      - name: Check out repository at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+          fetch-tags: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Build distributions (sdist + wheel)
+        run: uv build
+
+      - name: Validate distributions with twine
+        run: |
+          uv tool install twine
+          uv tool run twine check dist/*
+
+      - name: Publish to PyPI (trusted publisher / OIDC)
+        uses: pypa/gh-action-pypi-publish@release/v1
