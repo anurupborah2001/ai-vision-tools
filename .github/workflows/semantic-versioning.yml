@@ -131,9 +131,13 @@ jobs:
           echo "Bumped to: v${VERSION}"
 
       # ── Push commit + tag ─────────────────────────────────────────────────
+      # Push the commit and tag explicitly rather than relying on --follow-tags,
+      # which only pushes annotated tags and silently skips lightweight ones.
       - name: Push version commit and tag
         if: steps.bump.outputs.released == 'true'
-        run: git push origin HEAD:master --follow-tags
+        run: |
+          git push origin HEAD:master
+          git push origin "refs/tags/${{ steps.bump.outputs.tag }}"
 
       # ── Summary ───────────────────────────────────────────────────────────
       - name: Write job summary
