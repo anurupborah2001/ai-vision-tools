@@ -15,7 +15,7 @@ name: Semantic Versioning
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
     inputs:
       bump:
@@ -108,7 +108,7 @@ jobs:
       # ── Push commit + tag ─────────────────────────────────────────────────
       - name: Push version commit and tag
         if: steps.bump.outputs.released == 'true'
-        run: git push origin HEAD:main --follow-tags
+        run: git push origin HEAD:master --follow-tags
 
       # ── Summary ───────────────────────────────────────────────────────────
       - name: Write job summary
@@ -120,7 +120,7 @@ jobs:
               echo ""
               echo "| Step | Status |"
               echo "|------|--------|"
-              echo "| Version bump commit | pushed to \`main\` |"
+              echo "| Version bump commit | pushed to \`master\` |"
               echo "| Git tag | \`${{ steps.bump.outputs.tag }}\` pushed |"
               echo "| GitHub release | → **github-release** job below |"
               echo "| PyPI publish | → **publish-pypi** job below |"
