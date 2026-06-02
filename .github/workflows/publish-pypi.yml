@@ -1,11 +1,22 @@
 name: Publish to PyPI
 
+# Triggered by manually-pushed tags (v*) or workflow_dispatch.
+# NOTE: PyPI trusted publishing requires the job to live in the same file
+# that is registered as the trusted publisher — reusable workflows change
+# the job_workflow_ref OIDC claim and cause "invalid-publisher" errors.
+# The publishing step is therefore inlined here (same fix applied to
+# semantic-versioning.yml publish-pypi job).
+
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
     inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.4.1) — required for workflow_dispatch"
+        required: true
+        type: string
       repository_url:
         description: "Optional repository URL (e.g. https://test.pypi.org/legacy/ for TestPyPI)"
         required: false
@@ -14,10 +25,63 @@ on:
 
 jobs:
   publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ai-vision-tool/
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/reusable-pypi-publish.yml
-    with:
-      python-version: "3.11"
-      repository_url: ${{ inputs.repository_url || '' }}
+
+    steps:
+      - name: Resolve tag
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out repository at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.tag }}
+          fetch-tags: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Verify tag matches pyproject.toml version
+        run: |
+          TAG="${{ steps.resolve.outputs.tag }}"
+          PYPROJECT_VERSION="v$(grep -m1 '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')"
+          echo "Tag:            $TAG"
+          echo "pyproject.toml: $PYPROJECT_VERSION"
+          if [ "$TAG" != "$PYPROJECT_VERSION" ]; then
+            echo "ERROR: tag '$TAG' != pyproject.toml version '$PYPROJECT_VERSION'"
+            exit 1
+          fi
+          echo "Version check passed."
+
+      - name: Build distributions (sdist + wheel)
+        run: uv build
+
+      - name: Validate distributions with twine
+        run: |
+          uv tool install twine
+          uv tool run twine check dist/*
+
+      - name: Publish to PyPI (trusted publisher / OIDC)
+        if: inputs.repository_url == ''
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Publish to alternate repository
+        if: inputs.repository_url != ''
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ inputs.repository_url }}

@@ -1,119 +1,125 @@
 # Publishing Guide
 
-This project is packaged with Poetry and published as a PyPI distribution. The release flow below keeps local validation, commit conventions, and PyPI upload steps aligned.
+Releases are fully automated via GitHub Actions using commitizen semantic versioning.
+Manual steps are only needed on first-time setup.
 
-## 1. Prepare the release
+---
 
-Review these fields before publishing:
+## Automated Release Flow
 
-- `version` in [pyproject.toml](/Users/anuborah@sphnet.com.sg/IdeaProjects/ai-vision-flow/pyproject.toml:1)
-- `authors`
-- description, keywords, and classifiers
-- optional project URLs if you want homepage, docs, or issue tracker links on PyPI
+Every push to `master` triggers `semantic-versioning.yml`:
 
-Install the project with development tooling:
+1. Analyses conventional commits since the last `vX.Y.Z` tag
+2. Bumps version in `pyproject.toml` and `ai_vision_tool/__init__.py`
+3. Commits the bump and pushes an annotated `vX.Y.Z` tag to `master`
+4. Creates a GitHub Release with changelog notes and distribution assets
+5. Publishes to PyPI via OIDC trusted publishing (no token needed)
+
+No version is created if there are no releasable commits (`feat:`, `fix:`, `perf:`,
+`refactor:`, or `BREAKING CHANGE:`) since the last tag.
+
+### Version bump rules
+
+| Commit prefix | Bump |
+|---------------|------|
+| `fix:`, `perf:`, `refactor:` | patch (0.4.x) |
+| `feat:` | minor (0.x.0) |
+| `BREAKING CHANGE:` footer or `feat!:`/`fix!:` | major (x.0.0) |
+
+---
+
+## One-Time Setup: PyPI Trusted Publisher
+
+PyPI trusted publishing uses OIDC — no API token or `.pypirc` required.
+Configure once per project on pypi.org:
+
+1. Go to **https://pypi.org/manage/account/publishing/**
+2. Add a **pending trusted publisher** with:
+
+   | Field | Value |
+   |-------|-------|
+   | Project name | `ai-vision-tool` |
+   | Owner | `anurupborah2001` |
+   | Repository | `ai-vision-tools` |
+   | Workflow filename | `semantic-versioning.yml` |
+   | Environment | `pypi` |
+
+3. In the GitHub repository settings, create a **`pypi` environment**
+   under **Settings → Environments** (no secrets needed — OIDC handles auth).
+
+For TestPyPI rehearsals add a second publisher with workflow filename
+`publish-pypi.yml` and environment `testpypi`, then trigger:
 
 ```bash
-poetry install --with dev
+gh workflow run publish-pypi.yml \
+  -f tag=vX.Y.Z \
+  -f repository_url=https://test.pypi.org/legacy/
 ```
 
-## 2. Follow commit policy
+---
 
-This repository now enforces Conventional Commits through `pre-commit` at the `commit-msg` stage.
+## Manual Release Trigger
 
-Examples:
-
-- `feat: add advanced weather augmentations`
-- `fix: clamp crop bounds in augmentation component`
-- `docs: expand publishing guide`
-- `test: add coverage for basic augmentation classes`
-- `test: expand preprocessing component coverage`
-
-Install the hooks locally if you have not already:
+Force a release without waiting for a qualifying commit:
 
 ```bash
-poetry run pre-commit install
-poetry run pre-commit install --hook-type pre-push
-poetry run pre-commit install --hook-type commit-msg
+gh workflow run semantic-versioning.yml -f bump=patch   # or minor / major
 ```
 
-## 3. Run local quality gates
+---
 
-Run the hooks and tests before building:
+## Commit Message Convention
 
-```bash
-poetry run pre-commit run --all-files
-poetry run pytest
+This repository enforces [Conventional Commits](https://www.conventionalcommits.org/)
+via `pre-commit` at the `commit-msg` stage.
+
+```
+feat: add fog and rain augmentation pipeline stage
+fix: clamp crop bounds to prevent negative slice indices
+perf: replace nested loop with vectorised numpy op in mosaic
+docs: update CLI usage examples in README
+test: add coverage for weather augmentation components
+chore: bump dev dependency versions
 ```
 
-Recommended focused checks before a release:
-
-- verify `README.md` examples still match the CLI and import paths
-- verify `main.py --help` reflects the current flags
-- verify the package imports cleanly with `poetry run python -c "import visionflow"`
-- run the preprocessing-focused suite with `poetry run pytest tests/test_preprocessing_components.py`
-
-## 4. Build distributions
+Install hooks locally:
 
 ```bash
-poetry run python -m build
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
+uv run pre-commit install --hook-type commit-msg
 ```
 
-This creates:
+---
 
-- `dist/*.tar.gz`
-- `dist/*.whl`
+## Local Quality Gates
 
-## 5. Validate the distributions
+Run before opening a PR:
 
 ```bash
-poetry run python -m twine check dist/*
+uv run pre-commit run --all-files
+uv run pytest
 ```
 
-Recommended additional smoke tests:
+Smoke-test the package in a clean environment:
 
 ```bash
-python -m venv /tmp/ai-vision-flow-release-check
-source /tmp/ai-vision-flow-release-check/bin/activate
+uv build
+uv venv /tmp/avt-check && source /tmp/avt-check/bin/activate
 pip install dist/*.whl
-python -c "import visionflow; print(visionflow.__version__)"
-ai-vision-flow --help
+python -c "import ai_vision_tool; print(ai_vision_tool.__version__)"
+ai-vision-tool --help
 deactivate
 ```
 
-## 6. Upload to TestPyPI
+---
+
+## Hotfix / Out-of-Band Tag
+
+If you need to publish from an existing tag without a new bump:
 
 ```bash
-poetry run python -m twine upload --repository testpypi dist/*
+gh workflow run publish-pypi.yml -f tag=vX.Y.Z
 ```
 
-Install from TestPyPI in a clean environment if you want a full rehearsal before production release.
-
-## 7. Upload to PyPI
-
-```bash
-poetry run python -m twine upload dist/*
-```
-
-## 8. Tag and announce the release
-
-After the PyPI upload succeeds:
-
-- create a git tag for the released version
-- push the tag
-- update any changelog or release notes you maintain externally
-
-## Environment variables
-
-Use API tokens instead of passwords:
-
-```bash
-export TWINE_USERNAME="__token__"
-export TWINE_PASSWORD="pypi-..."
-```
-
-## Notes
-
-- Do not commit `.pypirc` with secrets.
-- If you change dependencies, package exports, or package layout, rebuild before uploading.
-- If you publish optional extras, confirm they are documented clearly in `README.md`.
+This re-runs the publish job against the specified tag without touching the version files.
