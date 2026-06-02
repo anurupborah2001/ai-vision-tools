@@ -238,23 +238,60 @@ Optional extras install only the libraries each feature needs.
 ### Development Setup
 
 ```bash
-git clone https://github.com/your-org/ai-vision-tool.git
-cd ai-vision-tool
+git clone https://github.com/anurupborah2001/ai-vision-tools.git
+cd ai-vision-tools
 
-# Using uv
-uv sync --dev
+# Install all dev dependencies
+make install-dev
 
-# Using Poetry
-poetry install --with dev
+# Install pre-commit hooks (commit-msg via commitizen, pre-push, pre-commit)
+make hooks
 ```
 
-Install pre-commit hooks:
+Or without `make`:
 
 ```bash
-pre-commit install
-pre-commit install --hook-type pre-push
-pre-commit install --hook-type commit-msg
-pre-commit run --all-files
+uv sync --dev
+uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
+uv run pre-commit install --hook-type pre-push
+```
+
+#### Commit messages
+
+Commits are validated by [commitizen](https://github.com/commitizen-tools/commitizen)
+at the `commit-msg` stage. Use the interactive prompt to build a valid commit:
+
+```bash
+uv run cz commit
+```
+
+Or write manually following [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add fog augmentation pipeline stage
+fix: clamp crop bounds to prevent negative slice indices
+docs: update CLI usage examples
+test: add coverage for weather augmentation components
+```
+
+| Prefix | Version bump |
+|--------|-------------|
+| `fix:`, `perf:`, `refactor:` | patch |
+| `feat:` | minor |
+| `BREAKING CHANGE:` / `feat!:` | major |
+
+#### Common development tasks
+
+```bash
+make lint        # ruff + isort + black (check only)
+make format      # auto-fix with ruff + isort + black
+make test        # run full test suite
+make test-fast   # stop on first failure
+make bump        # bump version from commits (commitizen)
+make changelog   # regenerate CHANGELOG.md
+make build       # build sdist + wheel into dist/
+make help        # list all targets
 ```
 
 ---
@@ -2385,16 +2422,26 @@ pytest tests/test_cli_file_processing.py
 
 ---
 
-## Build and Publish
+## Build and Release
+
+Releases are fully automated via GitHub Actions + commitizen semantic versioning.
+Push qualifying conventional commits to `master` and the pipeline handles the rest:
+version bump → git tag → GitHub Release → PyPI publish.
 
 ```bash
-python -m pip install --upgrade build
-python -m build
+# Build locally
+make build          # sdist + wheel written to dist/
+
+# Manual version bump (CI does this automatically on merge)
+make bump           # auto from commits
+make bump-patch     # force patch
+make bump-minor     # force minor
+
+# Trigger a release from CI without a code change
+gh workflow run semantic-versioning.yml -f bump=patch
 ```
 
-The wheel and source distribution are written to `dist/`.
-
-See `PUBLISHING.md` for the release checklist and PyPI upload commands.
+See `PUBLISHING.md` for the full automated release flow and PyPI trusted publisher setup.
 
 ---
 
