@@ -11,7 +11,7 @@ This file provides context for AI assistants navigating or modifying this reposi
 | PyPI package | `ai-vision-tool` |
 | Python import namespace | `ai_vision_tool` |
 | CLI entrypoint (webcam app + image processing) | `ai-vision-tool` |
-| Package version | `0.2.0` |
+| Package version | `0.4.1` |
 | Requires Python | `>=3.10,<4.0` |
 
 > **Important:** The package was renamed from `ai-vision-flow` / `visionflow` to
@@ -264,25 +264,34 @@ dep also has a pure cv2/numpy fallback so the library works with no extras insta
 ### Install Dependencies
 
 ```bash
-# uv (recommended)
-uv sync --dev
+make install-dev   # uv sync --dev
+```
 
-# Poetry
-poetry install --with dev
+### Common Tasks (Makefile)
+
+```bash
+make help          # list all targets
+make lint          # ruff + isort + black (check only)
+make format        # auto-fix with ruff + isort + black
+make test          # full pytest suite
+make test-fast     # stop on first failure (-x)
+make build         # sdist + wheel → dist/
+make clean         # remove dist/ build/
 ```
 
 ### Run Tests
 
 ```bash
-pytest                                          # all tests
-pytest tests/test_imports.py                   # base install boundary + lazy-import checks
-pytest tests/test_preprocessing_components.py
-pytest tests/test_basic_augmentations.py
-pytest tests/test_advanced_augmentations.py
-pytest tests/test_capture_components.py
-pytest tests/test_core_components.py
-pytest tests/test_labeler_components.py
-pytest tests/test_cli_file_processing.py
+make test
+# or individually:
+uv run pytest tests/test_imports.py
+uv run pytest tests/test_preprocessing_components.py
+uv run pytest tests/test_basic_augmentations.py
+uv run pytest tests/test_advanced_augmentations.py
+uv run pytest tests/test_capture_components.py
+uv run pytest tests/test_core_components.py
+uv run pytest tests/test_labeler_components.py
+uv run pytest tests/test_cli_file_processing.py
 ```
 
 > `tests/test_api.py` is intentionally skipped — the API module moved to `backup/` and
@@ -291,46 +300,73 @@ pytest tests/test_cli_file_processing.py
 ### Lint and Format
 
 ```bash
-ruff check .
-black .
-isort .
+make lint     # check only
+make format   # auto-fix
 ```
 
 ### Pre-Commit Hooks
 
-```bash
-# Install all hook types
-pre-commit install
-pre-commit install --hook-type pre-push
-pre-commit install --hook-type commit-msg
+Hooks are managed via [pre-commit](https://pre-commit.com/). Install once:
 
-# Run all hooks manually
-pre-commit run --all-files
+```bash
+make hooks
+# equivalent to:
+uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
+uv run pre-commit install --hook-type pre-push
 ```
 
-Hooks enforce: `ruff`, `isort`, `black`, `pre-commit-hooks`, Conventional Commits,
-and `pytest` on pre-push.
+Active hooks:
+- **pre-commit**: `check-yaml`, `check-toml`, `check-merge-conflict`, `end-of-file-fixer`,
+  `trailing-whitespace`, `ruff`, `isort`, `black`
+- **commit-msg**: commitizen validates message against `cz_conventional_commits` schema
+- **pre-push**: `pytest` full suite
 
 ### Commit Message Convention
 
-This repository uses [Conventional Commits](https://www.conventionalcommits.org/):
+Commit messages are validated by [commitizen](https://github.com/commitizen-tools/commitizen).
+Use the interactive prompt to build a valid message:
+
+```bash
+uv run cz commit
+```
+
+Or write manually following [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat: add fog and rain augmentation coverage
+feat: add fog and rain augmentation pipeline stage
 fix: correct augmentation profile parameter names
 docs: update publishing workflow
 test: add missing unit tests for basic augmentations
-chore: rename template → capture module
+chore: bump dev dependency versions
 ```
+
+| Prefix | Triggers bump |
+|--------|--------------|
+| `fix:`, `perf:`, `refactor:` | patch |
+| `feat:` | minor |
+| `BREAKING CHANGE:` / `feat!:` / `fix!:` | major |
 
 ---
 
 ## Release
 
-See `PUBLISHING.md` for the full release checklist and PyPI upload commands.
+Releases are fully automated. Push qualifying conventional commits to `master`;
+`semantic-versioning.yml` bumps the version, creates a tag, publishes a GitHub Release,
+and publishes to PyPI via OIDC trusted publishing.
 
-Key steps:
-1. Bump version in `pyproject.toml` (`[project].version` and `[tool.poetry].version`)
-2. Update `__version__` in `ai_vision_tool/__init__.py`
-3. Run `python -m build`
-4. Run `twine upload dist/*`
+```bash
+# Local version bump (CI does this automatically — only run locally to preview)
+make bump          # auto from commits
+make bump-patch    # force patch
+make bump-minor    # force minor
+
+# Trigger CI release manually
+gh workflow run semantic-versioning.yml -f bump=patch
+```
+
+Version files updated automatically by commitizen:
+- `pyproject.toml` → `[project].version` and `[tool.commitizen].version`
+- `ai_vision_tool/__init__.py` → `__version__`
+
+See `PUBLISHING.md` for the full automated flow and PyPI trusted publisher setup.

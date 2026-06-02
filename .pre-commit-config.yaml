@@ -26,12 +26,11 @@ repos:
     hooks:
       - id: black
 
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.2.0
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.16.3
     hooks:
-      - id: conventional-pre-commit
+      - id: commitizen
         stages: [commit-msg]
-        args: []
 
   - repo: local
     hooks:
