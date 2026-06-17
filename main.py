@@ -183,7 +183,6 @@ Core component and template lookups:
 # and after installation via the console script entrypoint.
 from ai_vision_tool.cli import main
 
-
 # Delegate directly to the packaged CLI.
 # This preserves a single source of truth for runtime flags, examples,
 # webcam behavior, and profile-driven augmentation loading.

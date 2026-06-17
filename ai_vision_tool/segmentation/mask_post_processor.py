@@ -49,7 +49,7 @@ class MaskPostProcessor(AIVisionComponent):
             if n <= 1:
                 return m > 0
             largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-            return (labels == largest)
+            return labels == largest
         if op == "remove_small":
             min_area = int(config.get("min_area", 100))
             n, labels, stats, _ = cv2.connectedComponentsWithStats(m)
@@ -81,7 +81,9 @@ class MaskPostProcessor(AIVisionComponent):
 
     @staticmethod
     def mask_to_polygon(mask: np.ndarray) -> list[list[int]]:
-        contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         if not contours:
             return []
         c = max(contours, key=cv2.contourArea)

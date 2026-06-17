@@ -25,8 +25,8 @@ from ai_vision_tool import (
     Greyscale,
     Hue,
     Mosaic,
-    MotionDetector,
     MotionBlur,
+    MotionDetector,
     Noise,
     Rotate90,
     Rotation,
@@ -37,7 +37,13 @@ from ai_vision_tool import (
 from ai_vision_tool.augmentation.common import parse_component_profile
 from ai_vision_tool.pipelines import AIVisionPipeline
 
-EXAMPLE_CATEGORY_CHOICES = ["all", "preprocessing", "augmentations", "components", "capture"]
+EXAMPLE_CATEGORY_CHOICES = [
+    "all",
+    "preprocessing",
+    "augmentations",
+    "components",
+    "capture",
+]
 
 
 def _example_entry(category, name, summary, python_example, runtime_example=None):
@@ -93,46 +99,274 @@ def build_examples_catalog():
     lookup_prefix = "python main.py --show-examples --example-name"
 
     preprocessing_entries = [
-        ("AutoOrient", "rotation=90, flip_horizontal=False", "Fix orientation metadata or rotate frames.", "image", "python main.py --auto-orient --auto-orient-rotation 90"),
-        ("AutoAdjustContrast", 'method="adaptive_equalization", clip_limit=2.0', "Apply adaptive equalization or histogram-based contrast recovery.", "image", 'python main.py --auto-adjust-contrast --contrast-method adaptive_equalization --clip-limit 2.0'),
-        ("Resize", "width=640, height=640", "Resize to an exact output size.", "image", None),
-        ("LetterboxResize", "width=640, height=640, pad_value=(114, 114, 114)", "Resize with padding while preserving aspect ratio.", "image", None),
-        ("CenterCrop", "width=224, height=224", "Crop the center patch for classification inputs.", "image", None),
-        ("PadToSquare", "pad_value=(0, 0, 0)", "Pad rectangular frames to a square canvas.", "image", None),
-        ("Normalize", "", "Map pixel intensities into a normalized numeric range.", "image", None),
-        ("Standardize", "per_channel=True", "Standardize by mean and standard deviation.", "image", None),
-        ("RescalePixels", "scale=1.0 / 255.0, offset=0.0", "Rescale raw pixel values for model ingestion.", "image", None),
-        ("ConvertColorSpace", 'source="BGR", target="RGB"', "Convert between OpenCV color spaces.", "image", None),
+        (
+            "AutoOrient",
+            "rotation=90, flip_horizontal=False",
+            "Fix orientation metadata or rotate frames.",
+            "image",
+            "python main.py --auto-orient --auto-orient-rotation 90",
+        ),
+        (
+            "AutoAdjustContrast",
+            'method="adaptive_equalization", clip_limit=2.0',
+            "Apply adaptive equalization or histogram-based contrast recovery.",
+            "image",
+            "python main.py --auto-adjust-contrast --contrast-method adaptive_equalization --clip-limit 2.0",
+        ),
+        (
+            "Resize",
+            "width=640, height=640",
+            "Resize to an exact output size.",
+            "image",
+            None,
+        ),
+        (
+            "LetterboxResize",
+            "width=640, height=640, pad_value=(114, 114, 114)",
+            "Resize with padding while preserving aspect ratio.",
+            "image",
+            None,
+        ),
+        (
+            "CenterCrop",
+            "width=224, height=224",
+            "Crop the center patch for classification inputs.",
+            "image",
+            None,
+        ),
+        (
+            "PadToSquare",
+            "pad_value=(0, 0, 0)",
+            "Pad rectangular frames to a square canvas.",
+            "image",
+            None,
+        ),
+        (
+            "Normalize",
+            "",
+            "Map pixel intensities into a normalized numeric range.",
+            "image",
+            None,
+        ),
+        (
+            "Standardize",
+            "per_channel=True",
+            "Standardize by mean and standard deviation.",
+            "image",
+            None,
+        ),
+        (
+            "RescalePixels",
+            "scale=1.0 / 255.0, offset=0.0",
+            "Rescale raw pixel values for model ingestion.",
+            "image",
+            None,
+        ),
+        (
+            "ConvertColorSpace",
+            'source="BGR", target="RGB"',
+            "Convert between OpenCV color spaces.",
+            "image",
+            None,
+        ),
         ("BGRToRGB", "", "Convert BGR frames to RGB.", "image", None),
         ("RGBToBGR", "", "Convert RGB frames back to BGR.", "image", None),
-        ("CLAHE", "clip_limit=2.0, tile_grid_size=(8, 8)", "Boost local contrast with CLAHE.", "image", None),
-        ("HistogramEqualization", 'color_space="ycrcb"', "Equalize luminance histograms for flatter lighting.", "image", None),
-        ("GammaCorrection", "gamma=1.4", "Apply gamma correction to brighten or darken frames.", "image", None),
-        ("WhiteBalance", 'method="gray_world"', "Correct channel color casts.", "image", None),
-        ("Denoise", 'method="median", kernel_size=3', "Reduce sensor or compression noise.", "image", None),
-        ("Sharpen", "amount=1.0", "Sharpen softened edges before downstream analysis.", "image", None),
-        ("Deblur", "amount=1.0", "Recover edges with an unsharp-style deblur pass.", "image", None),
-        ("RemoveBackground", 'method="threshold", threshold=10, keep_mask=True', "Mask or suppress the background region.", '{"frame": image}', None),
-        ("Threshold", "threshold=127, keep_channels=False", "Create a binary threshold mask.", "image", None),
-        ("AdaptiveThreshold", 'method="gaussian", block_size=11, keep_channels=False', "Create a local adaptive threshold mask.", "image", None),
-        ("EdgeDetection", 'method="canny", threshold1=100, threshold2=200', "Extract edges for feature or contour workflows.", "image", None),
-        ("ContourExtraction", "", "Populate contour metadata on a frame payload.", '{"frame": image}', None),
-        ("PerspectiveCorrection", "source_points=points, output_size=(600, 400)", "Rectify a quadrilateral document or planar region.", "image", None),
-        ("Deskew", "", "Rotate a document or scene back to a leveled angle.", "image", None),
-        ("AutoCrop", "threshold=10, padding=4", "Trim empty borders around the active subject.", "image", None),
-        ("FaceAlign", "output_size=(112, 112)", "Align a face payload using eye coordinates.", '{"frame": image, "metadata": {"left_eye": (40, 50), "right_eye": (90, 50)}}', None),
-        ("ObjectCrop", "", "Crop a region from payload bounding boxes.", '{"frame": image, "bboxes": [(10, 20, 120, 80)]}', None),
-        ("BoundingBoxClamp", "", "Clamp payload bounding boxes to image boundaries.", '{"frame": image, "bboxes": [(-5, -5, 80, 90)]}', None),
-        ("BoundingBoxNormalize", "", "Normalize payload bounding boxes to relative coordinates.", '{"frame": image, "bboxes": [(10, 20, 120, 80)]}', None),
-        ("MaskResize", "width=640, height=640", "Resize a payload mask to a target size.", '{"frame": image, "mask": mask}', None),
-        ("ImageQualityCheck", "", "Compute blur and brightness quality flags.", '{"frame": image}', None),
-        ("BlurDetection", "", "Flag blurry payloads using Laplacian variance.", '{"frame": image}', None),
-        ("BrightnessCheck", "min_brightness=40.0, max_brightness=215.0", "Validate payload brightness bounds.", '{"frame": image}', None),
-        ("DuplicateImageCheck", "reference_hashes=[]", "Hash a payload to detect duplicates.", '{"frame": image}', None),
-        ("CorruptImageCheck", "", "Flag empty or invalid payload frames.", '{"frame": image}', None),
-        ("AspectRatioFilter", "min_ratio=0.75, max_ratio=1.5", "Filter payloads by aspect ratio.", '{"frame": image}', None),
-        ("MinSizeFilter", "min_width=320, min_height=320", "Require a minimum payload size.", '{"frame": image}', None),
-        ("MaxSizeFilter", "max_width=2048, max_height=2048", "Reject overly large payloads.", '{"frame": image}', None),
+        (
+            "CLAHE",
+            "clip_limit=2.0, tile_grid_size=(8, 8)",
+            "Boost local contrast with CLAHE.",
+            "image",
+            None,
+        ),
+        (
+            "HistogramEqualization",
+            'color_space="ycrcb"',
+            "Equalize luminance histograms for flatter lighting.",
+            "image",
+            None,
+        ),
+        (
+            "GammaCorrection",
+            "gamma=1.4",
+            "Apply gamma correction to brighten or darken frames.",
+            "image",
+            None,
+        ),
+        (
+            "WhiteBalance",
+            'method="gray_world"',
+            "Correct channel color casts.",
+            "image",
+            None,
+        ),
+        (
+            "Denoise",
+            'method="median", kernel_size=3',
+            "Reduce sensor or compression noise.",
+            "image",
+            None,
+        ),
+        (
+            "Sharpen",
+            "amount=1.0",
+            "Sharpen softened edges before downstream analysis.",
+            "image",
+            None,
+        ),
+        (
+            "Deblur",
+            "amount=1.0",
+            "Recover edges with an unsharp-style deblur pass.",
+            "image",
+            None,
+        ),
+        (
+            "RemoveBackground",
+            'method="threshold", threshold=10, keep_mask=True',
+            "Mask or suppress the background region.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "Threshold",
+            "threshold=127, keep_channels=False",
+            "Create a binary threshold mask.",
+            "image",
+            None,
+        ),
+        (
+            "AdaptiveThreshold",
+            'method="gaussian", block_size=11, keep_channels=False',
+            "Create a local adaptive threshold mask.",
+            "image",
+            None,
+        ),
+        (
+            "EdgeDetection",
+            'method="canny", threshold1=100, threshold2=200',
+            "Extract edges for feature or contour workflows.",
+            "image",
+            None,
+        ),
+        (
+            "ContourExtraction",
+            "",
+            "Populate contour metadata on a frame payload.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "PerspectiveCorrection",
+            "source_points=points, output_size=(600, 400)",
+            "Rectify a quadrilateral document or planar region.",
+            "image",
+            None,
+        ),
+        (
+            "Deskew",
+            "",
+            "Rotate a document or scene back to a leveled angle.",
+            "image",
+            None,
+        ),
+        (
+            "AutoCrop",
+            "threshold=10, padding=4",
+            "Trim empty borders around the active subject.",
+            "image",
+            None,
+        ),
+        (
+            "FaceAlign",
+            "output_size=(112, 112)",
+            "Align a face payload using eye coordinates.",
+            '{"frame": image, "metadata": {"left_eye": (40, 50), "right_eye": (90, 50)}}',
+            None,
+        ),
+        (
+            "ObjectCrop",
+            "",
+            "Crop a region from payload bounding boxes.",
+            '{"frame": image, "bboxes": [(10, 20, 120, 80)]}',
+            None,
+        ),
+        (
+            "BoundingBoxClamp",
+            "",
+            "Clamp payload bounding boxes to image boundaries.",
+            '{"frame": image, "bboxes": [(-5, -5, 80, 90)]}',
+            None,
+        ),
+        (
+            "BoundingBoxNormalize",
+            "",
+            "Normalize payload bounding boxes to relative coordinates.",
+            '{"frame": image, "bboxes": [(10, 20, 120, 80)]}',
+            None,
+        ),
+        (
+            "MaskResize",
+            "width=640, height=640",
+            "Resize a payload mask to a target size.",
+            '{"frame": image, "mask": mask}',
+            None,
+        ),
+        (
+            "ImageQualityCheck",
+            "",
+            "Compute blur and brightness quality flags.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "BlurDetection",
+            "",
+            "Flag blurry payloads using Laplacian variance.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "BrightnessCheck",
+            "min_brightness=40.0, max_brightness=215.0",
+            "Validate payload brightness bounds.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "DuplicateImageCheck",
+            "reference_hashes=[]",
+            "Hash a payload to detect duplicates.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "CorruptImageCheck",
+            "",
+            "Flag empty or invalid payload frames.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "AspectRatioFilter",
+            "min_ratio=0.75, max_ratio=1.5",
+            "Filter payloads by aspect ratio.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "MinSizeFilter",
+            "min_width=320, min_height=320",
+            "Require a minimum payload size.",
+            '{"frame": image}',
+            None,
+        ),
+        (
+            "MaxSizeFilter",
+            "max_width=2048, max_height=2048",
+            "Reject overly large payloads.",
+            '{"frame": image}',
+            None,
+        ),
     ]
 
     for name, constructor, summary, target, runtime_example in preprocessing_entries:
@@ -141,80 +375,490 @@ def build_examples_catalog():
                 "preprocessing",
                 name,
                 summary,
-                _run_example("ai_vision_tool.preprocessing", name, constructor, target=target),
+                _run_example(
+                    "ai_vision_tool.preprocessing", name, constructor, target=target
+                ),
                 runtime_example,
             )
         )
 
     augmentation_entries = [
-        ("Flip", "horizontal=True", "Mirror a frame horizontally or vertically.", "image", "python main.py --flip-horizontal"),
-        ("Rotate90", "k=1", "Rotate a frame by 90-degree increments.", "image", "python main.py --rotate90-k 1"),
-        ("Crop", "x=20, y=20, width=200, height=200", "Extract a rectangular region.", "image", "python main.py --crop --crop-x 20 --crop-y 20 --crop-width 200 --crop-height 200"),
-        ("Rotation", "angle=12.0, scale=1.0", "Rotate with arbitrary angles.", "image", "python main.py --rotation-angle 12"),
-        ("Shear", "shear_x=0.15, shear_y=0.0", "Apply an affine shear transform.", "image", "python main.py --shear-x 0.15"),
-        ("Greyscale", "keep_channels=True", "Convert to grayscale while keeping 3 channels if desired.", "image", "python main.py --augment-greyscale"),
-        ("Hue", "delta=10", "Shift hue values in HSV space.", "image", "python main.py --hue-delta 10"),
-        ("Saturation", "scale=1.2", "Increase or reduce saturation.", "image", "python main.py --saturation-scale 1.2"),
-        ("Brightness", "beta=18", "Add or subtract brightness.", "image", "python main.py --brightness-beta 18"),
-        ("Exposure", "gamma=1.3", "Apply gamma-based exposure changes.", "image", "python main.py --exposure-gamma 1.3"),
-        ("Blur", "kernel_size=5, sigma_x=1.0", "Apply Gaussian blur.", "image", "python main.py --blur --blur-kernel-size 5 --blur-sigma-x 1.0"),
-        ("Noise", 'mode="gaussian", stddev=8.0', "Inject Gaussian or salt-and-pepper noise.", "image", "python main.py --noise --noise-mode gaussian --noise-stddev 8"),
-        ("Cutout", "x=30, y=30, width=60, height=60", "Blank out a rectangular patch.", "image", "python main.py --cutout --cutout-x 30 --cutout-y 30 --cutout-width 60 --cutout-height 60"),
-        ("Mosaic", "output_size=(640, 640), mosaic_images=[image, image, image]", "Create a 2x2 mosaic composition.", "image", "python main.py --mosaic --mosaic-image path/to/a.jpg --mosaic-image path/to/b.jpg"),
-        ("MotionBlur", "kernel_size=11, angle=25", "Simulate camera or subject motion blur.", "image", "python main.py --motion-blur --motion-blur-kernel-size 11 --motion-blur-angle 25"),
-        ("CameraGain", "gain=1.2, black_level=8.0", "Simulate sensor gain and black-level shifts.", "image", "python main.py --camera-gain 1.2 --camera-black-level 8"),
-        ("RandomResize", "min_width=320, max_width=640, min_height=320, max_height=640", "Randomize output size for training variation.", "image", f"{lookup_prefix} RandomResize"),
-        ("RandomScale", "min_scale=0.8, max_scale=1.2", "Randomize image scale.", "image", f"{lookup_prefix} RandomScale"),
-        ("RandomCrop", "crop_width=224, crop_height=224", "Sample a random crop.", "image", f"{lookup_prefix} RandomCrop"),
-        ("RandomResizedCrop", "output_width=224, output_height=224", "Random crop plus resize for model inputs.", "image", f"{lookup_prefix} RandomResizedCrop"),
-        ("RandomPadding", "max_top=16, max_bottom=16, max_left=16, max_right=16", "Add random padding to vary context.", "image", f"{lookup_prefix} RandomPadding"),
-        ("Translate", "shift_x=12, shift_y=8", "Translate a frame in X/Y.", "image", f"{lookup_prefix} Translate"),
-        ("AffineTransform", "angle=8, scale=1.0, translate_x=10, translate_y=10", "Apply combined rotate/scale/translate/shear.", "image", f"{lookup_prefix} AffineTransform"),
-        ("PerspectiveTransform", "distortion_scale=0.15", "Perturb perspective corners.", "image", f"{lookup_prefix} PerspectiveTransform"),
-        ("ElasticTransform", "alpha=3.0, sigma=1.0", "Apply elastic spatial distortion.", "image", f"{lookup_prefix} ElasticTransform"),
-        ("GridDistortion", "num_steps=5, distort_limit=0.2", "Warp using a distorted sampling grid.", "image", f"{lookup_prefix} GridDistortion"),
-        ("OpticalDistortion", "k=0.00001", "Simulate lens distortion.", "image", f"{lookup_prefix} OpticalDistortion"),
-        ("RandomShadow", "shadow_dimension=0.5, intensity=0.5", "Overlay synthetic shadows.", "image", f"{lookup_prefix} RandomShadow"),
-        ("RandomSunFlare", "radius=20, intensity=0.4", "Overlay a sun flare or hotspot.", "image", f"{lookup_prefix} RandomSunFlare"),
-        ("RandomFog", "alpha=0.2", "Blend fog or haze into the frame.", "image", f"{lookup_prefix} RandomFog"),
-        ("RandomRain", "drops=40, drop_length=12, intensity=0.25", "Render synthetic rain streaks.", "image", f"{lookup_prefix} RandomRain"),
-        ("RandomSnow", "intensity=0.1", "Render synthetic snow.", "image", f"{lookup_prefix} RandomSnow"),
-        ("RandomGamma", "min_gamma=0.8, max_gamma=1.2", "Randomize gamma for exposure drift.", "image", f"{lookup_prefix} RandomGamma"),
-        ("ColorJitter", "brightness=0.2, contrast=0.2, saturation=0.2, hue=8", "Randomize multiple color properties together.", "image", f"{lookup_prefix} ColorJitter"),
-        ("ChannelShuffle", "", "Randomize channel order.", "image", f"{lookup_prefix} ChannelShuffle"),
-        ("RGBShift", "r_shift=10, g_shift=-5, b_shift=4", "Shift individual RGB-style channels.", "image", f"{lookup_prefix} RGBShift"),
-        ("Posterize", "bits=4", "Reduce tonal depth.", "image", f"{lookup_prefix} Posterize"),
-        ("Solarize", "threshold=128", "Invert highlights above a threshold.", "image", f"{lookup_prefix} Solarize"),
-        ("Equalize", "", "Equalize image intensity channels.", "image", f"{lookup_prefix} Equalize"),
-        ("Emboss", "strength=1.0", "Create an embossed texture effect.", "image", f"{lookup_prefix} Emboss"),
-        ("GaussianBlur", "kernel_size=5, sigma_x=1.0", "Apply an explicit Gaussian blur augmentation.", "image", f"{lookup_prefix} GaussianBlur"),
-        ("MedianBlur", "kernel_size=5", "Apply a median blur.", "image", f"{lookup_prefix} MedianBlur"),
-        ("GlassBlur", "sigma=0.7, max_delta=2, iterations=1", "Apply glass blur style local pixel swaps.", "image", f"{lookup_prefix} GlassBlur"),
-        ("DefocusBlur", "radius=5", "Simulate defocus blur.", "image", f"{lookup_prefix} DefocusBlur"),
-        ("ZoomBlur", "zoom_factor=1.2, steps=5", "Simulate zoom-style motion blur.", "image", f"{lookup_prefix} ZoomBlur"),
-        ("ISONoise", "color_shift=0.01, intensity=0.5", "Simulate ISO sensor noise.", "image", f"{lookup_prefix} ISONoise"),
-        ("MultiplicativeNoise", "multiplier_min=0.9, multiplier_max=1.1", "Scale pixels with multiplicative noise.", "image", f"{lookup_prefix} MultiplicativeNoise"),
-        ("SaltPepperNoise", "amount=0.02, salt_vs_pepper=0.5", "Add salt-and-pepper noise.", "image", f"{lookup_prefix} SaltPepperNoise"),
-        ("CoarseDropout", "holes=8, max_height=8, max_width=8", "Erase several rectangular patches.", "image", f"{lookup_prefix} CoarseDropout"),
-        ("GridDropout", "ratio=0.5, unit_size=8", "Drop pixels on a grid pattern.", "image", f"{lookup_prefix} GridDropout"),
-        ("RandomErasing", "scale=(0.02, 0.2)", "Erase one random region.", "image", f"{lookup_prefix} RandomErasing"),
-        ("MixUp", "alpha=0.5", "Mix the payload frame with a partner image.", '{"frame": image, "mix_image": image_b}', f"{lookup_prefix} MixUp"),
-        ("CutMix", "alpha=0.5", "Replace a patch with a partner image.", '{"frame": image, "mix_image": image_b}', f"{lookup_prefix} CutMix"),
-        ("CopyPaste", "x=10, y=10", "Paste an overlay image into the frame.", '{"frame": image, "overlay_image": overlay}', f"{lookup_prefix} CopyPaste"),
-        ("RandomOcclusion", "max_width=20, max_height=20", "Hide a random rectangle.", "image", f"{lookup_prefix} RandomOcclusion"),
-        ("ObjectPaste", "x=20, y=30", "Paste an object image into the frame.", '{"frame": image, "object_image": object_image}', f"{lookup_prefix} ObjectPaste"),
-        ("BoundingBoxJitter", "x_jitter=0.05, y_jitter=0.05, size_jitter=0.1", "Perturb payload bounding boxes.", '{"frame": image, "bboxes": [(10, 10, 100, 60)]}', f"{lookup_prefix} BoundingBoxJitter"),
-        ("MaskDropout", "dropout_prob=0.1", "Randomly zero a payload mask.", '{"frame": image, "mask": mask}', f"{lookup_prefix} MaskDropout"),
-        ("Mosaic9", "mosaic_images=[image] * 8", "Create a 3x3 mosaic.", "image", f"{lookup_prefix} Mosaic9"),
-        ("HSVShift", "hue_shift=10, sat_shift=5, val_shift=5", "Shift hue, saturation, and value directly.", "image", f"{lookup_prefix} HSVShift"),
-        ("ToSepia", "", "Apply a sepia color effect.", "image", f"{lookup_prefix} ToSepia"),
-        ("InvertImage", "", "Invert all pixel values.", "image", f"{lookup_prefix} InvertImage"),
-        ("CompressionArtifacts", "quality=40", "Simulate generic compression artifacts.", "image", f"{lookup_prefix} CompressionArtifacts"),
-        ("JPEGCompression", "quality=40", "Round-trip through JPEG compression.", "image", f"{lookup_prefix} JPEGCompression"),
-        ("Downscale", 'scale=0.5, interpolation="area"', "Downscale and restore to simulate low resolution.", "image", f"{lookup_prefix} Downscale"),
-        ("Superpixel", "region_size=10, ruler=10.0", "Approximate a superpixel rendering effect.", "image", f"{lookup_prefix} Superpixel"),
-        ("PixelDropout", "dropout_prob=0.01", "Randomly zero individual pixels.", "image", f"{lookup_prefix} PixelDropout"),
-        ("RandomBrightnessContrast", "brightness_limit=0.2, contrast_limit=0.2", "Randomize brightness and contrast together.", "image", f"{lookup_prefix} RandomBrightnessContrast"),
+        (
+            "Flip",
+            "horizontal=True",
+            "Mirror a frame horizontally or vertically.",
+            "image",
+            "python main.py --flip-horizontal",
+        ),
+        (
+            "Rotate90",
+            "k=1",
+            "Rotate a frame by 90-degree increments.",
+            "image",
+            "python main.py --rotate90-k 1",
+        ),
+        (
+            "Crop",
+            "x=20, y=20, width=200, height=200",
+            "Extract a rectangular region.",
+            "image",
+            "python main.py --crop --crop-x 20 --crop-y 20 --crop-width 200 --crop-height 200",
+        ),
+        (
+            "Rotation",
+            "angle=12.0, scale=1.0",
+            "Rotate with arbitrary angles.",
+            "image",
+            "python main.py --rotation-angle 12",
+        ),
+        (
+            "Shear",
+            "shear_x=0.15, shear_y=0.0",
+            "Apply an affine shear transform.",
+            "image",
+            "python main.py --shear-x 0.15",
+        ),
+        (
+            "Greyscale",
+            "keep_channels=True",
+            "Convert to grayscale while keeping 3 channels if desired.",
+            "image",
+            "python main.py --augment-greyscale",
+        ),
+        (
+            "Hue",
+            "delta=10",
+            "Shift hue values in HSV space.",
+            "image",
+            "python main.py --hue-delta 10",
+        ),
+        (
+            "Saturation",
+            "scale=1.2",
+            "Increase or reduce saturation.",
+            "image",
+            "python main.py --saturation-scale 1.2",
+        ),
+        (
+            "Brightness",
+            "beta=18",
+            "Add or subtract brightness.",
+            "image",
+            "python main.py --brightness-beta 18",
+        ),
+        (
+            "Exposure",
+            "gamma=1.3",
+            "Apply gamma-based exposure changes.",
+            "image",
+            "python main.py --exposure-gamma 1.3",
+        ),
+        (
+            "Blur",
+            "kernel_size=5, sigma_x=1.0",
+            "Apply Gaussian blur.",
+            "image",
+            "python main.py --blur --blur-kernel-size 5 --blur-sigma-x 1.0",
+        ),
+        (
+            "Noise",
+            'mode="gaussian", stddev=8.0',
+            "Inject Gaussian or salt-and-pepper noise.",
+            "image",
+            "python main.py --noise --noise-mode gaussian --noise-stddev 8",
+        ),
+        (
+            "Cutout",
+            "x=30, y=30, width=60, height=60",
+            "Blank out a rectangular patch.",
+            "image",
+            "python main.py --cutout --cutout-x 30 --cutout-y 30 --cutout-width 60 --cutout-height 60",
+        ),
+        (
+            "Mosaic",
+            "output_size=(640, 640), mosaic_images=[image, image, image]",
+            "Create a 2x2 mosaic composition.",
+            "image",
+            "python main.py --mosaic --mosaic-image path/to/a.jpg --mosaic-image path/to/b.jpg",
+        ),
+        (
+            "MotionBlur",
+            "kernel_size=11, angle=25",
+            "Simulate camera or subject motion blur.",
+            "image",
+            "python main.py --motion-blur --motion-blur-kernel-size 11 --motion-blur-angle 25",
+        ),
+        (
+            "CameraGain",
+            "gain=1.2, black_level=8.0",
+            "Simulate sensor gain and black-level shifts.",
+            "image",
+            "python main.py --camera-gain 1.2 --camera-black-level 8",
+        ),
+        (
+            "RandomResize",
+            "min_width=320, max_width=640, min_height=320, max_height=640",
+            "Randomize output size for training variation.",
+            "image",
+            f"{lookup_prefix} RandomResize",
+        ),
+        (
+            "RandomScale",
+            "min_scale=0.8, max_scale=1.2",
+            "Randomize image scale.",
+            "image",
+            f"{lookup_prefix} RandomScale",
+        ),
+        (
+            "RandomCrop",
+            "crop_width=224, crop_height=224",
+            "Sample a random crop.",
+            "image",
+            f"{lookup_prefix} RandomCrop",
+        ),
+        (
+            "RandomResizedCrop",
+            "output_width=224, output_height=224",
+            "Random crop plus resize for model inputs.",
+            "image",
+            f"{lookup_prefix} RandomResizedCrop",
+        ),
+        (
+            "RandomPadding",
+            "max_top=16, max_bottom=16, max_left=16, max_right=16",
+            "Add random padding to vary context.",
+            "image",
+            f"{lookup_prefix} RandomPadding",
+        ),
+        (
+            "Translate",
+            "shift_x=12, shift_y=8",
+            "Translate a frame in X/Y.",
+            "image",
+            f"{lookup_prefix} Translate",
+        ),
+        (
+            "AffineTransform",
+            "angle=8, scale=1.0, translate_x=10, translate_y=10",
+            "Apply combined rotate/scale/translate/shear.",
+            "image",
+            f"{lookup_prefix} AffineTransform",
+        ),
+        (
+            "PerspectiveTransform",
+            "distortion_scale=0.15",
+            "Perturb perspective corners.",
+            "image",
+            f"{lookup_prefix} PerspectiveTransform",
+        ),
+        (
+            "ElasticTransform",
+            "alpha=3.0, sigma=1.0",
+            "Apply elastic spatial distortion.",
+            "image",
+            f"{lookup_prefix} ElasticTransform",
+        ),
+        (
+            "GridDistortion",
+            "num_steps=5, distort_limit=0.2",
+            "Warp using a distorted sampling grid.",
+            "image",
+            f"{lookup_prefix} GridDistortion",
+        ),
+        (
+            "OpticalDistortion",
+            "k=0.00001",
+            "Simulate lens distortion.",
+            "image",
+            f"{lookup_prefix} OpticalDistortion",
+        ),
+        (
+            "RandomShadow",
+            "shadow_dimension=0.5, intensity=0.5",
+            "Overlay synthetic shadows.",
+            "image",
+            f"{lookup_prefix} RandomShadow",
+        ),
+        (
+            "RandomSunFlare",
+            "radius=20, intensity=0.4",
+            "Overlay a sun flare or hotspot.",
+            "image",
+            f"{lookup_prefix} RandomSunFlare",
+        ),
+        (
+            "RandomFog",
+            "alpha=0.2",
+            "Blend fog or haze into the frame.",
+            "image",
+            f"{lookup_prefix} RandomFog",
+        ),
+        (
+            "RandomRain",
+            "drops=40, drop_length=12, intensity=0.25",
+            "Render synthetic rain streaks.",
+            "image",
+            f"{lookup_prefix} RandomRain",
+        ),
+        (
+            "RandomSnow",
+            "intensity=0.1",
+            "Render synthetic snow.",
+            "image",
+            f"{lookup_prefix} RandomSnow",
+        ),
+        (
+            "RandomGamma",
+            "min_gamma=0.8, max_gamma=1.2",
+            "Randomize gamma for exposure drift.",
+            "image",
+            f"{lookup_prefix} RandomGamma",
+        ),
+        (
+            "ColorJitter",
+            "brightness=0.2, contrast=0.2, saturation=0.2, hue=8",
+            "Randomize multiple color properties together.",
+            "image",
+            f"{lookup_prefix} ColorJitter",
+        ),
+        (
+            "ChannelShuffle",
+            "",
+            "Randomize channel order.",
+            "image",
+            f"{lookup_prefix} ChannelShuffle",
+        ),
+        (
+            "RGBShift",
+            "r_shift=10, g_shift=-5, b_shift=4",
+            "Shift individual RGB-style channels.",
+            "image",
+            f"{lookup_prefix} RGBShift",
+        ),
+        (
+            "Posterize",
+            "bits=4",
+            "Reduce tonal depth.",
+            "image",
+            f"{lookup_prefix} Posterize",
+        ),
+        (
+            "Solarize",
+            "threshold=128",
+            "Invert highlights above a threshold.",
+            "image",
+            f"{lookup_prefix} Solarize",
+        ),
+        (
+            "Equalize",
+            "",
+            "Equalize image intensity channels.",
+            "image",
+            f"{lookup_prefix} Equalize",
+        ),
+        (
+            "Emboss",
+            "strength=1.0",
+            "Create an embossed texture effect.",
+            "image",
+            f"{lookup_prefix} Emboss",
+        ),
+        (
+            "GaussianBlur",
+            "kernel_size=5, sigma_x=1.0",
+            "Apply an explicit Gaussian blur augmentation.",
+            "image",
+            f"{lookup_prefix} GaussianBlur",
+        ),
+        (
+            "MedianBlur",
+            "kernel_size=5",
+            "Apply a median blur.",
+            "image",
+            f"{lookup_prefix} MedianBlur",
+        ),
+        (
+            "GlassBlur",
+            "sigma=0.7, max_delta=2, iterations=1",
+            "Apply glass blur style local pixel swaps.",
+            "image",
+            f"{lookup_prefix} GlassBlur",
+        ),
+        (
+            "DefocusBlur",
+            "radius=5",
+            "Simulate defocus blur.",
+            "image",
+            f"{lookup_prefix} DefocusBlur",
+        ),
+        (
+            "ZoomBlur",
+            "zoom_factor=1.2, steps=5",
+            "Simulate zoom-style motion blur.",
+            "image",
+            f"{lookup_prefix} ZoomBlur",
+        ),
+        (
+            "ISONoise",
+            "color_shift=0.01, intensity=0.5",
+            "Simulate ISO sensor noise.",
+            "image",
+            f"{lookup_prefix} ISONoise",
+        ),
+        (
+            "MultiplicativeNoise",
+            "multiplier_min=0.9, multiplier_max=1.1",
+            "Scale pixels with multiplicative noise.",
+            "image",
+            f"{lookup_prefix} MultiplicativeNoise",
+        ),
+        (
+            "SaltPepperNoise",
+            "amount=0.02, salt_vs_pepper=0.5",
+            "Add salt-and-pepper noise.",
+            "image",
+            f"{lookup_prefix} SaltPepperNoise",
+        ),
+        (
+            "CoarseDropout",
+            "holes=8, max_height=8, max_width=8",
+            "Erase several rectangular patches.",
+            "image",
+            f"{lookup_prefix} CoarseDropout",
+        ),
+        (
+            "GridDropout",
+            "ratio=0.5, unit_size=8",
+            "Drop pixels on a grid pattern.",
+            "image",
+            f"{lookup_prefix} GridDropout",
+        ),
+        (
+            "RandomErasing",
+            "scale=(0.02, 0.2)",
+            "Erase one random region.",
+            "image",
+            f"{lookup_prefix} RandomErasing",
+        ),
+        (
+            "MixUp",
+            "alpha=0.5",
+            "Mix the payload frame with a partner image.",
+            '{"frame": image, "mix_image": image_b}',
+            f"{lookup_prefix} MixUp",
+        ),
+        (
+            "CutMix",
+            "alpha=0.5",
+            "Replace a patch with a partner image.",
+            '{"frame": image, "mix_image": image_b}',
+            f"{lookup_prefix} CutMix",
+        ),
+        (
+            "CopyPaste",
+            "x=10, y=10",
+            "Paste an overlay image into the frame.",
+            '{"frame": image, "overlay_image": overlay}',
+            f"{lookup_prefix} CopyPaste",
+        ),
+        (
+            "RandomOcclusion",
+            "max_width=20, max_height=20",
+            "Hide a random rectangle.",
+            "image",
+            f"{lookup_prefix} RandomOcclusion",
+        ),
+        (
+            "ObjectPaste",
+            "x=20, y=30",
+            "Paste an object image into the frame.",
+            '{"frame": image, "object_image": object_image}',
+            f"{lookup_prefix} ObjectPaste",
+        ),
+        (
+            "BoundingBoxJitter",
+            "x_jitter=0.05, y_jitter=0.05, size_jitter=0.1",
+            "Perturb payload bounding boxes.",
+            '{"frame": image, "bboxes": [(10, 10, 100, 60)]}',
+            f"{lookup_prefix} BoundingBoxJitter",
+        ),
+        (
+            "MaskDropout",
+            "dropout_prob=0.1",
+            "Randomly zero a payload mask.",
+            '{"frame": image, "mask": mask}',
+            f"{lookup_prefix} MaskDropout",
+        ),
+        (
+            "Mosaic9",
+            "mosaic_images=[image] * 8",
+            "Create a 3x3 mosaic.",
+            "image",
+            f"{lookup_prefix} Mosaic9",
+        ),
+        (
+            "HSVShift",
+            "hue_shift=10, sat_shift=5, val_shift=5",
+            "Shift hue, saturation, and value directly.",
+            "image",
+            f"{lookup_prefix} HSVShift",
+        ),
+        (
+            "ToSepia",
+            "",
+            "Apply a sepia color effect.",
+            "image",
+            f"{lookup_prefix} ToSepia",
+        ),
+        (
+            "InvertImage",
+            "",
+            "Invert all pixel values.",
+            "image",
+            f"{lookup_prefix} InvertImage",
+        ),
+        (
+            "CompressionArtifacts",
+            "quality=40",
+            "Simulate generic compression artifacts.",
+            "image",
+            f"{lookup_prefix} CompressionArtifacts",
+        ),
+        (
+            "JPEGCompression",
+            "quality=40",
+            "Round-trip through JPEG compression.",
+            "image",
+            f"{lookup_prefix} JPEGCompression",
+        ),
+        (
+            "Downscale",
+            'scale=0.5, interpolation="area"',
+            "Downscale and restore to simulate low resolution.",
+            "image",
+            f"{lookup_prefix} Downscale",
+        ),
+        (
+            "Superpixel",
+            "region_size=10, ruler=10.0",
+            "Approximate a superpixel rendering effect.",
+            "image",
+            f"{lookup_prefix} Superpixel",
+        ),
+        (
+            "PixelDropout",
+            "dropout_prob=0.01",
+            "Randomly zero individual pixels.",
+            "image",
+            f"{lookup_prefix} PixelDropout",
+        ),
+        (
+            "RandomBrightnessContrast",
+            "brightness_limit=0.2, contrast_limit=0.2",
+            "Randomize brightness and contrast together.",
+            "image",
+            f"{lookup_prefix} RandomBrightnessContrast",
+        ),
     ]
 
     for name, constructor, summary, target, runtime_example in augmentation_entries:
@@ -223,27 +867,104 @@ def build_examples_catalog():
                 "augmentations",
                 name,
                 summary,
-                _run_example("ai_vision_tool.augmentation", name, constructor, target=target),
+                _run_example(
+                    "ai_vision_tool.augmentation", name, constructor, target=target
+                ),
                 runtime_example,
             )
         )
 
     component_entries = [
-        ("FrameEnhancer", 'FrameEnhancer().run({"frame": image}, {"brightness": 10, "contrast": 1.1, "sharpen": True})', "Apply brightness, contrast, sharpen, denoise, and grayscale settings.", "python main.py --enhance --brightness 10 --contrast 1.1 --sharpen"),
-        ("FrameResizer", 'FrameResizer().run({"frame": image}, {"size": (640, 480), "keep_aspect": True})', "Resize frames using the classic component pipeline.", "python main.py --resize --width 640 --height 480 --keep-aspect"),
-        ("MotionDetector", 'MotionDetector().run({"frame": image}, {"min_area": 800, "draw_motion": True})', "Detect motion regions across sequential frames.", "python main.py --motion --motion-area 800"),
-        ("FrameAnnotator", 'FrameAnnotator().run({"frame": image, "annotations": [{"type": "text", "text": "Demo", "pos": (20, 30)}]}, {})', "Overlay payload-driven annotations onto frames.", "python main.py --annotate"),
-        ("DatasetCollector", 'DatasetCollector().run({"frame": image}, {"save_sample": True, "output_dir": "output/dataset", "label": "demo"})', "Persist dataset samples and metadata.", "python main.py --dataset --label demo"),
-        ("TimeLapseCapture", 'TimeLapseCapture(output_dir="output/timelapse", interval_seconds=5).run({"frame": image}, {})', "Persist periodic frames for time-lapse workflows.", "python main.py --timelapse --timelapse-interval 5"),
-        ("PictureTaker", 'PictureTaker().run(None, {"imgdir": "Pics", "resolution": "1280x720", "camera_id": 0})', "Interactive still-image capture from a webcam.", "python main.py --picture"),
-        ("BurstPictureTaker", 'BurstPictureTaker(burst_count=5, interval_seconds=0.2)', "Interactive burst capture helper.", "python main.py --burst --burst-count 5"),
-        ("ROICapture", 'ROICapture(roi=(100, 100, 300, 300))', "Interactive region-of-interest capture helper.", "python main.py --roi --roi-x 100 --roi-y 100 --roi-w 300 --roi-h 300"),
-        ("ImageExporter", 'ImageExporter(output_dir="output/exports").run({"frame": image}, {"export_gray": True, "export_edges": True})', "Export grayscale and edge images.", "python main.py --export"),
-        ("FrameGrabber", 'FrameGrabber().run("sample.mp4", {"output_folder": "extracted_pics", "skip_frames": 90})', "Extract still frames from a video file.", None),
-        ("VideoTaker", 'VideoTaker().run(None, {"viddir": "Videos", "resolution": "1280x720", "camera_id": 0, "fps": 30.0})', "Interactive webcam recording helper.", "python main.py --video --fps 20"),
-        ("AutoLabeller", 'AutoLabeller().run(image)', "Base auto-labeling entrypoint for downstream integrations.", None),
-        ("DarknetAutoLabeler", 'DarknetAutoLabeler().run({"frame": image}, {"output_dir": "labels"})', "Darknet-powered labeling workflow.", None),
-        ("TensorFlowAutoLabeler", 'TensorFlowAutoLabeler().run({"frame": image}, {"output_dir": "labels"})', "TensorFlow-powered labeling workflow.", None),
+        (
+            "FrameEnhancer",
+            'FrameEnhancer().run({"frame": image}, {"brightness": 10, "contrast": 1.1, "sharpen": True})',
+            "Apply brightness, contrast, sharpen, denoise, and grayscale settings.",
+            "python main.py --enhance --brightness 10 --contrast 1.1 --sharpen",
+        ),
+        (
+            "FrameResizer",
+            'FrameResizer().run({"frame": image}, {"size": (640, 480), "keep_aspect": True})',
+            "Resize frames using the classic component pipeline.",
+            "python main.py --resize --width 640 --height 480 --keep-aspect",
+        ),
+        (
+            "MotionDetector",
+            'MotionDetector().run({"frame": image}, {"min_area": 800, "draw_motion": True})',
+            "Detect motion regions across sequential frames.",
+            "python main.py --motion --motion-area 800",
+        ),
+        (
+            "FrameAnnotator",
+            'FrameAnnotator().run({"frame": image, "annotations": [{"type": "text", "text": "Demo", "pos": (20, 30)}]}, {})',
+            "Overlay payload-driven annotations onto frames.",
+            "python main.py --annotate",
+        ),
+        (
+            "DatasetCollector",
+            'DatasetCollector().run({"frame": image}, {"save_sample": True, "output_dir": "output/dataset", "label": "demo"})',
+            "Persist dataset samples and metadata.",
+            "python main.py --dataset --label demo",
+        ),
+        (
+            "TimeLapseCapture",
+            'TimeLapseCapture(output_dir="output/timelapse", interval_seconds=5).run({"frame": image}, {})',
+            "Persist periodic frames for time-lapse workflows.",
+            "python main.py --timelapse --timelapse-interval 5",
+        ),
+        (
+            "PictureTaker",
+            'PictureTaker().run(None, {"imgdir": "Pics", "resolution": "1280x720", "camera_id": 0})',
+            "Interactive still-image capture from a webcam.",
+            "python main.py --picture",
+        ),
+        (
+            "BurstPictureTaker",
+            "BurstPictureTaker(burst_count=5, interval_seconds=0.2)",
+            "Interactive burst capture helper.",
+            "python main.py --burst --burst-count 5",
+        ),
+        (
+            "ROICapture",
+            "ROICapture(roi=(100, 100, 300, 300))",
+            "Interactive region-of-interest capture helper.",
+            "python main.py --roi --roi-x 100 --roi-y 100 --roi-w 300 --roi-h 300",
+        ),
+        (
+            "ImageExporter",
+            'ImageExporter(output_dir="output/exports").run({"frame": image}, {"export_gray": True, "export_edges": True})',
+            "Export grayscale and edge images.",
+            "python main.py --export",
+        ),
+        (
+            "FrameGrabber",
+            'FrameGrabber().run("sample.mp4", {"output_folder": "extracted_pics", "skip_frames": 90})',
+            "Extract still frames from a video file.",
+            None,
+        ),
+        (
+            "VideoTaker",
+            'VideoTaker().run(None, {"viddir": "Videos", "resolution": "1280x720", "camera_id": 0, "fps": 30.0})',
+            "Interactive webcam recording helper.",
+            "python main.py --video --fps 20",
+        ),
+        (
+            "AutoLabeller",
+            "AutoLabeller().run(image)",
+            "Base auto-labeling entrypoint for downstream integrations.",
+            None,
+        ),
+        (
+            "DarknetAutoLabeler",
+            'DarknetAutoLabeler().run({"frame": image}, {"output_dir": "labels"})',
+            "Darknet-powered labeling workflow.",
+            None,
+        ),
+        (
+            "TensorFlowAutoLabeler",
+            'TensorFlowAutoLabeler().run({"frame": image}, {"output_dir": "labels"})',
+            "TensorFlow-powered labeling workflow.",
+            None,
+        ),
     ]
 
     for name, python_call, summary, runtime_example in component_entries:
@@ -261,17 +982,17 @@ def build_examples_catalog():
         (
             "image_template",
             "Display a still image with optional custom logic.",
-            "from ai_vision_tool.capture.image_template import image_template\nimage_template(\n    image_path=\"path/to/image.jpg\",\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Demo\",\n    resolution=(1280, 720),\n)",
+            'from ai_vision_tool.capture.image_template import image_template\nimage_template(\n    image_path="path/to/image.jpg",\n    custom_logic=lambda frame: frame,\n    window_name="KAMI Demo",\n    resolution=(1280, 720),\n)',
         ),
         (
             "save_screenshot",
             "Save a screenshot frame to disk from the template workflow.",
-            "from ai_vision_tool.capture.video_template import save_screenshot\nsave_screenshot(frame, output_dir=\"screenshots\", prefix=\"capture\")",
+            'from ai_vision_tool.capture.video_template import save_screenshot\nsave_screenshot(frame, output_dir="screenshots", prefix="capture")',
         ),
         (
             "video_capture_template",
             "Run the legacy OpenCV video template with custom frame logic.",
-            "from ai_vision_tool.capture.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name=\"KAMI Live\",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)",
+            'from ai_vision_tool.capture.video_template import video_capture_template\nvideo_capture_template(\n    video_source=0,\n    custom_logic=lambda frame: frame,\n    window_name="KAMI Live",\n    resolution=(1280, 720),\n    enable_recording=False,\n    enable_screenshot=True,\n)',
         ),
     ]
 
@@ -361,9 +1082,7 @@ def parse_json_argument(value, argument_name):
     try:
         return json.loads(value)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"Invalid JSON passed to {argument_name}: {exc.msg}"
-        ) from exc
+        raise ValueError(f"Invalid JSON passed to {argument_name}: {exc.msg}") from exc
 
 
 def _encode_image_base64(image: np.ndarray) -> str:
@@ -394,7 +1113,9 @@ def _serialize_value(value):
     return value
 
 
-def _execute_component(category, name, init_args, config, image_base64, payload, data, batch):
+def _execute_component(
+    category, name, init_args, config, image_base64, payload, data, batch
+):
     module_path = f"ai_vision_tool.{category}"
     module = importlib.import_module(module_path)
     cls = getattr(module, name)
@@ -453,7 +1174,11 @@ def process_component_from_image_path(args):
 
     if args.save_output_image:
         serialized = result.get("result")
-        if isinstance(serialized, dict) and serialized.get("type") == "image" and serialized.get("base64"):
+        if (
+            isinstance(serialized, dict)
+            and serialized.get("type") == "image"
+            and serialized.get("base64")
+        ):
             output_image = _decode_image_base64(serialized["base64"])
             output_path = Path(args.save_output_image)
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -604,9 +1329,11 @@ def build_pipeline(args):
     if args.mosaic:
         pipeline.add(
             Mosaic(
-                output_size=(args.mosaic_output_width, args.mosaic_output_height)
-                if args.mosaic_output_width and args.mosaic_output_height
-                else None,
+                output_size=(
+                    (args.mosaic_output_width, args.mosaic_output_height)
+                    if args.mosaic_output_width and args.mosaic_output_height
+                    else None
+                ),
                 mosaic_images=load_mosaic_images(args.mosaic_images),
             )
         )
@@ -837,9 +1564,11 @@ def save_roi(frame, output_dir, roi):
         roi (tuple[int, int, int, int]): Region of interest as (x, y, w, h).
     """
     x, y, w, h = roi
-    roi_frame = frame[y:y + h, x:x + w]
+    roi_frame = frame[y : y + h, x : x + w]
     if roi_frame.size == 0:
-        print("[ai-vision-tool] ROI capture skipped because the selected area is outside the frame.")
+        print(
+            "[ai-vision-tool] ROI capture skipped because the selected area is outside the frame."
+        )
         return
 
     image_path = next_output_path(output_dir, "roi", "jpg")
@@ -1008,13 +1737,19 @@ def create_parser():
     parser.add_argument("--auto-orient", action="store_true")
     parser.add_argument("--no-auto-orient-exif", action="store_true")
     parser.add_argument("--auto-orient-exif-key", default="exif_orientation")
-    parser.add_argument("--auto-orient-rotation", type=int, choices=[90, 180, 270], default=None)
+    parser.add_argument(
+        "--auto-orient-rotation", type=int, choices=[90, 180, 270], default=None
+    )
     parser.add_argument("--auto-orient-flip-horizontal", action="store_true")
     parser.add_argument("--auto-orient-flip-vertical", action="store_true")
     parser.add_argument("--auto-adjust-contrast", action="store_true")
     parser.add_argument(
         "--contrast-method",
-        choices=["adaptive_equalization", "histogram_equalization", "contrast_stretching"],
+        choices=[
+            "adaptive_equalization",
+            "histogram_equalization",
+            "contrast_stretching",
+        ],
         default="adaptive_equalization",
     )
     parser.add_argument("--clip-limit", type=float, default=2.0)
@@ -1060,7 +1795,9 @@ def create_parser():
     parser.add_argument("--blur-kernel-size", type=int, default=5)
     parser.add_argument("--blur-sigma-x", type=float, default=0.0)
     parser.add_argument("--noise", action="store_true")
-    parser.add_argument("--noise-mode", choices=["gaussian", "salt_pepper"], default="gaussian")
+    parser.add_argument(
+        "--noise-mode", choices=["gaussian", "salt_pepper"], default="gaussian"
+    )
     parser.add_argument("--noise-mean", type=float, default=0.0)
     parser.add_argument("--noise-stddev", type=float, default=10.0)
     parser.add_argument("--noise-amount", type=float, default=0.02)
@@ -1072,7 +1809,9 @@ def create_parser():
     parser.add_argument("--cutout-height", type=int, default=32)
     parser.add_argument("--cutout-fill-value", nargs=3, type=int, default=[0, 0, 0])
     parser.add_argument("--mosaic", action="store_true")
-    parser.add_argument("--mosaic-image", dest="mosaic_images", action="append", default=[])
+    parser.add_argument(
+        "--mosaic-image", dest="mosaic_images", action="append", default=[]
+    )
     parser.add_argument("--mosaic-output-width", type=int, default=None)
     parser.add_argument("--mosaic-output-height", type=int, default=None)
     parser.add_argument("--motion-blur", action="store_true")
@@ -1167,7 +1906,9 @@ def main(argv=None):
 
     if args.process_image_path:
         if not args.component_category:
-            raise ValueError("--component-category is required with --process-image-path")
+            raise ValueError(
+                "--component-category is required with --process-image-path"
+            )
         if not args.component_name:
             raise ValueError("--component-name is required with --process-image-path")
         if not args.image_path:
@@ -1214,8 +1955,12 @@ def main(argv=None):
                 break
 
             annotations = add_default_annotations() if args.annotate else []
-            config = build_runtime_config(args, save_sample=False, annotations=annotations)
-            processed_payload = run_pipeline(pipeline, frame, config, annotations=annotations)
+            config = build_runtime_config(
+                args, save_sample=False, annotations=annotations
+            )
+            processed_payload = run_pipeline(
+                pipeline, frame, config, annotations=annotations
+            )
             processed_frame = (
                 processed_payload["frame"]
                 if isinstance(processed_payload, dict)

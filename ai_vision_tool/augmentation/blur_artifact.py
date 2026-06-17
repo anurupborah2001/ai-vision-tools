@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import ensure_odd, extract_frame, maybe_grayscale_to_bgr, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import ensure_odd, extract_frame, replace_frame, to_uint8
 
 
 class Posterize(AIVisionComponent):
@@ -88,7 +88,9 @@ class Equalize(AIVisionComponent):
         frame = extract_frame(data)
         ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
         y, cr, cb = cv2.split(ycrcb)
-        output = cv2.cvtColor(cv2.merge((cv2.equalizeHist(y), cr, cb)), cv2.COLOR_YCrCb2BGR)
+        output = cv2.cvtColor(
+            cv2.merge((cv2.equalizeHist(y), cr, cb)), cv2.COLOR_YCrCb2BGR
+        )
         return replace_frame(data, output)
 
 
@@ -267,7 +269,10 @@ class GlassBlur(AIVisionComponent):
                 for x in range(max_delta, width - max_delta):
                     dx = np.random.randint(-max_delta, max_delta + 1)
                     dy = np.random.randint(-max_delta, max_delta + 1)
-                    output[y, x], output[y + dy, x + dx] = output[y + dy, x + dx].copy(), output[y, x].copy()
+                    output[y, x], output[y + dy, x + dx] = (
+                        output[y + dy, x + dx].copy(),
+                        output[y, x].copy(),
+                    )
         return replace_frame(data, output)
 
 
@@ -343,7 +348,9 @@ class ZoomBlur(AIVisionComponent):
         accum = np.zeros_like(frame, dtype=np.float32)
         for i in range(steps):
             factor = 1.0 + (zoom_factor - 1.0) * (i / max(steps - 1, 1))
-            zoomed = cv2.resize(frame, None, fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
+            zoomed = cv2.resize(
+                frame, None, fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR
+            )
             zh, zw = zoomed.shape[:2]
             x1 = max(0, (zw - width) // 2)
             y1 = max(0, (zh - height) // 2)
@@ -383,7 +390,9 @@ class CompressionArtifacts(AIVisionComponent):
         Returns:
             NumPy array or dict: Artifact-compressed image in the same format as input.
         """
-        return JPEGCompression(quality=config.get("quality", self.quality)).run(data, config)
+        return JPEGCompression(quality=config.get("quality", self.quality)).run(
+            data, config
+        )
 
 
 class JPEGCompression(AIVisionComponent):
@@ -415,7 +424,9 @@ class JPEGCompression(AIVisionComponent):
         """
         frame = extract_frame(data)
         quality = int(config.get("quality", self.quality))
-        ok, encoded = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+        ok, encoded = cv2.imencode(
+            ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        )
         if not ok:
             return replace_frame(data, frame.copy())
         output = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
@@ -453,9 +464,15 @@ class Downscale(AIVisionComponent):
         """
         frame = extract_frame(data)
         scale = float(config.get("scale", self.scale))
-        interpolation = _resolve_interpolation(config.get("interpolation", self.interpolation))
+        interpolation = _resolve_interpolation(
+            config.get("interpolation", self.interpolation)
+        )
         height, width = frame.shape[:2]
-        down = cv2.resize(frame, (max(1, int(width * scale)), max(1, int(height * scale))), interpolation=interpolation)
+        down = cv2.resize(
+            frame,
+            (max(1, int(width * scale)), max(1, int(height * scale))),
+            interpolation=interpolation,
+        )
         output = cv2.resize(down, (width, height), interpolation=cv2.INTER_LINEAR)
         return replace_frame(data, output)
 

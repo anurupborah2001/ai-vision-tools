@@ -14,27 +14,35 @@ from ai_vision_tool.utils.image_utils import extract_frame
 def _import_consumer():
     try:
         from confluent_kafka import Consumer
+
         return Consumer, "confluent"
     except ImportError:
         pass
     try:
         from kafka import KafkaConsumer
+
         return KafkaConsumer, "kafka_python"
-    except ImportError:
-        raise ImportError("Install with: pip install confluent-kafka  # or kafka-python")
+    except ImportError as e:
+        raise ImportError(
+            "Install with: pip install confluent-kafka  # or kafka-python"
+        ) from e
 
 
 def _import_producer():
     try:
         from confluent_kafka import Producer
+
         return Producer, "confluent"
     except ImportError:
         pass
     try:
         from kafka import KafkaProducer
+
         return KafkaProducer, "kafka_python"
-    except ImportError:
-        raise ImportError("Install with: pip install confluent-kafka  # or kafka-python")
+    except ImportError as e:
+        raise ImportError(
+            "Install with: pip install confluent-kafka  # or kafka-python"
+        ) from e
 
 
 class KafkaSource(AIVisionComponent):
@@ -48,8 +56,14 @@ class KafkaSource(AIVisionComponent):
         timeout_ms: Poll timeout in milliseconds.
     """
 
-    def __init__(self, bootstrap_servers: str, topic: str, group_id: str = "ai_vision",
-                 auto_offset_reset: str = "latest", timeout_ms: int = 1000):
+    def __init__(
+        self,
+        bootstrap_servers: str,
+        topic: str,
+        group_id: str = "ai_vision",
+        auto_offset_reset: str = "latest",
+        timeout_ms: int = 1000,
+    ):
         super().__init__()
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
@@ -62,16 +76,20 @@ class KafkaSource(AIVisionComponent):
     def setup(self, config: dict):
         cls, self._lib = _import_consumer()
         if self._lib == "confluent":
-            self._consumer = cls({
-                "bootstrap.servers": self.bootstrap_servers,
-                "group.id": self.group_id,
-                "auto.offset.reset": self.auto_offset_reset,
-            })
+            self._consumer = cls(
+                {
+                    "bootstrap.servers": self.bootstrap_servers,
+                    "group.id": self.group_id,
+                    "auto.offset.reset": self.auto_offset_reset,
+                }
+            )
             self._consumer.subscribe([self.topic])
         else:
             self._consumer = cls(
-                self.topic, bootstrap_servers=self.bootstrap_servers,
-                group_id=self.group_id, auto_offset_reset=self.auto_offset_reset,
+                self.topic,
+                bootstrap_servers=self.bootstrap_servers,
+                group_id=self.group_id,
+                auto_offset_reset=self.auto_offset_reset,
                 value_deserializer=lambda v: v,
             )
         super().setup(config)
@@ -94,9 +112,14 @@ class KafkaSource(AIVisionComponent):
             d = json.loads(raw)
             buf = np.frombuffer(base64.b64decode(d["frame"]), dtype=np.uint8)
             frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
-            return {"frame": frame, "kafka_offset": offset, "kafka_partition": partition,
-                    "kafka_topic": self.topic, "connected": True,
-                    "metadata": d.get("metadata", {})}
+            return {
+                "frame": frame,
+                "kafka_offset": offset,
+                "kafka_partition": partition,
+                "kafka_topic": self.topic,
+                "connected": True,
+                "metadata": d.get("metadata", {}),
+            }
         except Exception as e:
             return {"frame": None, "error": str(e), "connected": False}
 
@@ -136,11 +159,13 @@ class KafkaSink(AIVisionComponent):
     def _execute(self, data, config):
         frame = extract_frame(data)
         _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, self.quality])
-        payload = json.dumps({
-            "frame": base64.b64encode(buf.tobytes()).decode(),
-            "timestamp_ms": time.time() * 1000.0,
-            "metadata": {},
-        }).encode()
+        payload = json.dumps(
+            {
+                "frame": base64.b64encode(buf.tobytes()).decode(),
+                "timestamp_ms": time.time() * 1000.0,
+                "metadata": {},
+            }
+        ).encode()
 
         if self._lib == "confluent":
             self._producer.produce(self.topic, value=payload)

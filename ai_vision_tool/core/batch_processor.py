@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -35,7 +34,9 @@ class BatchProcessor:
         results = [None] * len(images)
         if self.num_workers > 0:
             with ThreadPoolExecutor(max_workers=self.num_workers) as ex:
-                futures = {ex.submit(self._run_one, img): i for i, img in enumerate(images)}
+                futures = {
+                    ex.submit(self._run_one, img): i for i, img in enumerate(images)
+                }
                 done = 0
                 for fut in as_completed(futures):
                     results[futures[fut]] = fut.result()
@@ -50,11 +51,12 @@ class BatchProcessor:
         return results
 
     def process_directory(
-        self, path: str, extensions: tuple[str, ...] = (".jpg", ".png", ".jpeg", ".bmp", ".webp")
+        self,
+        path: str,
+        extensions: tuple[str, ...] = (".jpg", ".png", ".jpeg", ".bmp", ".webp"),
     ) -> list:
         paths = sorted(
-            p for p in Path(path).iterdir()
-            if p.suffix.lower() in extensions
+            p for p in Path(path).iterdir() if p.suffix.lower() in extensions
         )
         images = []
         for p in paths:

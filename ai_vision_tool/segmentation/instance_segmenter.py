@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 from ai_vision_tool.utils.color_palette import ColorPalette
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class InstanceSegmenter(AIVisionComponent):
@@ -19,9 +19,14 @@ class InstanceSegmenter(AIVisionComponent):
         class_names: Class names list.
     """
 
-    def __init__(self, model_path: str | None = None, backend: str = "yolo",
-                 conf_threshold: float = 0.25, iou_threshold: float = 0.45,
-                 class_names: list[str] | None = None):
+    def __init__(
+        self,
+        model_path: str | None = None,
+        backend: str = "yolo",
+        conf_threshold: float = 0.25,
+        iou_threshold: float = 0.45,
+        class_names: list[str] | None = None,
+    ):
         super().__init__()
         self.model_path = model_path
         self.backend = backend
@@ -38,19 +43,24 @@ class InstanceSegmenter(AIVisionComponent):
         if self.backend == "yolo":
             try:
                 from ultralytics import YOLO
+
                 self._model = YOLO(self.model_path)
                 if not self.class_names and hasattr(self._model, "names"):
                     self.class_names = list(self._model.names.values())
-            except ImportError:
-                raise ImportError("Install with: pip install ultralytics")
+            except ImportError as e:
+                raise ImportError("Install with: pip install ultralytics") from e
         elif self.backend == "onnx":
             try:
                 import onnxruntime as ort
-                providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                             if p in ort.get_available_providers()]
+
+                providers = [
+                    p
+                    for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                    if p in ort.get_available_providers()
+                ]
                 self._model = ort.InferenceSession(self.model_path, providers=providers)
-            except ImportError:
-                raise ImportError("Install with: pip install onnxruntime")
+            except ImportError as e:
+                raise ImportError("Install with: pip install onnxruntime") from e
         super().setup(config)
 
     def _execute(self, data, config):
@@ -71,20 +81,41 @@ class InstanceSegmenter(AIVisionComponent):
             for r in results:
                 if r.masks is None:
                     continue
-                for i, (mask_data, box) in enumerate(zip(r.masks.data, r.boxes)):
+                for _i, (mask_data, box) in enumerate(
+                    zip(r.masks.data, r.boxes, strict=False)
+                ):
                     mask_np = mask_data.cpu().numpy()
                     mask_resized = cv2.resize(mask_np, (w, h)) > 0.5
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     cls = int(box.cls[0])
-                    label = self.class_names[cls] if cls < len(self.class_names) else str(cls)
+                    label = (
+                        self.class_names[cls]
+                        if cls < len(self.class_names)
+                        else str(cls)
+                    )
                     conf = float(box.conf[0])
-                    masks.append({"mask": mask_resized, "label": label, "conf": conf,
-                                  "bbox": [x1, y1, x2, y2]})
-                    bboxes.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "label": label, "conf": conf})
+                    masks.append(
+                        {
+                            "mask": mask_resized,
+                            "label": label,
+                            "conf": conf,
+                            "bbox": [x1, y1, x2, y2],
+                        }
+                    )
+                    bboxes.append(
+                        {
+                            "x1": x1,
+                            "y1": y1,
+                            "x2": x2,
+                            "y2": y2,
+                            "label": label,
+                            "conf": conf,
+                        }
+                    )
 
         # Build overlay
         overlay = frame.copy()
-        for i, m in enumerate(masks):
+        for _i, m in enumerate(masks):
             label = m.get("label", "")
             color = self._palette.get(label)
             colored = np.zeros_like(frame)

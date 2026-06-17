@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import platform
-import sys
 
 
 class Device:
@@ -23,6 +22,7 @@ class Device:
             return device
         try:
             import torch
+
             if torch.cuda.is_available():
                 return "cuda:0"
             if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -50,12 +50,14 @@ class Device:
     def to_torch(self):
         try:
             import torch
+
             return torch.device(self._resolved)
-        except ImportError:
-            raise ImportError("Install with: pip install torch")
+        except ImportError as e:
+            raise ImportError("Install with: pip install torch") from e
 
     def to_cv_backend(self) -> int:
         import cv2
+
         sys_name = platform.system().lower()
         if sys_name == "linux":
             return cv2.CAP_V4L2

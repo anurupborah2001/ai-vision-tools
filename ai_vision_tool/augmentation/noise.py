@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 
 
 class Noise(AIVisionComponent):

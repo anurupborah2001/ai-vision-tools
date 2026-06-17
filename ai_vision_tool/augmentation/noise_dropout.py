@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
-from .common import additive_noise
+from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 
 
 class ISONoise(AIVisionComponent):
@@ -120,10 +118,16 @@ class SaltPepperNoise(AIVisionComponent):
         salt = int(total_pixels * amount * salt_vs_pepper)
         pepper = int(total_pixels * amount * (1.0 - salt_vs_pepper))
         if salt > 0:
-            coords = (np.random.randint(0, frame.shape[0], salt), np.random.randint(0, frame.shape[1], salt))
+            coords = (
+                np.random.randint(0, frame.shape[0], salt),
+                np.random.randint(0, frame.shape[1], salt),
+            )
             frame[coords] = 255
         if pepper > 0:
-            coords = (np.random.randint(0, frame.shape[0], pepper), np.random.randint(0, frame.shape[1], pepper))
+            coords = (
+                np.random.randint(0, frame.shape[0], pepper),
+                np.random.randint(0, frame.shape[1], pepper),
+            )
             frame[coords] = 0
         return replace_frame(data, frame)
 
@@ -216,7 +220,9 @@ class GridDropout(AIVisionComponent):
         cut = max(1, int(unit_size * ratio))
         for y in range(0, frame.shape[0], unit_size):
             for x in range(0, frame.shape[1], unit_size):
-                frame[y : y + cut, x : x + cut] = config.get("fill_value", self.fill_value)
+                frame[y : y + cut, x : x + cut] = config.get(
+                    "fill_value", self.fill_value
+                )
         return replace_frame(data, frame)
 
 
@@ -257,7 +263,9 @@ class RandomErasing(AIVisionComponent):
         erase_h = int(np.sqrt(erase_area))
         x = np.random.randint(0, max(1, frame.shape[1] - erase_w + 1))
         y = np.random.randint(0, max(1, frame.shape[0] - erase_h + 1))
-        frame[y : y + erase_h, x : x + erase_w] = config.get("fill_value", self.fill_value)
+        frame[y : y + erase_h, x : x + erase_w] = config.get(
+            "fill_value", self.fill_value
+        )
         return replace_frame(data, frame)
 
 

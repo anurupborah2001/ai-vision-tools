@@ -5,7 +5,6 @@ import threading
 import time
 
 import cv2
-import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame
@@ -21,8 +20,13 @@ class DashboardSink(AIVisionComponent):
         title: Dashboard page title.
     """
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 7860, quality: int = 80,
-                 title: str = "AI Vision Dashboard"):
+    def __init__(
+        self,
+        host: str = "0.0.0.0",
+        port: int = 7860,
+        quality: int = 80,
+        title: str = "AI Vision Dashboard",
+    ):
         super().__init__()
         self.host = host
         self.port = port
@@ -41,13 +45,15 @@ class DashboardSink(AIVisionComponent):
 
     def _start_server(self):
         try:
-            import gradio as gr
+            import gradio as gr  # noqa: F401
+
             self._start_gradio()
         except ImportError:
             self._start_mjpeg()
 
     def _start_gradio(self):
         import gradio as gr
+
         sink = self
 
         def get_frame():
@@ -55,6 +61,7 @@ class DashboardSink(AIVisionComponent):
                 data = sink._latest_frame
             if data:
                 import numpy as np
+
                 buf = np.frombuffer(data, np.uint8)
                 frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
                 return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -76,19 +83,26 @@ class DashboardSink(AIVisionComponent):
 </body></html>"""
 
         class Handler(http.server.BaseHTTPRequestHandler):
-            def log_message(self, *a): pass
+            def log_message(self, *a):
+                pass
 
             def do_GET(self):
                 if self.path == "/stream":
                     self.send_response(200)
-                    self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+                    self.send_header(
+                        "Content-Type", "multipart/x-mixed-replace; boundary=frame"
+                    )
                     self.end_headers()
                     try:
                         while True:
                             with sink._lock:
                                 data = sink._latest_frame
                             if data:
-                                self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + data + b"\r\n")
+                                self.wfile.write(
+                                    b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                                    + data
+                                    + b"\r\n"
+                                )
                             time.sleep(0.033)
                     except Exception:
                         pass

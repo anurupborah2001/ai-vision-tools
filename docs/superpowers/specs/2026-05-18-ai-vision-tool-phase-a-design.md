@@ -1,8 +1,8 @@
 # Phase A Design: Rename & Restructure `ai-vision-flow` → `ai-vision-tool`
 
-**Date:** 2026-05-18  
-**Status:** Approved  
-**Scope:** Rename only — no logic changes, no new features  
+**Date:** 2026-05-18
+**Status:** Approved
+**Scope:** Rename only — no logic changes, no new features
 **Next phase:** Phase B (CLI rewrite: argparse → Typer + Rich)
 
 ---

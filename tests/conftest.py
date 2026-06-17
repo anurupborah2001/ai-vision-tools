@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -44,6 +44,7 @@ class FakeVideoCapture:
 
     def get(self, prop):
         import cv2
+
         if prop == cv2.CAP_PROP_FRAME_COUNT:
             return len(self.frames)
         if prop == cv2.CAP_PROP_POS_FRAMES:

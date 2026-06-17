@@ -142,6 +142,7 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"

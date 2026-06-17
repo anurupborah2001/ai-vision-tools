@@ -27,6 +27,7 @@ class ComponentRegistry:
     def _auto_register(self):
         try:
             import ai_vision_tool as avt
+
             for name in avt.__all__:
                 try:
                     obj = getattr(avt, name)
@@ -39,12 +40,16 @@ class ComponentRegistry:
 
     def register(self, name: str, cls: type = None, override: bool = False):
         if cls is None:
+
             def decorator(c):
                 self.register(name, c, override=override)
                 return c
+
             return decorator
         if name in self._registry and not override:
-            raise ValueError(f"Component {name!r} already registered. Use override=True to replace.")
+            raise ValueError(
+                f"Component {name!r} already registered. Use override=True to replace."
+            )
         self._registry[name] = cls
 
     def get(self, name: str) -> type:

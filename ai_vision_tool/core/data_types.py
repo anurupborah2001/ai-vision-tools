@@ -39,12 +39,21 @@ class BBox:
             max(0.0, min(self.y1, h)),
             max(0.0, min(self.x2, w)),
             max(0.0, min(self.y2, h)),
-            self.label, self.conf, self.track_id,
+            self.label,
+            self.conf,
+            self.track_id,
         )
 
     def as_dict(self) -> dict:
-        return {"x1": self.x1, "y1": self.y1, "x2": self.x2, "y2": self.y2,
-                "label": self.label, "conf": self.conf, "track_id": self.track_id}
+        return {
+            "x1": self.x1,
+            "y1": self.y1,
+            "x2": self.x2,
+            "y2": self.y2,
+            "label": self.label,
+            "conf": self.conf,
+            "track_id": self.track_id,
+        }
 
 
 @dataclass
@@ -81,6 +90,7 @@ class Mask:
 
     def to_polygon(self) -> list[list[int]]:
         import cv2
+
         contours, _ = cv2.findContours(
             self.array.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
@@ -106,5 +116,12 @@ class Track:
 
     def as_dict(self) -> dict:
         d = self.bbox.as_dict()
-        d.update({"track_id": self.track_id, "age": self.age, "hits": self.hits, "state": self.state})
+        d.update(
+            {
+                "track_id": self.track_id,
+                "age": self.age,
+                "hits": self.hits,
+                "state": self.state,
+            }
+        )
         return d

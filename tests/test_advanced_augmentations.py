@@ -20,8 +20,8 @@ from ai_vision_tool.augmentation import (
     GridDistortion,
     GridDropout,
     HSVShift,
-    ISONoise,
     InvertImage,
+    ISONoise,
     JPEGCompression,
     MaskDropout,
     MedianBlur,
@@ -200,7 +200,9 @@ def test_mixup_cutmix_and_copy_paste():
     payload = {"frame": frame.copy(), "mix_image": other}
     mixup = MixUp(alpha=0.4).run(payload.copy(), {})
     cutmix = CutMix(alpha=0.5).run(payload.copy(), {})
-    copied = CopyPaste(x=5, y=5).run({"frame": frame.copy(), "overlay_image": other[:10, :10]}, {})
+    copied = CopyPaste(x=5, y=5).run(
+        {"frame": frame.copy(), "overlay_image": other[:10, :10]}, {}
+    )
     assert mixup["frame"].shape == frame.shape
     assert cutmix["frame"].shape == frame.shape
     assert copied["frame"].shape == frame.shape
@@ -216,7 +218,11 @@ def test_random_occlusion_and_object_paste():
 
 
 def test_bounding_box_jitter_and_mask_dropout(sample_frame):
-    payload = {"frame": sample_frame.copy(), "bboxes": [(10, 10, 20, 20)], "mask": np.ones(sample_frame.shape[:2], dtype=np.uint8)}
+    payload = {
+        "frame": sample_frame.copy(),
+        "bboxes": [(10, 10, 20, 20)],
+        "mask": np.ones(sample_frame.shape[:2], dtype=np.uint8),
+    }
     jittered = BoundingBoxJitter().run(payload, {})
     dropped = MaskDropout(dropout_prob=0.5).run(jittered, {})
     assert len(dropped["bboxes"]) == 1
@@ -240,6 +246,7 @@ def test_compression_downscale_and_superpixel():
     assert downscaled.shape == frame.shape
 
     import cv2
+
     if not hasattr(getattr(cv2, "ximgproc", None), "createSuperpixelSLIC"):
         pytest.skip("cv2 ximgproc not available in this environment")
     superpixel = Superpixel(region_size=5).run(frame, {})

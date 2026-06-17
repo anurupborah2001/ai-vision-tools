@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+
 from ai_vision_tool.core.base import AIVisionComponent
 
 
@@ -29,11 +30,11 @@ class FrameEnhancer(AIVisionComponent):
         frame = data["frame"] if isinstance(data, dict) else data
         output = frame.copy()
 
-        brightness = config.get('brightness', 0)
-        contrast = config.get('contrast', 1.0)
-        sharpen = config.get('sharpen', False)
-        denoise = config.get('denoise', False)
-        grayscale = config.get('grayscale', False)
+        brightness = config.get("brightness", 0)
+        contrast = config.get("contrast", 1.0)
+        sharpen = config.get("sharpen", False)
+        denoise = config.get("denoise", False)
+        grayscale = config.get("grayscale", False)
 
         output = cv2.convertScaleAbs(output, alpha=contrast, beta=brightness)
 
@@ -41,11 +42,13 @@ class FrameEnhancer(AIVisionComponent):
             output = cv2.fastNlMeansDenoisingColored(output, None, 10, 10, 7, 21)
 
         if sharpen:
-            kernel = np.array([
-                [0, -1, 0],
-                [-1, 5, -1],
-                [0, -1, 0],
-            ])
+            kernel = np.array(
+                [
+                    [0, -1, 0],
+                    [-1, 5, -1],
+                    [0, -1, 0],
+                ]
+            )
             output = cv2.filter2D(output, -1, kernel)
 
         if grayscale:

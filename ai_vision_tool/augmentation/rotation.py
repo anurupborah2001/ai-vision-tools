@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import cv2
 
+from ..core.base import AIVisionComponent
 from ..utils.image_utils import (
     extract_frame,
     normalize_color_value,
@@ -9,7 +10,6 @@ from ..utils.image_utils import (
     resolve_border_mode,
     rotate_bound,
 )
-from ..core.base import AIVisionComponent
 
 
 class Rotation(AIVisionComponent):

@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame
 
 
 class Saturation(AIVisionComponent):

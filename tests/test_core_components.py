@@ -1,16 +1,15 @@
 import json
 
-import cv2
 import numpy as np
 
-from ai_vision_tool.integrations.labeling.auto_labeller import AutoLabeller
-from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.io.dataset_collector import DatasetCollector
-from ai_vision_tool.visualization.frame_annotator import FrameAnnotator
-from ai_vision_tool.enhancement.frame_enhancer import FrameEnhancer
-from ai_vision_tool.preprocessing.frame_resizer import FrameResizer
 from ai_vision_tool.capture.motion_detector import MotionDetector
 from ai_vision_tool.capture.time_lapse import TimeLapseCapture
+from ai_vision_tool.core.base import AIVisionComponent
+from ai_vision_tool.enhancement.frame_enhancer import FrameEnhancer
+from ai_vision_tool.integrations.labeling.auto_labeller import AutoLabeller
+from ai_vision_tool.io.dataset_collector import DatasetCollector
+from ai_vision_tool.preprocessing.frame_resizer import FrameResizer
+from ai_vision_tool.visualization.frame_annotator import FrameAnnotator
 
 
 class RecordingComponent(AIVisionComponent):
@@ -47,7 +46,14 @@ def test_base_component_processes_batches():
     result = component.run([1, 2], {"mode": "batch"})
 
     assert result == [1, 3]
-    assert [entry[0] for entry in component.calls] == ["pre", "exec", "post", "pre", "exec", "post"]
+    assert [entry[0] for entry in component.calls] == [
+        "pre",
+        "exec",
+        "post",
+        "pre",
+        "exec",
+        "post",
+    ]
 
 
 def test_auto_labeller_setup_downloads_weights(monkeypatch):
@@ -103,7 +109,9 @@ def test_frame_enhancer_handles_plain_frame(sample_frame):
 def test_frame_resizer_plain_frame(sample_frame):
     component = FrameResizer()
 
-    result = component.run(sample_frame.copy(), {"size": (20, 10), "keep_aspect": False})
+    result = component.run(
+        sample_frame.copy(), {"size": (20, 10), "keep_aspect": False}
+    )
 
     assert result.shape == (10, 20, 3)
 
@@ -183,7 +191,9 @@ def test_motion_detector_can_skip_drawing(sample_frame):
     assert np.array_equal(result["frame"], second)
 
 
-def test_dataset_collector_saves_image_and_metadata(tmp_path, sample_frame, stub_imwrite):
+def test_dataset_collector_saves_image_and_metadata(
+    tmp_path, sample_frame, stub_imwrite
+):
     component = DatasetCollector()
     payload = {"frame": sample_frame.copy()}
 
@@ -214,16 +224,24 @@ def test_dataset_collector_passthrough_when_not_saving(tmp_path, sample_frame):
     component = DatasetCollector()
     payload = {"frame": sample_frame.copy()}
 
-    result = component.run(payload, {"save_sample": False, "output_dir": str(tmp_path / "dataset")})
+    result = component.run(
+        payload, {"save_sample": False, "output_dir": str(tmp_path / "dataset")}
+    )
 
     assert result is payload
     assert not (tmp_path / "dataset").exists()
 
 
-def test_time_lapse_capture_saves_on_interval(monkeypatch, tmp_path, sample_frame, created_files, stub_imwrite):
+def test_time_lapse_capture_saves_on_interval(
+    monkeypatch, tmp_path, sample_frame, created_files, stub_imwrite
+):
     times = iter([100.0, 102.0, 108.5])
-    monkeypatch.setattr("ai_vision_tool.capture.time_lapse.time.time", lambda: next(times))
-    component = TimeLapseCapture(output_dir=tmp_path / "timelapse", interval_seconds=5, prefix="snap")
+    monkeypatch.setattr(
+        "ai_vision_tool.capture.time_lapse.time.time", lambda: next(times)
+    )
+    component = TimeLapseCapture(
+        output_dir=tmp_path / "timelapse", interval_seconds=5, prefix="snap"
+    )
 
     payload = {"frame": sample_frame.copy()}
     component.run(payload, {})

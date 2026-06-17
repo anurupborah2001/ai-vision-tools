@@ -3,9 +3,14 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, normalize_color_value, replace_frame, resolve_border_mode
 from ..core.base import AIVisionComponent
-from .common import apply_affine, apply_perspective, build_translation_matrix, random_uniform
+from ..utils.image_utils import extract_frame, normalize_color_value, replace_frame
+from .common import (
+    apply_affine,
+    apply_perspective,
+    build_translation_matrix,
+    random_uniform,
+)
 
 
 class RandomResize(AIVisionComponent):
@@ -19,7 +24,14 @@ class RandomResize(AIVisionComponent):
         interpolation (str): Interpolation method. Default is 'linear'.
     """
 
-    def __init__(self, min_width, max_width, min_height=None, max_height=None, interpolation="linear"):
+    def __init__(
+        self,
+        min_width,
+        max_width,
+        min_height=None,
+        max_height=None,
+        interpolation="linear",
+    ):
         """Initializes RandomResize with width and height bounds.
 
         Args:
@@ -48,12 +60,22 @@ class RandomResize(AIVisionComponent):
             NumPy array or dict: Resized image in the same format as input.
         """
         frame = extract_frame(data)
-        width = int(random_uniform(config, "min_width", "max_width", self.min_width, self.max_width))
-        height = int(
-            random_uniform(config, "min_height", "max_height", self.min_height, self.max_height)
+        width = int(
+            random_uniform(
+                config, "min_width", "max_width", self.min_width, self.max_width
+            )
         )
-        interpolation = _resolve_interpolation(config.get("interpolation", self.interpolation))
-        return replace_frame(data, cv2.resize(frame, (width, height), interpolation=interpolation))
+        height = int(
+            random_uniform(
+                config, "min_height", "max_height", self.min_height, self.max_height
+            )
+        )
+        interpolation = _resolve_interpolation(
+            config.get("interpolation", self.interpolation)
+        )
+        return replace_frame(
+            data, cv2.resize(frame, (width, height), interpolation=interpolation)
+        )
 
 
 class RandomScale(AIVisionComponent):
@@ -89,12 +111,18 @@ class RandomScale(AIVisionComponent):
             NumPy array or dict: Scaled image (dimensions change) in the same format as input.
         """
         frame = extract_frame(data)
-        scale = random_uniform(config, "min_scale", "max_scale", self.min_scale, self.max_scale)
+        scale = random_uniform(
+            config, "min_scale", "max_scale", self.min_scale, self.max_scale
+        )
         height, width = frame.shape[:2]
         out_w = max(1, int(round(width * scale)))
         out_h = max(1, int(round(height * scale)))
-        interpolation = _resolve_interpolation(config.get("interpolation", self.interpolation))
-        return replace_frame(data, cv2.resize(frame, (out_w, out_h), interpolation=interpolation))
+        interpolation = _resolve_interpolation(
+            config.get("interpolation", self.interpolation)
+        )
+        return replace_frame(
+            data, cv2.resize(frame, (out_w, out_h), interpolation=interpolation)
+        )
 
 
 class RandomCrop(AIVisionComponent):
@@ -192,8 +220,12 @@ class RandomResizedCrop(AIVisionComponent):
         frame = extract_frame(data)
         height, width = frame.shape[:2]
         area = width * height
-        scale = random_uniform(config, "scale_min", "scale_max", self.scale_min, self.scale_max)
-        ratio = random_uniform(config, "ratio_min", "ratio_max", self.ratio_min, self.ratio_max)
+        scale = random_uniform(
+            config, "scale_min", "scale_max", self.scale_min, self.scale_max
+        )
+        ratio = random_uniform(
+            config, "ratio_min", "ratio_max", self.ratio_min, self.ratio_max
+        )
         target_area = area * scale
         crop_w = int(round((target_area * ratio) ** 0.5))
         crop_h = int(round((target_area / ratio) ** 0.5))
@@ -204,7 +236,10 @@ class RandomResizedCrop(AIVisionComponent):
         cropped = frame[y : y + crop_h, x : x + crop_w]
         output = cv2.resize(
             cropped,
-            (int(config.get("output_width", self.output_width)), int(config.get("output_height", self.output_height))),
+            (
+                int(config.get("output_width", self.output_width)),
+                int(config.get("output_height", self.output_height)),
+            ),
             interpolation=cv2.INTER_LINEAR,
         )
         return replace_frame(data, output)
@@ -221,7 +256,9 @@ class RandomPadding(AIVisionComponent):
         pad_value (tuple[int, int, int] or int): BGR fill color for padding. Default is (0, 0, 0).
     """
 
-    def __init__(self, max_top=10, max_bottom=10, max_left=10, max_right=10, pad_value=(0, 0, 0)):
+    def __init__(
+        self, max_top=10, max_bottom=10, max_left=10, max_right=10, pad_value=(0, 0, 0)
+    ):
         """Initializes RandomPadding with per-side padding limits.
 
         Args:
@@ -251,7 +288,9 @@ class RandomPadding(AIVisionComponent):
         """
         frame = extract_frame(data)
         top = np.random.randint(0, int(config.get("max_top", self.max_top)) + 1)
-        bottom = np.random.randint(0, int(config.get("max_bottom", self.max_bottom)) + 1)
+        bottom = np.random.randint(
+            0, int(config.get("max_bottom", self.max_bottom)) + 1
+        )
         left = np.random.randint(0, int(config.get("max_left", self.max_left)) + 1)
         right = np.random.randint(0, int(config.get("max_right", self.max_right)) + 1)
         output = cv2.copyMakeBorder(
@@ -438,7 +477,10 @@ class PerspectiveTransform(AIVisionComponent):
         dst = [
             [np.random.uniform(0, dx), np.random.uniform(0, dy)],
             [width - 1 - np.random.uniform(0, dx), np.random.uniform(0, dy)],
-            [width - 1 - np.random.uniform(0, dx), height - 1 - np.random.uniform(0, dy)],
+            [
+                width - 1 - np.random.uniform(0, dx),
+                height - 1 - np.random.uniform(0, dy),
+            ],
             [np.random.uniform(0, dx), height - 1 - np.random.uniform(0, dy)],
         ]
         output = apply_perspective(
@@ -488,20 +530,32 @@ class ElasticTransform(AIVisionComponent):
         sigma = float(config.get("sigma", self.sigma))
         random_state = np.random.RandomState(config.get("seed", None))
         shape = frame.shape[:2]
-        dx = cv2.GaussianBlur(
-            (random_state.rand(*shape).astype(np.float32) * 2 - 1),
-            (0, 0),
-            sigma,
-        ) * alpha
-        dy = cv2.GaussianBlur(
-            (random_state.rand(*shape).astype(np.float32) * 2 - 1),
-            (0, 0),
-            sigma,
-        ) * alpha
+        dx = (
+            cv2.GaussianBlur(
+                (random_state.rand(*shape).astype(np.float32) * 2 - 1),
+                (0, 0),
+                sigma,
+            )
+            * alpha
+        )
+        dy = (
+            cv2.GaussianBlur(
+                (random_state.rand(*shape).astype(np.float32) * 2 - 1),
+                (0, 0),
+                sigma,
+            )
+            * alpha
+        )
         x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
         map_x = (x + dx).astype(np.float32)
         map_y = (y + dy).astype(np.float32)
-        output = cv2.remap(frame, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101)
+        output = cv2.remap(
+            frame,
+            map_x,
+            map_y,
+            interpolation=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_REFLECT_101,
+        )
         return replace_frame(data, output)
 
 
@@ -538,8 +592,14 @@ class GridDistortion(AIVisionComponent):
         height, width = frame.shape[:2]
         steps = int(config.get("num_steps", self.num_steps))
         distort_limit = float(config.get("distort_limit", self.distort_limit))
-        xsteps = [1 + np.random.uniform(-distort_limit, distort_limit) for _ in range(steps + 1)]
-        ysteps = [1 + np.random.uniform(-distort_limit, distort_limit) for _ in range(steps + 1)]
+        xsteps = [
+            1 + np.random.uniform(-distort_limit, distort_limit)
+            for _ in range(steps + 1)
+        ]
+        ysteps = [
+            1 + np.random.uniform(-distort_limit, distort_limit)
+            for _ in range(steps + 1)
+        ]
         xx = np.zeros(width, np.float32)
         yy = np.zeros(height, np.float32)
         x_segment = width / steps
@@ -550,7 +610,9 @@ class GridDistortion(AIVisionComponent):
             cur = prev + x_segment * xsteps[idx]
             start = int(round(idx * x_segment))
             end = int(round((idx + 1) * x_segment))
-            xx[start:end] = np.linspace(prev_index, cur, max(1, end - start), endpoint=False)
+            xx[start:end] = np.linspace(
+                prev_index, cur, max(1, end - start), endpoint=False
+            )
             prev_index = cur
             prev = cur
         xx[end:] = np.linspace(prev_index, width - 1, width - end)
@@ -560,12 +622,20 @@ class GridDistortion(AIVisionComponent):
             cur = prev + y_segment * ysteps[idx]
             start = int(round(idx * y_segment))
             end = int(round((idx + 1) * y_segment))
-            yy[start:end] = np.linspace(prev_index, cur, max(1, end - start), endpoint=False)
+            yy[start:end] = np.linspace(
+                prev_index, cur, max(1, end - start), endpoint=False
+            )
             prev_index = cur
             prev = cur
         yy[end:] = np.linspace(prev_index, height - 1, height - end)
         map_x, map_y = np.meshgrid(xx, yy)
-        output = cv2.remap(frame, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101)
+        output = cv2.remap(
+            frame,
+            map_x,
+            map_y,
+            interpolation=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_REFLECT_101,
+        )
         return replace_frame(data, output)
 
 
@@ -610,7 +680,9 @@ class OpticalDistortion(AIVisionComponent):
         fy = height
         cx = width / 2.0 + dx
         cy = height / 2.0 + dy
-        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
+        camera_matrix = np.array(
+            [[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32
+        )
         dist = np.array([k, k, 0, 0], dtype=np.float32)
         output = cv2.undistort(frame, camera_matrix, dist)
         return replace_frame(data, output)

@@ -24,7 +24,7 @@ class AutoLabeller(AIVisionComponent):
                 - 'model_url' (str): URL to fetch model weights from.
                   Default is 'http://default-model-url.com'.
         """
-        model_url = config.get('model_url', 'http://default-model-url.com')
+        model_url = config.get("model_url", "http://default-model-url.com")
         self.download_model_weights(model_url)
         self.is_initialized = True
 

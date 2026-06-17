@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class ImageHash(AIVisionComponent):
@@ -26,7 +26,9 @@ class ImageHash(AIVisionComponent):
 
     def _phash(self, gray: np.ndarray) -> str:
         size = self.hash_size * 4
-        img = cv2.resize(gray, (size, size), interpolation=cv2.INTER_AREA).astype(np.float32)
+        img = cv2.resize(gray, (size, size), interpolation=cv2.INTER_AREA).astype(
+            np.float32
+        )
         dct = cv2.dct(img)
         dct_low = dct[: self.hash_size, : self.hash_size]
         median = np.median(dct_low)
@@ -35,14 +37,18 @@ class ImageHash(AIVisionComponent):
         return format(val, f"0{self.hash_size * self.hash_size // 4}x")
 
     def _ahash(self, gray: np.ndarray) -> str:
-        img = cv2.resize(gray, (self.hash_size, self.hash_size), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(
+            gray, (self.hash_size, self.hash_size), interpolation=cv2.INTER_AREA
+        )
         avg = img.mean()
-        bits = (img.flatten() > avg)
+        bits = img.flatten() > avg
         val = int(np.packbits(bits).tobytes().hex(), 16)
         return format(val, f"0{self.hash_size * self.hash_size // 4}x")
 
     def _dhash(self, gray: np.ndarray) -> str:
-        img = cv2.resize(gray, (self.hash_size + 1, self.hash_size), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(
+            gray, (self.hash_size + 1, self.hash_size), interpolation=cv2.INTER_AREA
+        )
         bits = (img[:, :-1] > img[:, 1:]).flatten()
         val = int(np.packbits(bits).tobytes().hex(), 16)
         return format(val, f"0{self.hash_size * self.hash_size // 4}x")
@@ -64,7 +70,9 @@ class ImageHash(AIVisionComponent):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame
         h = self._compute(gray)
         distance = self._hamming(h, self._prev_hash) if self._prev_hash else None
-        is_dup = (h in self._seen) or (distance is not None and distance < self.threshold)
+        is_dup = (h in self._seen) or (
+            distance is not None and distance < self.threshold
+        )
         self._seen.add(h)
         self._prev_hash = h
         payload = data if isinstance(data, dict) else {"frame": frame}

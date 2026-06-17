@@ -1,6 +1,7 @@
-from ai_vision_tool.core.base import AIVisionComponent
 import cv2
 import numpy as np
+
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class FrameResizer(AIVisionComponent):
@@ -21,8 +22,8 @@ class FrameResizer(AIVisionComponent):
         """
         frame = data["frame"] if isinstance(data, dict) else data
 
-        target_size = config.get('size', (640, 480))
-        keep_aspect = config.get('keep_aspect', False)
+        target_size = config.get("size", (640, 480))
+        keep_aspect = config.get("keep_aspect", False)
 
         if keep_aspect:
             output = self._resize_keep_aspect(frame, target_size)
@@ -58,5 +59,5 @@ class FrameResizer(AIVisionComponent):
         x = (target_w - new_w) // 2
         y = (target_h - new_h) // 2
 
-        canvas[y:y + new_h, x:x + new_w] = resized
+        canvas[y : y + new_h, x : x + new_w] = resized
         return canvas

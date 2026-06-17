@@ -55,8 +55,8 @@ class ModelBenchmark:
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         result = self.run(sample_input)
-        result["peak_memory_mb"] = round(peak / 1024 ** 2, 3)
-        result["current_memory_mb"] = round(current / 1024 ** 2, 3)
+        result["peak_memory_mb"] = round(peak / 1024**2, 3)
+        result["current_memory_mb"] = round(current / 1024**2, 3)
         return result
 
     @staticmethod

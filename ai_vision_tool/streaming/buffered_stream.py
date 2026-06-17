@@ -4,7 +4,6 @@ import queue
 import time
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class BufferedStream(AIVisionComponent):
@@ -16,8 +15,12 @@ class BufferedStream(AIVisionComponent):
         emit_rate: Optional target output FPS (token bucket throttle).
     """
 
-    def __init__(self, buffer_size: int = 30, drop_policy: str = "oldest",
-                 emit_rate: float | None = None):
+    def __init__(
+        self,
+        buffer_size: int = 30,
+        drop_policy: str = "oldest",
+        emit_rate: float | None = None,
+    ):
         super().__init__()
         self.buffer_size = buffer_size
         self.drop_policy = drop_policy
@@ -88,7 +91,7 @@ class SlidingWindowBuffer:
         self._buffer.append(frame)
         if len(self._buffer) >= self.window:
             result = list(self._buffer)
-            self._buffer = self._buffer[self.window - self.overlap:]
+            self._buffer = self._buffer[self.window - self.overlap :]
             return result
         return None
 

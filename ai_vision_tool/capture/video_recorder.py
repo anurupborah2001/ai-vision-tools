@@ -1,11 +1,10 @@
-import cv2
-import numpy as np
 import os
 import time
-import imageio
-from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional
+from datetime import datetime
+
+import cv2
+import imageio
 
 
 @dataclass
@@ -31,8 +30,7 @@ class VideoRecorder:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.file_path = os.path.join(
-            self.output_path,
-            f"record_{timestamp}.{self.output_format}"
+            self.output_path, f"record_{timestamp}.{self.output_format}"
         )
 
         self.writer = None

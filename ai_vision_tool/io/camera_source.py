@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 
 class CameraSource(AIVisionComponent):
@@ -20,7 +19,14 @@ class CameraSource(AIVisionComponent):
         buffer_size: cv2 capture buffer size (1 = latest frame only).
     """
 
-    def __init__(self, source=0, width: int = 1280, height: int = 720, fps: float = 30.0, buffer_size: int = 1):
+    def __init__(
+        self,
+        source=0,
+        width: int = 1280,
+        height: int = 720,
+        fps: float = 30.0,
+        buffer_size: int = 1,
+    ):
         super().__init__()
         self.source = source
         self.width = width
@@ -33,7 +39,7 @@ class CameraSource(AIVisionComponent):
     def setup(self, config: dict):
         self._cap = cv2.VideoCapture(self.source)
         if not self._cap.isOpened():
-            raise IOError(f"CameraSource: cannot open {self.source!r}")
+            raise OSError(f"CameraSource: cannot open {self.source!r}")
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self._cap.set(cv2.CAP_PROP_FPS, self.fps)

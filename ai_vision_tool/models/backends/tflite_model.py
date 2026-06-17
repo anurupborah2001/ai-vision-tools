@@ -16,7 +16,7 @@ except ImportError:
         ) from exc
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class TFLiteModel(AIVisionComponent):
@@ -38,12 +38,14 @@ class TFLiteModel(AIVisionComponent):
     def setup(self, config: dict):
         try:
             from tflite_runtime.interpreter import Interpreter
-        except ImportError:
+        except ImportError as e:
             try:
                 from tensorflow.lite.python.interpreter import Interpreter
             except ImportError:
-                raise ImportError("Install with: pip install tflite-runtime")
-        self._interpreter = Interpreter(model_path=self.model_path, num_threads=self.num_threads)
+                raise ImportError("Install with: pip install tflite-runtime") from e
+        self._interpreter = Interpreter(
+            model_path=self.model_path, num_threads=self.num_threads
+        )
         self._interpreter.allocate_tensors()
         self._input_details = self._interpreter.get_input_details()
         self._output_details = self._interpreter.get_output_details()
@@ -67,7 +69,9 @@ class TFLiteModel(AIVisionComponent):
         self._interpreter.invoke()
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
-        outputs = [self._interpreter.get_tensor(d["index"]) for d in self._output_details]
+        outputs = [
+            self._interpreter.get_tensor(d["index"]) for d in self._output_details
+        ]
         payload = data if isinstance(data, dict) else {"frame": frame}
         payload["model_output"] = outputs[0] if len(outputs) == 1 else outputs
         payload["inference_time_ms"] = round(elapsed_ms, 3)

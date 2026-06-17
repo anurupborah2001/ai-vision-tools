@@ -1,5 +1,7 @@
-import cv2
 import os
+
+import cv2
+
 from ai_vision_tool.core.base import AIVisionComponent
 
 
@@ -23,11 +25,11 @@ class PictureTaker(AIVisionComponent):
         Returns:
             list[str]: Paths of all images saved during the session.
         """
-        imgdir = config.get('imgdir', 'Pics')
-        resolution = config.get('resolution', '1280x720')
-        camera_id = config.get('camera_id', 0)
+        imgdir = config.get("imgdir", "Pics")
+        resolution = config.get("resolution", "1280x720")
+        camera_id = config.get("camera_id", 0)
 
-        imW, imH = map(int, resolution.split('x'))
+        imW, imH = map(int, resolution.split("x"))
         dirpath = os.path.join(os.getcwd(), imgdir)
 
         if not os.path.exists(dirpath):
@@ -57,9 +59,9 @@ class PictureTaker(AIVisionComponent):
                 cv2.imshow(winname, frame)
                 key = cv2.waitKey(1) & 0xFF
 
-                if key == ord('q'):
+                if key == ord("q"):
                     break
-                elif key == ord('p'):
+                elif key == ord("p"):
                     filename = f"{imgdir}-{imnum}.jpg"
                     savepath = os.path.join(dirpath, filename)
                     cv2.imwrite(savepath, frame)

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncGenerator
 
 
 class AsyncPipeline:
@@ -13,7 +13,9 @@ class AsyncPipeline:
         global_config: Config dict passed to every component.
     """
 
-    def __init__(self, components: list | None = None, global_config: dict | None = None):
+    def __init__(
+        self, components: list | None = None, global_config: dict | None = None
+    ):
         self._components = list(components or [])
         self.global_config = global_config or {}
         self._executor = ThreadPoolExecutor()

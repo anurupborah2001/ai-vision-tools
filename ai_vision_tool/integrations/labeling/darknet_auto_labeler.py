@@ -1,8 +1,9 @@
 import os
+import shutil
+
 import cv2
 import numpy as np
-import glob
-import shutil
+
 from ai_vision_tool.core.base import AIVisionComponent
 
 XML_BODY_1 = """<annotation>
@@ -58,16 +59,22 @@ class DarknetAutoLabeler(AIVisionComponent):
         """
         import sys
 
-        self.darknet_path = config.get('darknet_path', 'C:\\darknet\\build\\darknet\\x64')
-        self.weights = config.get('weights', 'yolov4.weights')
-        self.cfg = config.get('cfg', 'yolov4.cfg')
-        self.meta = config.get('meta', 'cfg/coco.data')
-        self.min_thresh = config.get('min_thresh', 0.5)
-        self.iou_thresh = config.get('iou_thresh', 0.5)
+        self.darknet_path = config.get(
+            "darknet_path", "C:\\darknet\\build\\darknet\\x64"
+        )
+        self.weights = config.get("weights", "yolov4.weights")
+        self.cfg = config.get("cfg", "yolov4.cfg")
+        self.meta = config.get("meta", "cfg/coco.data")
+        self.min_thresh = config.get("min_thresh", 0.5)
+        self.iou_thresh = config.get("iou_thresh", 0.5)
 
-        self.folder_name = config.get('folder_name', 'images')
-        self.labeled_dir = os.path.join(self.folder_name, config.get('labeled_dir', 'labeled'))
-        self.unlabeled_dir = os.path.join(self.folder_name, config.get('unlabeled_dir', 'unlabeled'))
+        self.folder_name = config.get("folder_name", "images")
+        self.labeled_dir = os.path.join(
+            self.folder_name, config.get("labeled_dir", "labeled")
+        )
+        self.unlabeled_dir = os.path.join(
+            self.folder_name, config.get("unlabeled_dir", "unlabeled")
+        )
 
         os.makedirs(self.labeled_dir, exist_ok=True)
         os.makedirs(self.unlabeled_dir, exist_ok=True)
@@ -112,12 +119,18 @@ class DarknetAutoLabeler(AIVisionComponent):
 
         image = cv2.imread(image_path)
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_resized = cv2.resize(image_rgb, (self.darknet_width, self.darknet_height), interpolation=cv2.INTER_LINEAR)
+        image_resized = cv2.resize(
+            image_rgb,
+            (self.darknet_width, self.darknet_height),
+            interpolation=cv2.INTER_LINEAR,
+        )
 
         darknet_image = darknet.make_image(self.darknet_width, self.darknet_height, 3)
         darknet.copy_image_from_bytes(darknet_image, image_resized.tobytes())
 
-        detections = darknet.detect_image(self.network, self.class_names, darknet_image, thresh=self.min_thresh)
+        detections = darknet.detect_image(
+            self.network, self.class_names, darknet_image, thresh=self.min_thresh
+        )
         darknet.free_image(darknet_image)
 
         frame_h, frame_w = image.shape[0:2]
@@ -128,26 +141,48 @@ class DarknetAutoLabeler(AIVisionComponent):
             y_true = int((y / self.darknet_height) * frame_h)
             w_true = int((w / self.darknet_width) * frame_w)
             h_true = int((h / self.darknet_height) * frame_h)
-            detections_true.append([str(label), confidence, (x_true, y_true, w_true, h_true)])
+            detections_true.append(
+                [str(label), confidence, (x_true, y_true, w_true, h_true)]
+            )
 
         detections_true = self._filter_iou(detections_true, self.iou_thresh)
 
         image_results = np.copy(image)
         for detection in detections_true:
             x, y, w, h = detection[2]
-            image_results = self._draw_pred(image_results, detection[0], float(detection[1]), x, y, w, h)
+            image_results = self._draw_pred(
+                image_results, detection[0], float(detection[1]), x, y, w, h
+            )
 
-        cv2.putText(image_results, 'Label good? (y/n)', (30, 50), self.font, 1, (0, 0, 0), 4, cv2.LINE_AA)
-        cv2.putText(image_results, 'Label good? (y/n)', (30, 50), self.font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(
+            image_results,
+            "Label good? (y/n)",
+            (30, 50),
+            self.font,
+            1,
+            (0, 0, 0),
+            4,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            image_results,
+            "Label good? (y/n)",
+            (30, 50),
+            self.font,
+            1,
+            (0, 255, 0),
+            2,
+            cv2.LINE_AA,
+        )
 
-        cv2.imshow('Label attempt', image_results)
+        cv2.imshow("Label attempt", image_results)
 
         key = cv2.waitKey(0) & 0xFF
-        if key == ord('q'):
+        if key == ord("q"):
             cv2.destroyAllWindows()
             raise StopIteration("User triggered pipeline exit.")
 
-        save_labels = (key == ord('y'))
+        save_labels = key == ord("y")
 
         if save_labels:
             bboxdata = []
@@ -164,7 +199,10 @@ class DarknetAutoLabeler(AIVisionComponent):
         new_image_path = os.path.join(dest_dir, os.path.basename(image_path))
         shutil.move(image_path, new_image_path)
 
-        return {"file": new_image_path, "status": "labeled" if save_labels else "rejected"}
+        return {
+            "file": new_image_path,
+            "status": "labeled" if save_labels else "rejected",
+        }
 
     def _draw_pred(self, draw_frame, classId, conf, x, y, w, h):
         """Draws a labeled bounding box on the frame.
@@ -183,11 +221,17 @@ class DarknetAutoLabeler(AIVisionComponent):
         """
         left, top, right, bottom = self._get_min_max([x, y, w, h])
         cv2.rectangle(draw_frame, (left, top), (right, bottom), (10, 255, 0), 3)
-        label = f'{classId}: {int(conf)}%'
+        label = f"{classId}: {int(conf)}%"
         labelSize, baseLine = cv2.getTextSize(label, self.font, 0.5, 1)
         top = max(top, labelSize[1])
-        cv2.rectangle(draw_frame, (left, top - labelSize[1] - 12), (left + labelSize[0] + 40, top + baseLine - 8), (255, 255, 255), cv2.FILLED)
-        cv2.putText(draw_frame, label, (left, top - 7), self.font, .7, (0, 0, 0), 2)
+        cv2.rectangle(
+            draw_frame,
+            (left, top - labelSize[1] - 12),
+            (left + labelSize[0] + 40, top + baseLine - 8),
+            (255, 255, 255),
+            cv2.FILLED,
+        )
+        cv2.putText(draw_frame, label, (left, top - 7), self.font, 0.7, (0, 0, 0), 2)
         return draw_frame
 
     def _get_min_max(self, coords_wh):
@@ -200,7 +244,12 @@ class DarknetAutoLabeler(AIVisionComponent):
             list[int]: Bounding box as [xmin, ymin, xmax, ymax].
         """
         x, y, w, h = coords_wh
-        return [int(round(x - (w / 2))), int(round(y - (h / 2))), int(round(x + (w / 2))), int(round(y + (h / 2)))]
+        return [
+            int(round(x - (w / 2))),
+            int(round(y - (h / 2))),
+            int(round(x + (w / 2))),
+            int(round(y + (h / 2))),
+        ]
 
     def _filter_iou(self, detections, iou_threshold):
         """Removes overlapping detections using non-maximum suppression.
@@ -242,7 +291,11 @@ class DarknetAutoLabeler(AIVisionComponent):
         if w_overlap < 0 or h_overlap < 0:
             return 0
         overlap_area = w_overlap * h_overlap
-        union_area = ((b1_ymax - b1_ymin) * (b1_xmax - b1_xmin)) + ((b2_ymax - b2_ymin) * (b2_xmax - b2_xmin)) - overlap_area
+        union_area = (
+            ((b1_ymax - b1_ymin) * (b1_xmax - b1_xmin))
+            + ((b2_ymax - b2_ymin) * (b2_xmax - b2_xmin))
+            - overlap_area
+        )
         return overlap_area / union_area if union_area > 0 else 0
 
     def _create_xml(self, im_path, im_bbs, imH, imW):
@@ -255,11 +308,27 @@ class DarknetAutoLabeler(AIVisionComponent):
             imW (int): Image width in pixels.
         """
         imFn = os.path.basename(im_path)
-        xmlFn = os.path.splitext(imFn)[0] + '.xml'
+        xmlFn = os.path.splitext(imFn)[0] + ".xml"
         xmlPath = os.path.join(self.labeled_dir, xmlFn)
 
-        with open(xmlPath, 'w') as f:
-            f.write(XML_BODY_1.format(FOLDER=self.folder_name, FILENAME=imFn, PATH=im_path, WIDTH=imW, HEIGHT=imH))
+        with open(xmlPath, "w") as f:
+            f.write(
+                XML_BODY_1.format(
+                    FOLDER=self.folder_name,
+                    FILENAME=imFn,
+                    PATH=im_path,
+                    WIDTH=imW,
+                    HEIGHT=imH,
+                )
+            )
             for bbox in im_bbs:
-                f.write(XML_OBJECT.format(CLASS=bbox[0], XMIN=bbox[1][0], YMIN=bbox[1][1], XMAX=bbox[1][2], YMAX=bbox[1][3]))
+                f.write(
+                    XML_OBJECT.format(
+                        CLASS=bbox[0],
+                        XMIN=bbox[1][0],
+                        YMIN=bbox[1][1],
+                        XMAX=bbox[1][2],
+                        YMAX=bbox[1][3],
+                    )
+                )
             f.write(XML_BODY_2)

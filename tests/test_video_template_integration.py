@@ -5,13 +5,16 @@ These tests exercise complete multi-feature flows — auto/manual recording
 cycles, timed screenshot logic, and end-of-stream behaviour — with the
 camera and VideoRecorder replaced by lightweight fakes.
 """
+
 import cv2
 import numpy as np
 import pytest
 
 import ai_vision_tool.capture.video_template as _vt
-from ai_vision_tool.capture.video_template import video_capture_template, KeyEventManager
-
+from ai_vision_tool.capture.video_template import (
+    KeyEventManager,
+    video_capture_template,
+)
 
 # ── shared fakes ─────────────────────────────────────────────────────────────
 
@@ -82,7 +85,9 @@ def test_auto_screenshot_fires_exactly_once(monkeypatch, small_frame):
     monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
     monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
-    monkeypatch.setattr(_vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png")
+    monkeypatch.setattr(
+        _vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png"
+    )
 
     video_capture_template(
         video_source=0,
@@ -106,7 +111,9 @@ def test_auto_screenshot_repeats_every_interval(monkeypatch, small_frame):
     monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
     monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
-    monkeypatch.setattr(_vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png")
+    monkeypatch.setattr(
+        _vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png"
+    )
 
     video_capture_template(
         video_source=0,
@@ -129,7 +136,9 @@ def test_auto_screenshot_not_taken_before_interval(monkeypatch, small_frame):
     monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
     monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
-    monkeypatch.setattr(_vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png")
+    monkeypatch.setattr(
+        _vt, "save_screenshot", lambda f, **kw: shots.append(True) or "shot.png"
+    )
 
     video_capture_template(
         video_source=0,
@@ -250,8 +259,12 @@ def test_manual_recording_not_active_without_r_key(monkeypatch, small_frame):
     monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
     monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
-    monkeypatch.setattr(_vt, "_make_recorder",
-                        lambda **kw: recorder_instances.append(FakeVideoRecorder()) or recorder_instances[-1])
+    monkeypatch.setattr(
+        _vt,
+        "_make_recorder",
+        lambda **kw: recorder_instances.append(FakeVideoRecorder())
+        or recorder_instances[-1],
+    )
 
     video_capture_template(
         video_source=0,
@@ -273,7 +286,9 @@ def test_end_of_stream_exits_cleanly(monkeypatch, small_frame, capsys):
     monkeypatch.setattr(cv2, "waitKey", lambda _: 0)
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
 
-    video_capture_template(video_source="clip.mp4", loop_forever=False, show_window=False, draw_fps=False)
+    video_capture_template(
+        video_source="clip.mp4", loop_forever=False, show_window=False, draw_fps=False
+    )
 
     assert fake_cap.released is True
     assert "End of video" in capsys.readouterr().out
@@ -296,7 +311,9 @@ def test_custom_logic_plus_key_manager_plus_screenshot(monkeypatch, small_frame)
     monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
     monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
     monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
-    monkeypatch.setattr(_vt, "save_screenshot", lambda f, **kw: shots.append(True) or "p.png")
+    monkeypatch.setattr(
+        _vt, "save_screenshot", lambda f, **kw: shots.append(True) or "p.png"
+    )
 
     video_capture_template(
         video_source=0,

@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame
 from ai_vision_tool.tracking.track_manager import TrackManager
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class DeepSORTTracker(AIVisionComponent):
@@ -20,8 +20,15 @@ class DeepSORTTracker(AIVisionComponent):
         embedder: "hog" (no deps), "none" (IoU only), or "mobilenet" (requires model).
     """
 
-    def __init__(self, max_age: int = 30, min_hits: int = 3, iou_threshold: float = 0.3,
-                 max_cosine_distance: float = 0.3, nn_budget: int = 100, embedder: str = "hog"):
+    def __init__(
+        self,
+        max_age: int = 30,
+        min_hits: int = 3,
+        iou_threshold: float = 0.3,
+        max_cosine_distance: float = 0.3,
+        nn_budget: int = 100,
+        embedder: str = "hog",
+    ):
         super().__init__()
         self.max_age = max_age
         self.min_hits = min_hits
@@ -40,7 +47,12 @@ class DeepSORTTracker(AIVisionComponent):
         super().setup(config)
 
     def _extract_embedding(self, frame: np.ndarray, bbox: dict) -> np.ndarray:
-        x1, y1, x2, y2 = int(bbox["x1"]), int(bbox["y1"]), int(bbox["x2"]), int(bbox["y2"])
+        x1, y1, x2, y2 = (
+            int(bbox["x1"]),
+            int(bbox["y1"]),
+            int(bbox["x2"]),
+            int(bbox["y2"]),
+        )
         x1, y1 = max(0, x1), max(0, y1)
         x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
         roi = frame[y1:y2, x1:x2]
@@ -59,7 +71,9 @@ class DeepSORTTracker(AIVisionComponent):
 
     @staticmethod
     def _cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
-        return 1.0 - float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-6))
+        return 1.0 - float(
+            np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-6)
+        )
 
     def _execute(self, data, config):
         frame = extract_frame(data)

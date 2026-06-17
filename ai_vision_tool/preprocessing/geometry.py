@@ -5,6 +5,7 @@ import math
 import cv2
 import numpy as np
 
+from ..core.base import AIVisionComponent
 from ..utils.image_utils import (
     extract_frame,
     normalize_color_value,
@@ -12,7 +13,6 @@ from ..utils.image_utils import (
     resolve_border_mode,
     rotate_bound,
 )
-from ..core.base import AIVisionComponent
 
 
 def _get_bboxes(data, config):
@@ -25,7 +25,11 @@ def _get_bboxes(data, config):
     Returns:
         list: List of bounding boxes, or empty list if none found.
     """
-    return config.get("bboxes", data.get("bboxes", [])) if isinstance(data, dict) else config.get("bboxes", [])
+    return (
+        config.get("bboxes", data.get("bboxes", []))
+        if isinstance(data, dict)
+        else config.get("bboxes", [])
+    )
 
 
 class Resize(AIVisionComponent):
@@ -65,7 +69,9 @@ class Resize(AIVisionComponent):
         width = int(config.get("resize_width", config.get("width", self.width)))
         height = int(config.get("resize_height", config.get("height", self.height)))
         interpolation = _resolve_interpolation(
-            config.get("resize_interpolation", config.get("interpolation", self.interpolation))
+            config.get(
+                "resize_interpolation", config.get("interpolation", self.interpolation)
+            )
         )
         output = cv2.resize(frame, (width, height), interpolation=interpolation)
         return replace_frame(data, output)
@@ -121,9 +127,13 @@ class LetterboxResize(AIVisionComponent):
         """
         frame = extract_frame(data)
         target_w = int(config.get("letterbox_width", config.get("width", self.width)))
-        target_h = int(config.get("letterbox_height", config.get("height", self.height)))
+        target_h = int(
+            config.get("letterbox_height", config.get("height", self.height))
+        )
         pad_value = normalize_color_value(config.get("pad_value", self.pad_value))
-        interpolation = _resolve_interpolation(config.get("interpolation", self.interpolation))
+        interpolation = _resolve_interpolation(
+            config.get("interpolation", self.interpolation)
+        )
         center = config.get("center", self.center)
 
         height, width = frame.shape[:2]
@@ -132,7 +142,9 @@ class LetterboxResize(AIVisionComponent):
         new_h = max(1, int(round(height * scale)))
         resized = cv2.resize(frame, (new_w, new_h), interpolation=interpolation)
 
-        canvas = np.full((target_h, target_w, frame.shape[2]), pad_value, dtype=frame.dtype)
+        canvas = np.full(
+            (target_h, target_w, frame.shape[2]), pad_value, dtype=frame.dtype
+        )
         if center:
             x = (target_w - new_w) // 2
             y = (target_h - new_h) // 2
@@ -176,7 +188,9 @@ class CenterCrop(AIVisionComponent):
         """
         frame = extract_frame(data)
         crop_w = int(config.get("center_crop_width", config.get("width", self.width)))
-        crop_h = int(config.get("center_crop_height", config.get("height", self.height)))
+        crop_h = int(
+            config.get("center_crop_height", config.get("height", self.height))
+        )
         height, width = frame.shape[:2]
         crop_w = min(crop_w, width)
         crop_h = min(crop_h, height)
@@ -237,7 +251,13 @@ class PerspectiveCorrection(AIVisionComponent):
         border_value (int or tuple): Constant border fill value. Default is 0.
     """
 
-    def __init__(self, source_points=None, output_size=None, border_mode="constant", border_value=0):
+    def __init__(
+        self,
+        source_points=None,
+        output_size=None,
+        border_mode="constant",
+        border_value=0,
+    ):
         """Initializes PerspectiveCorrection with source points and output parameters.
 
         Args:
@@ -293,7 +313,9 @@ class PerspectiveCorrection(AIVisionComponent):
             matrix,
             (out_w, out_h),
             borderMode=resolve_border_mode(config.get("border_mode", self.border_mode)),
-            borderValue=normalize_color_value(config.get("border_value", self.border_value)),
+            borderValue=normalize_color_value(
+                config.get("border_value", self.border_value)
+            ),
         )
         return replace_frame(data, output)
 
@@ -325,9 +347,15 @@ class Deskew(AIVisionComponent):
             NumPy array or dict: Deskewed image, or original if no content is detected.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
-        thresh = int(config.get("deskew_threshold", config.get("threshold", self.threshold)))
-        _, binary = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
+        thresh = int(
+            config.get("deskew_threshold", config.get("threshold", self.threshold))
+        )
+        _, binary = cv2.threshold(
+            gray, thresh, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+        )
         points = cv2.findNonZero(binary)
         if points is None:
             return replace_frame(data, frame.copy())
@@ -370,8 +398,12 @@ class AutoCrop(AIVisionComponent):
             NumPy array or dict: Cropped image, or original if no foreground content found.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
-        threshold = int(config.get("auto_crop_threshold", config.get("threshold", self.threshold)))
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
+        threshold = int(
+            config.get("auto_crop_threshold", config.get("threshold", self.threshold))
+        )
         padding = int(config.get("padding", self.padding))
         _, binary = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
         coords = cv2.findNonZero(binary)
@@ -453,7 +485,10 @@ class FaceAlign(AIVisionComponent):
         desired_dist = (desired_right_eye_x - desired_left_eye[0]) * desired_face_width
         scale = desired_dist / max(dist, 1e-6)
 
-        eyes_center = ((left_eye[0] + right_eye[0]) / 2.0, (left_eye[1] + right_eye[1]) / 2.0)
+        eyes_center = (
+            (left_eye[0] + right_eye[0]) / 2.0,
+            (left_eye[1] + right_eye[1]) / 2.0,
+        )
         matrix = cv2.getRotationMatrix2D(eyes_center, angle, scale)
         t_x = desired_face_width * 0.5
         t_y = desired_face_height * desired_left_eye[1]
@@ -654,7 +689,9 @@ class MaskResize(AIVisionComponent):
         interpolation = _resolve_interpolation(
             config.get("mask_interpolation", self.interpolation)
         )
-        data["mask"] = cv2.resize(mask, (int(width), int(height)), interpolation=interpolation)
+        data["mask"] = cv2.resize(
+            mask, (int(width), int(height)), interpolation=interpolation
+        )
         return data
 
 

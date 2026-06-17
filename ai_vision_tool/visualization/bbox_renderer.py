@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 from ai_vision_tool.utils.color_palette import ColorPalette
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class BBoxRenderer(AIVisionComponent):
@@ -21,9 +21,16 @@ class BBoxRenderer(AIVisionComponent):
         alpha: Semi-transparent fill alpha (0 = no fill).
     """
 
-    def __init__(self, color_map: dict | None = None, thickness: int = 2, font_scale: float = 0.5,
-                 show_conf: bool = True, show_label: bool = True, show_track_id: bool = True,
-                 alpha: float = 0.0):
+    def __init__(
+        self,
+        color_map: dict | None = None,
+        thickness: int = 2,
+        font_scale: float = 0.5,
+        show_conf: bool = True,
+        show_label: bool = True,
+        show_track_id: bool = True,
+        alpha: float = 0.0,
+    ):
         super().__init__()
         self.color_map = color_map or {}
         self.thickness = thickness
@@ -48,7 +55,12 @@ class BBoxRenderer(AIVisionComponent):
         overlay = frame.copy() if alpha > 0 else None
 
         for item in items:
-            x1, y1, x2, y2 = int(item["x1"]), int(item["y1"]), int(item["x2"]), int(item["y2"])
+            x1, y1, x2, y2 = (
+                int(item["x1"]),
+                int(item["y1"]),
+                int(item["x2"]),
+                int(item["y2"]),
+            )
             label = item.get("label", "")
             conf = item.get("conf", 1.0)
             track_id = item.get("track_id", -1)
@@ -69,10 +81,20 @@ class BBoxRenderer(AIVisionComponent):
             text = " ".join(parts)
 
             if text:
-                (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
+                (tw, th), _ = cv2.getTextSize(
+                    text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1
+                )
                 cv2.rectangle(frame, (x1, y1 - th - 6), (x1 + tw + 4, y1), color, -1)
-                cv2.putText(frame, text, (x1 + 2, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
-                            font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+                cv2.putText(
+                    frame,
+                    text,
+                    (x1 + 2, y1 - 2),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    font_scale,
+                    (255, 255, 255),
+                    1,
+                    cv2.LINE_AA,
+                )
 
         if alpha > 0 and overlay is not None:
             frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)

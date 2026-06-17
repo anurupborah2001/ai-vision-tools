@@ -37,14 +37,22 @@ class ModelRegistry:
         self._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         self._CACHE_PATH.write_text(json.dumps(self._registry, indent=2))
 
-    def register(self, name: str, path_or_url: str, model_type: str, metadata: dict | None = None) -> None:
-        self._registry[name] = {"name": name, "path_or_url": path_or_url,
-                                "model_type": model_type, "metadata": metadata or {}}
+    def register(
+        self, name: str, path_or_url: str, model_type: str, metadata: dict | None = None
+    ) -> None:
+        self._registry[name] = {
+            "name": name,
+            "path_or_url": path_or_url,
+            "model_type": model_type,
+            "metadata": metadata or {},
+        }
         self._save_cache()
 
     def get_info(self, name: str) -> dict:
         if name not in self._registry:
-            raise KeyError(f"Model {name!r} not registered. Available: {list(self._registry)}")
+            raise KeyError(
+                f"Model {name!r} not registered. Available: {list(self._registry)}"
+            )
         return dict(self._registry[name])
 
     def list(self) -> list[dict]:
@@ -56,17 +64,22 @@ class ModelRegistry:
         path = info["path_or_url"]
         if mtype == "onnx":
             from ai_vision_tool.models.onnx_model import ONNXModel
+
             return ONNXModel(model_path=path, **kwargs)
         if mtype == "torch":
             from ai_vision_tool.models.torch_model import TorchModel
+
             return TorchModel(model_path=path, **kwargs)
         if mtype == "tflite":
             from ai_vision_tool.models.tflite_model import TFLiteModel
+
             return TFLiteModel(model_path=path, **kwargs)
         raise ValueError(f"Unknown model_type {mtype!r}")
 
     @classmethod
-    def from_huggingface(cls, repo_id: str, filename: str, model_type: str) -> ModelRegistry:
+    def from_huggingface(
+        cls, repo_id: str, filename: str, model_type: str
+    ) -> ModelRegistry:
         reg = cls.instance()
         url = f"https://huggingface.co/{repo_id}/resolve/main/{filename}"
         name = f"{repo_id.replace('/', '__')}_{filename}"

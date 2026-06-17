@@ -1,5 +1,6 @@
-import cv2
 import os
+
+import cv2
 
 from ai_vision_tool.core.base import AIVisionComponent
 
@@ -28,15 +29,15 @@ class FrameGrabber(AIVisionComponent):
             print(f"Error: Video file not found: {data}")
             return []
 
-        output_folder_name = config.get('output_folder', 'extracted_pics')
-        skip_frames = config.get('skip_frames', 90)
-        resize_factor = config.get('resize_factor', 0.5)
+        output_folder_name = config.get("output_folder", "extracted_pics")
+        skip_frames = config.get("skip_frames", 90)
+        resize_factor = config.get("resize_factor", 0.5)
 
         folder_path = os.path.join(os.getcwd(), output_folder_name)
         if not os.path.isdir(folder_path):
             os.makedirs(folder_path)
 
-        basefn = os.path.basename(data).split('.')[0]
+        basefn = os.path.basename(data).split(".")[0]
         video = cv2.VideoCapture(data)
 
         im_count = 0
@@ -49,7 +50,7 @@ class FrameGrabber(AIVisionComponent):
             while video.isOpened():
                 hasFrame, frame = video.read()
                 if not hasFrame:
-                    print(f'Reached end of {data}!')
+                    print(f"Reached end of {data}!")
                     break
 
                 frame_count += 1
@@ -61,7 +62,7 @@ class FrameGrabber(AIVisionComponent):
                     im_name = f"{basefn}-{im_count}.jpg"
                     savepath = os.path.join(folder_path, im_name)
 
-                    cv2.imshow('Extracted image (Press any key to close early)', frame)
+                    cv2.imshow("Extracted image (Press any key to close early)", frame)
                     cv2.waitKey(10)
 
                     cv2.imwrite(savepath, frame)

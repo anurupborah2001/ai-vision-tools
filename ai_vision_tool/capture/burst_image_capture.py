@@ -1,5 +1,6 @@
-from .image_capture import PictureTaker
 import time
+
+from .image_capture import PictureTaker
 
 
 class BurstPictureTaker(PictureTaker):
@@ -54,7 +55,7 @@ class BurstPictureTaker(PictureTaker):
         """
         saved = []
 
-        for i in range(self.burst_count):
+        for _i in range(self.burst_count):
             ok, frame = cap.read()
             if not ok:
                 break

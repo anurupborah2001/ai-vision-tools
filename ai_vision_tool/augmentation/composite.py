@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame
 from .common import maybe_get_partner_frame
 
 
@@ -166,7 +166,9 @@ class RandomOcclusion(AIVisionComponent):
         """
         frame = extract_frame(data).copy()
         width = np.random.randint(1, int(config.get("max_width", self.max_width)) + 1)
-        height = np.random.randint(1, int(config.get("max_height", self.max_height)) + 1)
+        height = np.random.randint(
+            1, int(config.get("max_height", self.max_height)) + 1
+        )
         x = np.random.randint(0, max(1, frame.shape[1] - width + 1))
         y = np.random.randint(0, max(1, frame.shape[0] - height + 1))
         frame[y : y + height, x : x + width] = config.get("fill_value", self.fill_value)
@@ -306,13 +308,20 @@ class Mosaic9(AIVisionComponent):
         while len(images) < 9:
             images.append(frame)
         height, width = frame.shape[:2]
-        output_size = config.get("output_size", self.output_size) or (width * 3, height * 3)
+        output_size = config.get("output_size", self.output_size) or (
+            width * 3,
+            height * 3,
+        )
         cell_w = output_size[0] // 3
         cell_h = output_size[1] // 3
         rows = []
         for row in range(3):
             row_images = [
-                cv2.resize(images[row * 3 + col], (cell_w, cell_h), interpolation=cv2.INTER_LINEAR)
+                cv2.resize(
+                    images[row * 3 + col],
+                    (cell_w, cell_h),
+                    interpolation=cv2.INTER_LINEAR,
+                )
                 for col in range(3)
             ]
             rows.append(np.hstack(row_images))

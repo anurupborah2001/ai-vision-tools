@@ -3,13 +3,13 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
+from ..core.base import AIVisionComponent
 from ..utils.image_utils import (
     extract_frame,
     normalize_color_value,
     replace_frame,
     resolve_border_mode,
 )
-from ..core.base import AIVisionComponent
 
 
 class Shear(AIVisionComponent):
@@ -22,7 +22,9 @@ class Shear(AIVisionComponent):
         border_value (int or tuple): Fill color for constant border. Default is 0.
     """
 
-    def __init__(self, shear_x=0.0, shear_y=0.0, border_mode="constant", border_value=0):
+    def __init__(
+        self, shear_x=0.0, shear_y=0.0, border_mode="constant", border_value=0
+    ):
         """Initializes Shear with shear coefficients and border parameters.
 
         Args:

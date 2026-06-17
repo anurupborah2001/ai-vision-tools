@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 
 class FrameSampler(AIVisionComponent):
@@ -16,7 +15,13 @@ class FrameSampler(AIVisionComponent):
         prob: Keep probability in [0,1] (random mode).
     """
 
-    def __init__(self, every_n: int = 1, mode: str = "count", target_fps: float = 10.0, prob: float = 0.5):
+    def __init__(
+        self,
+        every_n: int = 1,
+        mode: str = "count",
+        target_fps: float = 10.0,
+        prob: float = 0.5,
+    ):
         super().__init__()
         self.every_n = every_n
         self.mode = mode
@@ -33,7 +38,7 @@ class FrameSampler(AIVisionComponent):
 
         if mode == "count":
             n = int(config.get("sample_every_n", self.every_n))
-            keep = (self._counter % n == 0)
+            keep = self._counter % n == 0
 
         elif mode == "fps":
             fps = float(config.get("sample_every_n", self.target_fps))

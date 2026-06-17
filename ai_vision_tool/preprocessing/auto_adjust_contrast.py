@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 
 
 class AutoAdjustContrast(AIVisionComponent):
@@ -72,7 +72,9 @@ class AutoAdjustContrast(AIVisionComponent):
         frame = extract_frame(data)
         output = frame.copy()
 
-        method = config.get("contrast_method", config.get("method", self.method)).lower()
+        method = config.get(
+            "contrast_method", config.get("method", self.method)
+        ).lower()
         clip_limit = config.get("clip_limit", self.clip_limit)
         tile_grid_size = tuple(config.get("tile_grid_size", self.tile_grid_size))
         lower_percentile = config.get("lower_percentile", self.lower_percentile)
@@ -110,7 +112,9 @@ class AutoAdjustContrast(AIVisionComponent):
         """
         lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
         l_channel, a_channel, b_channel = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=float(clip_limit), tileGridSize=tile_grid_size)
+        clahe = cv2.createCLAHE(
+            clipLimit=float(clip_limit), tileGridSize=tile_grid_size
+        )
         enhanced_l = clahe.apply(l_channel)
         merged = cv2.merge((enhanced_l, a_channel, b_channel))
         return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
