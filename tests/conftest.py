@@ -42,6 +42,14 @@ class FakeVideoCapture:
     def set(self, prop, value):
         self.settings.append((prop, value))
 
+    def get(self, prop):
+        import cv2
+        if prop == cv2.CAP_PROP_FRAME_COUNT:
+            return len(self.frames)
+        if prop == cv2.CAP_PROP_POS_FRAMES:
+            return self.index
+        return 0
+
     def release(self):
         self.released = True
 

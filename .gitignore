@@ -23,3 +23,5 @@ site/
 # Internal docs (planning, design specs)
 docs/superpowers/
 docs/kami-overview-en.html
+.memsearch
+CLAUDE.md

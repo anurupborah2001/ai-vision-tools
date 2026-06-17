@@ -9,6 +9,15 @@ from ai_vision_tool.io.image_exporter import ImageExporter
 from ai_vision_tool.capture.image_capture import PictureTaker
 from ai_vision_tool.capture.roi_capture import ROICapture
 from ai_vision_tool.capture.video_capture import VideoTaker
+import ai_vision_tool.capture.video_template as _vt
+from ai_vision_tool.capture.video_template import (
+    video_capture_template,
+    save_screenshot,
+    KeyEventManager,
+)
+
+
+def _noop(*a, **kw): ...
 
 
 def test_frame_grabber_returns_empty_for_missing_video(capsys):
@@ -122,6 +131,134 @@ def test_image_exporter_execute_passthrough_dict(tmp_path, sample_frame, created
 
     assert result is payload
     assert len(created_files) == 2
+
+
+# ── save_screenshot ──────────────────────────────────────────────────────────
+
+
+def test_save_screenshot_writes_png(tmp_cwd, sample_frame, stub_imwrite):
+    path = save_screenshot(sample_frame, output_dir="shots", prefix="test")
+    assert path.endswith(".png")
+    assert "test_" in path
+
+
+def test_save_screenshot_creates_directory(tmp_cwd, sample_frame, stub_imwrite):
+    save_screenshot(sample_frame, output_dir="new_dir/nested", prefix="cap")
+    assert (tmp_cwd / "new_dir" / "nested").is_dir()
+
+
+# ── video_capture_template — unit tests ──────────────────────────────────────
+
+
+def test_vct_returns_when_source_fails_to_open(monkeypatch, fake_video_capture_cls, capsys):
+    fake_cap = fake_video_capture_cls([])  # isOpened() → False
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(video_source=99, show_window=False, draw_fps=False)
+
+    assert "Error" in capsys.readouterr().out
+
+
+def test_vct_exits_on_esc(monkeypatch, sample_frame, fake_video_capture_cls):
+    fake_cap = fake_video_capture_cls([sample_frame, sample_frame])
+    keys = iter([27])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(video_source=0, loop_forever=False, show_window=False, draw_fps=False)
+
+    assert fake_cap.released is True
+
+
+def test_vct_exits_on_end_of_stream(monkeypatch, sample_frame, fake_video_capture_cls, capsys):
+    fake_cap = fake_video_capture_cls([sample_frame])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: 0)
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(video_source="clip.mp4", loop_forever=False, show_window=False, draw_fps=False)
+
+    assert fake_cap.released is True
+    assert "End of video" in capsys.readouterr().out
+
+
+def test_vct_applies_custom_logic_to_each_frame(monkeypatch, sample_frame, fake_video_capture_cls):
+    processed = []
+    fake_cap = fake_video_capture_cls([sample_frame, sample_frame])
+    keys = iter([0, 27])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(
+        video_source=0,
+        loop_forever=False,
+        show_window=False,
+        draw_fps=False,
+        custom_logic=lambda frame: processed.append(True) or frame,
+    )
+
+    assert len(processed) == 2
+
+
+def test_vct_key_handler_called_for_matching_key(monkeypatch, sample_frame, fake_video_capture_cls):
+    calls = []
+    km = KeyEventManager()
+    km.register(ord("x"), lambda frame, state: calls.append(True))
+
+    fake_cap = fake_video_capture_cls([sample_frame, sample_frame])
+    keys = iter([ord("x"), 27])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(
+        video_source=0,
+        loop_forever=False,
+        show_window=False,
+        draw_fps=False,
+        key_manager=km,
+    )
+
+    assert calls == [True]
+
+
+def test_vct_screenshot_on_s_key(monkeypatch, sample_frame, fake_video_capture_cls):
+    shots = []
+    fake_cap = fake_video_capture_cls([sample_frame, sample_frame])
+    keys = iter([ord("s"), 27])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: next(keys, 27))
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+    monkeypatch.setattr(_vt, "save_screenshot", lambda f, **kw: shots.append(True) or "p.png")
+
+    video_capture_template(
+        video_source=0,
+        loop_forever=False,
+        show_window=False,
+        draw_fps=False,
+        enable_screenshot=True,
+    )
+
+    assert shots == [True]
+
+
+def test_vct_no_window_created_when_hidden(monkeypatch, sample_frame, fake_video_capture_cls):
+    window_calls = []
+    fake_cap = fake_video_capture_cls([sample_frame])
+    monkeypatch.setattr(cv2, "VideoCapture", lambda src: fake_cap)
+    monkeypatch.setattr(cv2, "waitKey", lambda _: 27)
+    monkeypatch.setattr(cv2, "namedWindow", lambda *a, **kw: window_calls.append(True))
+    monkeypatch.setattr(cv2, "destroyAllWindows", _noop)
+
+    video_capture_template(video_source=0, loop_forever=False, show_window=False, draw_fps=False)
+
+    assert window_calls == []
+
+
+# ── VideoTaker ───────────────────────────────────────────────────────────────
 
 
 def test_video_taker_records_and_returns_saved_video(monkeypatch, tmp_cwd, sample_frame, fake_video_capture_cls, fake_video_writer_cls):

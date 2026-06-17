@@ -2099,20 +2099,49 @@ image_template(
 )
 ```
 
-**`video_capture_template`** — Run a live webcam loop with custom per-frame logic.
+**`video_capture_template`** — Run a live webcam or video-file loop with custom per-frame logic, optional recording, and screenshot support.
 
 ```python
-from ai_vision_tool.capture.video_template import video_capture_template
+from ai_vision_tool.capture.video_template import video_capture_template, KeyEventManager
 
+# Minimal — apply logic and display
 video_capture_template(
     video_source=0,
     custom_logic=lambda frame: frame,
     window_name="Live",
     resolution=(1280, 720),
-    enable_recording=False,
-    enable_screenshot=True,
+)
+
+# With KeyEventManager, shared state, recording and auto-screenshot
+score = {"value": 0}
+
+km = KeyEventManager()
+km.register(ord("g"), lambda frame, state: print(f"score={state['value']}"))
+km.register(ord("r"), lambda frame, state: state.update(value=state["value"] + 1))
+
+video_capture_template(
+    video_source=0,
+    custom_logic=lambda frame: frame,
+    key_manager=km,
+    state=score,                           # shared dict passed to every handler
+    enable_auto_recording=True,            # record from start
+    enable_manual_recording=False,         # toggle with 'r' / 'R'
+    record_format="mp4",                   # "mp4" | "gif"
+    enable_screenshot=True,                # 's' / 'S' to snapshot
+    auto_screenshot_after_seconds=10.0,    # auto-snapshot after 10 s
+    auto_screenshot_repeat=True,           # repeat every 10 s
+    screenshot_output_dir="screenshots",
+    screenshot_prefix="capture",
 )
 ```
+
+Built-in hotkeys (always active):
+
+| Key | Action |
+|-----|--------|
+| `ESC` | Exit loop |
+| `s` / `S` | Save screenshot (requires `enable_screenshot=True`) |
+| `r` / `R` | Toggle manual recording (requires `enable_manual_recording=True`) |
 
 **`save_screenshot`** — Save a frame to disk from within a template loop.
 
