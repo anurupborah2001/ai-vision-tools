@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import cv2
-import imageio
 
 
 @dataclass
@@ -116,6 +115,8 @@ class VideoRecorder:
             print(f"MP4 saved → {self.file_path}")
 
         if self.output_format == "gif" and self.frames:
+            import imageio
+
             imageio.mimsave(self.file_path, self.frames, fps=self.fps)
             print(f"GIF saved → {self.file_path}")
 

@@ -67,6 +67,10 @@ def save_screenshot(frame, output_dir="screenshots", prefix="capture"):
     return str(filename)
 
 
+def _make_recorder(output_format="mp4", fps=20):
+    return VideoRecorder(output_format=output_format, fps=fps)
+
+
 def video_capture_template(
     video_source: int | str = 0,
     loop_forever: bool = True,
@@ -225,7 +229,7 @@ def video_capture_template(
             if auto_recorder is None:
                 safe_fps = current_fps if current_fps and current_fps > 0 else 10
                 print("Initializing auto-recorder with FPS:", safe_fps)
-                auto_recorder = VideoRecorder(output_format=record_format, fps=safe_fps)
+                auto_recorder = _make_recorder(output_format=record_format, fps=safe_fps)
 
             if not auto_recorder_started:
                 auto_recorder.start(frame.shape)
@@ -249,7 +253,7 @@ def video_capture_template(
                 # Initialise lazily the first time R is pressed
                 safe_fps = current_fps if current_fps and current_fps > 0 else 10
                 print("Initializing manual recorder with FPS:", safe_fps)
-                manual_recorder = VideoRecorder(
+                manual_recorder = _make_recorder(
                     output_format=record_format, fps=safe_fps
                 )
                 manual_recorder.start(frame.shape)
