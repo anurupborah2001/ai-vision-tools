@@ -1,8 +1,8 @@
 # Package Restructure Design — ai-vision-tool v0.2.0
 
-**Date:** 2026-05-20  
-**Status:** Approved  
-**Strategy:** Big Bang (single branch, one pass)  
+**Date:** 2026-05-20
+**Status:** Approved
+**Strategy:** Big Bang (single branch, one pass)
 **Breaking change:** Yes — all `ai_vision_tool.components.*` import paths removed
 
 ---

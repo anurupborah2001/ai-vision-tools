@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 
 class YAMLConfig:
     """YAML configuration file loader with dot-notation access and deep merge.
@@ -18,8 +16,8 @@ class YAMLConfig:
     def _load(self):
         try:
             import yaml
-        except ImportError:
-            raise ImportError("Install with: pip install pyyaml")
+        except ImportError as e:
+            raise ImportError("Install with: pip install pyyaml") from e
         with open(self._path) as f:
             self._data = yaml.safe_load(f) or {}
 
@@ -62,7 +60,9 @@ class YAMLConfig:
             if val is None:
                 raise ValueError(f"Missing required config key: {key!r}")
             if not isinstance(val, expected_type):
-                raise TypeError(f"Config key {key!r}: expected {expected_type.__name__}, got {type(val).__name__}")
+                raise TypeError(
+                    f"Config key {key!r}: expected {expected_type.__name__}, got {type(val).__name__}"
+                )
 
 
 def _deep_merge(base: dict, override: dict) -> dict:

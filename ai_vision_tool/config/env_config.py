@@ -40,7 +40,7 @@ class EnvConfig:
     def as_dict(self) -> dict[str, str]:
         prefix = self._prefix + "_"
         return {
-            k[len(prefix):].lower(): v
+            k[len(prefix) :].lower(): v
             for k, v in os.environ.items()
             if k.startswith(prefix)
         }
@@ -56,7 +56,9 @@ class EnvConfig:
 
     @property
     def model_cache_dir(self) -> str:
-        return self.get("model_cache_dir", str(Path.home() / ".cache" / "ai_vision_tool" / "models"))
+        return self.get(
+            "model_cache_dir", str(Path.home() / ".cache" / "ai_vision_tool" / "models")
+        )
 
     @property
     def api_host(self) -> str:

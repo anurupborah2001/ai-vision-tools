@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class AnomalyDetector(AIVisionComponent):
@@ -18,8 +18,13 @@ class AnomalyDetector(AIVisionComponent):
         patch_size: Patch size for patchcore/autoencoder methods.
     """
 
-    def __init__(self, method: str = "statistical", window: int = 30, threshold: float = 2.0,
-                 patch_size: int = 64):
+    def __init__(
+        self,
+        method: str = "statistical",
+        window: int = 30,
+        threshold: float = 2.0,
+        patch_size: int = 64,
+    ):
         super().__init__()
         self.method = method
         self.window = window
@@ -35,7 +40,9 @@ class AnomalyDetector(AIVisionComponent):
 
     def setup(self, config: dict):
         if self.method == "patchcore":
-            self._hog = cv2.HOGDescriptor((self.patch_size, self.patch_size), (16, 16), (8, 8), (8, 8), 9)
+            self._hog = cv2.HOGDescriptor(
+                (self.patch_size, self.patch_size), (16, 16), (8, 8), (8, 8), 9
+            )
         super().setup(config)
 
     def _hist_features(self, frame: np.ndarray) -> np.ndarray:
@@ -50,13 +57,22 @@ class AnomalyDetector(AIVisionComponent):
         patches = []
         for y in range(0, h - self.patch_size, self.patch_size // 2):
             for x in range(0, w - self.patch_size, self.patch_size // 2):
-                patch = cv2.resize(frame[y:y+self.patch_size, x:x+self.patch_size], (self.patch_size, self.patch_size))
+                patch = cv2.resize(
+                    frame[y : y + self.patch_size, x : x + self.patch_size],
+                    (self.patch_size, self.patch_size),
+                )
                 if self.method == "patchcore" and self._hog:
-                    feat = self._hog.compute(cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)).flatten()
+                    feat = self._hog.compute(
+                        cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
+                    ).flatten()
                 else:
                     feat = patch.astype(np.float32).flatten() / 255.0
                 patches.append(feat)
-        return np.array(patches) if patches else np.zeros((1, self.patch_size * self.patch_size * 3))
+        return (
+            np.array(patches)
+            if patches
+            else np.zeros((1, self.patch_size * self.patch_size * 3))
+        )
 
     def _build_reference(self):
         if self.method == "statistical":
@@ -66,22 +82,32 @@ class AnomalyDetector(AIVisionComponent):
         elif self.method == "patchcore":
             try:
                 from sklearn.neighbors import NearestNeighbors
-                all_patches = np.concatenate([self._extract_patches(f) for f in self._warmup_frames])
+
+                all_patches = np.concatenate(
+                    [self._extract_patches(f) for f in self._warmup_frames]
+                )
                 self._nn = NearestNeighbors(n_neighbors=1, algorithm="ball_tree")
                 self._nn.fit(all_patches)
             except ImportError:
-                print("[AnomalyDetector] sklearn not available; falling back to statistical method")
+                print(
+                    "[AnomalyDetector] sklearn not available; falling back to statistical method"
+                )
                 self.method = "statistical"
                 self._build_reference()
         elif self.method == "autoencoder_approx":
             try:
                 from sklearn.decomposition import PCA
-                all_patches = np.concatenate([self._extract_patches(f) for f in self._warmup_frames])
+
+                all_patches = np.concatenate(
+                    [self._extract_patches(f) for f in self._warmup_frames]
+                )
                 n_comp = min(50, all_patches.shape[0], all_patches.shape[1])
                 self._pca = PCA(n_components=n_comp)
                 self._pca.fit(all_patches)
             except ImportError:
-                print("[AnomalyDetector] sklearn not available; falling back to statistical method")
+                print(
+                    "[AnomalyDetector] sklearn not available; falling back to statistical method"
+                )
                 self.method = "statistical"
                 self._build_reference()
         self._ready = True

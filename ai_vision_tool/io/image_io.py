@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-import os
 import time
 from pathlib import Path
 
 import cv2
-import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
-_COLOR_MODES = {"bgr": cv2.IMREAD_COLOR, "rgb": cv2.IMREAD_COLOR, "gray": cv2.IMREAD_GRAYSCALE}
+_COLOR_MODES = {
+    "bgr": cv2.IMREAD_COLOR,
+    "rgb": cv2.IMREAD_COLOR,
+    "gray": cv2.IMREAD_GRAYSCALE,
+}
 
 
 class ImageReader(AIVisionComponent):
@@ -42,7 +44,7 @@ class ImageReader(AIVisionComponent):
 
         frame = cv2.imread(src, flag)
         if frame is None:
-            raise IOError(f"ImageReader: could not read {src!r}")
+            raise OSError(f"ImageReader: could not read {src!r}")
         if mode == "rgb":
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -62,7 +64,12 @@ class ImageWriter(AIVisionComponent):
         quality: JPEG quality (1-100).
     """
 
-    def __init__(self, output_dir: str = "./output", filename_pattern: str = "{index:06d}.jpg", quality: int = 95):
+    def __init__(
+        self,
+        output_dir: str = "./output",
+        filename_pattern: str = "{index:06d}.jpg",
+        quality: int = 95,
+    ):
         super().__init__()
         self.output_dir = output_dir
         self.filename_pattern = filename_pattern

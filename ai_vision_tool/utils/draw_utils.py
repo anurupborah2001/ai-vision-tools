@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 from ai_vision_tool.utils.color_palette import ColorPalette
+from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 
 class DrawUtils(AIVisionComponent):
@@ -24,9 +24,16 @@ class DrawUtils(AIVisionComponent):
         self.alpha = alpha
         self._palette = ColorPalette()
 
-    def _draw_bboxes(self, frame: np.ndarray, bboxes: list, color_map: dict, show_conf: bool) -> np.ndarray:
+    def _draw_bboxes(
+        self, frame: np.ndarray, bboxes: list, color_map: dict, show_conf: bool
+    ) -> np.ndarray:
         for det in bboxes:
-            x1, y1, x2, y2 = int(det["x1"]), int(det["y1"]), int(det["x2"]), int(det["y2"])
+            x1, y1, x2, y2 = (
+                int(det["x1"]),
+                int(det["y1"]),
+                int(det["x2"]),
+                int(det["y2"]),
+            )
             label = det.get("label", "")
             conf = det.get("conf", 1.0)
             track_id = det.get("track_id", -1)
@@ -35,10 +42,20 @@ class DrawUtils(AIVisionComponent):
             text = f"#{track_id} {label}" if track_id >= 0 else label
             if show_conf and conf < 1.0:
                 text += f" {conf:.2f}"
-            (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, self.font_scale, 1)
+            (tw, th), _ = cv2.getTextSize(
+                text, cv2.FONT_HERSHEY_SIMPLEX, self.font_scale, 1
+            )
             cv2.rectangle(frame, (x1, y1 - th - 4), (x1 + tw + 2, y1), color, -1)
-            cv2.putText(frame, text, (x1 + 1, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
-                        self.font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(
+                frame,
+                text,
+                (x1 + 1, y1 - 2),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                self.font_scale,
+                (255, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
         return frame
 
     def _draw_masks(self, frame: np.ndarray, masks: list) -> np.ndarray:

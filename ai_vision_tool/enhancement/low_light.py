@@ -38,8 +38,14 @@ class LowLightEnhancer(AIVisionComponent):
         model_path: Path to ONNX low-light model.
     """
 
-    def __init__(self, method: str = "clahe", clip_limit: float = 2.0,
-                 tile_size: int = 8, gamma: float = 1.5, model_path: str | None = None):
+    def __init__(
+        self,
+        method: str = "clahe",
+        clip_limit: float = 2.0,
+        tile_size: int = 8,
+        gamma: float = 1.5,
+        model_path: str | None = None,
+    ):
         super().__init__()
         self.method = method
         self.clip_limit = clip_limit
@@ -52,16 +58,22 @@ class LowLightEnhancer(AIVisionComponent):
     def setup(self, config: dict):
         self._clahe = cv2.createCLAHE(
             clipLimit=float(config.get("clip_limit", self.clip_limit)),
-            tileGridSize=(int(config.get("tile_size", self.tile_size)),) * 2
+            tileGridSize=(int(config.get("tile_size", self.tile_size)),) * 2,
         )
         if self.method == "onnx" and self.model_path:
             try:
                 import onnxruntime as ort
-                providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                             if p in ort.get_available_providers()]
-                self._session = ort.InferenceSession(self.model_path, providers=providers)
-            except ImportError:
-                raise ImportError("Install with: pip install onnxruntime")
+
+                providers = [
+                    p
+                    for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                    if p in ort.get_available_providers()
+                ]
+                self._session = ort.InferenceSession(
+                    self.model_path, providers=providers
+                )
+            except ImportError as e:
+                raise ImportError("Install with: pip install onnxruntime") from e
         super().setup(config)
 
     def _execute(self, data, config):
@@ -71,12 +83,15 @@ class LowLightEnhancer(AIVisionComponent):
 
         if method == "clahe":
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-            l, a, b = cv2.split(lab)
-            l_enhanced = self._clahe.apply(l)
+            l_ch, a, b = cv2.split(lab)
+            l_enhanced = self._clahe.apply(l_ch)
             result = cv2.cvtColor(cv2.merge([l_enhanced, a, b]), cv2.COLOR_LAB2BGR)
 
         elif method == "gamma":
-            table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255 for i in range(256)], dtype=np.uint8)
+            table = np.array(
+                [((i / 255.0) ** (1.0 / gamma)) * 255 for i in range(256)],
+                dtype=np.uint8,
+            )
             result = cv2.LUT(frame, table)
 
         elif method == "histogram_stretch":
@@ -84,7 +99,9 @@ class LowLightEnhancer(AIVisionComponent):
             for i in range(3):
                 c = frame[:, :, i].astype(np.float64)
                 lo, hi = np.percentile(c, 2), np.percentile(c, 98)
-                result[:, :, i] = np.clip((c - lo) / (hi - lo + 1e-8) * 255, 0, 255).astype(np.uint8)
+                result[:, :, i] = np.clip(
+                    (c - lo) / (hi - lo + 1e-8) * 255, 0, 255
+                ).astype(np.uint8)
 
         elif method == "retinex_singlescale":
             result = np.zeros_like(frame)
@@ -105,11 +122,16 @@ class LowLightEnhancer(AIVisionComponent):
             inp = self._session.get_inputs()[0]
             ih, iw = inp.shape[2], inp.shape[3]
             resized = cv2.resize(frame, (iw, ih))
-            tensor = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis] / 255.0
+            tensor = (
+                cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis]
+                / 255.0
+            )
             tensor = np.transpose(tensor, (0, 3, 1, 2))
             out = self._session.run(None, {inp.name: tensor})[0]
             out = np.clip(out[0].transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            result = cv2.resize(cv2.cvtColor(out, cv2.COLOR_RGB2BGR), (frame.shape[1], frame.shape[0]))
+            result = cv2.resize(
+                cv2.cvtColor(out, cv2.COLOR_RGB2BGR), (frame.shape[1], frame.shape[0])
+            )
         else:
             result = frame
 

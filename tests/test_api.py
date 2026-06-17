@@ -1,13 +1,16 @@
 import pytest
 
-pytest.skip("API module moved to backup/; skip until re-introduced via [api] extra", allow_module_level=True)
+pytest.skip(
+    "API module moved to backup/; skip until re-introduced via [api] extra",
+    allow_module_level=True,
+)
 
-import base64
+import base64  # noqa: E402
 
-import cv2
-from fastapi.testclient import TestClient
+import cv2  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
-from ai_vision_tool.api import create_app
+from ai_vision_tool.api import create_app  # noqa: E402
 
 
 def _encode_frame(frame):

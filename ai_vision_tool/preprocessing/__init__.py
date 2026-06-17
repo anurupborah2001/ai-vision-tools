@@ -19,9 +19,9 @@ from .geometry import (
     Resize,
 )
 from .intensity import (
+    CLAHE,
     AdaptiveThreshold,
     BGRToRGB,
-    CLAHE,
     ContourExtraction,
     ConvertColorSpace,
     Deblur,

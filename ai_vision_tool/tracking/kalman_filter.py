@@ -51,13 +51,16 @@ class KalmanFilter:
         covariance = self.P0.copy()
         return mean, covariance
 
-    def predict(self, mean: np.ndarray, covariance: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def predict(
+        self, mean: np.ndarray, covariance: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         mean = self.F @ mean
         covariance = self.F @ covariance @ self.F.T + self.Q
         return mean, covariance
 
-    def update(self, mean: np.ndarray, covariance: np.ndarray,
-               bbox_xyxy: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def update(
+        self, mean: np.ndarray, covariance: np.ndarray, bbox_xyxy: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         z = self._xyxy_to_state(bbox_xyxy)[:4]
         S = self.H @ covariance @ self.H.T + self.R
         K = covariance @ self.H.T @ np.linalg.inv(S)
@@ -69,8 +72,9 @@ class KalmanFilter:
     def to_xyxy(self, mean: np.ndarray) -> np.ndarray:
         return self._state_to_xyxy(mean)
 
-    def gating_distance(self, mean: np.ndarray, covariance: np.ndarray,
-                        measurements: np.ndarray) -> np.ndarray:
+    def gating_distance(
+        self, mean: np.ndarray, covariance: np.ndarray, measurements: np.ndarray
+    ) -> np.ndarray:
         projected_mean = self.H @ mean
         projected_cov = self.H @ covariance @ self.H.T
         diff = measurements - projected_mean

@@ -1,5 +1,6 @@
-from ai_vision_tool.core.base import AIVisionComponent
 import cv2
+
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class MotionDetector(AIVisionComponent):
@@ -34,8 +35,8 @@ class MotionDetector(AIVisionComponent):
         frame = data["frame"] if isinstance(data, dict) else data
         output = frame.copy()
 
-        min_area = config.get('min_area', 800)
-        draw = config.get('draw_motion', True)
+        min_area = config.get("min_area", 800)
+        draw = config.get("draw_motion", True)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -46,7 +47,9 @@ class MotionDetector(AIVisionComponent):
             thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
             thresh = cv2.dilate(thresh, None, iterations=2)
 
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(
+                thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
 
             for c in contours:
                 if cv2.contourArea(c) < min_area:

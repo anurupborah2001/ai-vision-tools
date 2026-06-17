@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class ObjectDetector(AIVisionComponent):
@@ -18,8 +18,14 @@ class ObjectDetector(AIVisionComponent):
         backend: "yolo", "onnx", or "auto".
     """
 
-    def __init__(self, model_path: str, conf_threshold: float = 0.25, iou_threshold: float = 0.45,
-                 class_names: list[str] | None = None, backend: str = "auto"):
+    def __init__(
+        self,
+        model_path: str,
+        conf_threshold: float = 0.25,
+        iou_threshold: float = 0.45,
+        class_names: list[str] | None = None,
+        backend: str = "auto",
+    ):
         super().__init__()
         self.model_path = model_path
         self.conf_threshold = conf_threshold
@@ -34,23 +40,30 @@ class ObjectDetector(AIVisionComponent):
         if backend in ("yolo", "auto"):
             try:
                 from ultralytics import YOLO
+
                 self._model = YOLO(self.model_path)
                 if not self.class_names and hasattr(self._model, "names"):
                     self.class_names = list(self._model.names.values())
                 self._backend_used = "yolo"
                 super().setup(config)
                 return
-            except ImportError:
+            except ImportError as e:
                 if backend == "yolo":
-                    raise ImportError("Install with: pip install ultralytics")
+                    raise ImportError("Install with: pip install ultralytics") from e
         try:
             import onnxruntime as ort
-            providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                         if p in ort.get_available_providers()]
+
+            providers = [
+                p
+                for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                if p in ort.get_available_providers()
+            ]
             self._model = ort.InferenceSession(self.model_path, providers=providers)
             self._backend_used = "onnx"
-        except ImportError:
-            raise ImportError("Install with: pip install onnxruntime  # or ultralytics")
+        except ImportError as e:
+            raise ImportError(
+                "Install with: pip install onnxruntime  # or ultralytics"
+            ) from e
         super().setup(config)
 
     @staticmethod
@@ -82,8 +95,19 @@ class ObjectDetector(AIVisionComponent):
                 x1, y1, x2, y2 = box.xyxy[0].tolist()
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
-                label = self.class_names[cls] if cls < len(self.class_names) else str(cls)
-                dets.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "label": label, "conf": conf})
+                label = (
+                    self.class_names[cls] if cls < len(self.class_names) else str(cls)
+                )
+                dets.append(
+                    {
+                        "x1": x1,
+                        "y1": y1,
+                        "x2": x2,
+                        "y2": y2,
+                        "label": label,
+                        "conf": conf,
+                    }
+                )
         return dets
 
     def _execute(self, data, config):
@@ -98,7 +122,10 @@ class ObjectDetector(AIVisionComponent):
             inp = self._model.get_inputs()[0]
             h, w = inp.shape[2], inp.shape[3]
             resized = cv2.resize(frame, (w, h))
-            tensor = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis] / 255.0
+            tensor = (
+                cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis]
+                / 255.0
+            )
             tensor = np.transpose(tensor, (0, 3, 1, 2))
             outputs = self._model.run(None, {inp.name: tensor})[0]
             dets = self._parse_onnx_output(outputs, frame.shape, conf_thr, iou_thr)
@@ -126,8 +153,19 @@ class ObjectDetector(AIVisionComponent):
         xyxy = np.stack([cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2], axis=1)
         keep = self._nms(xyxy, confs, iou_thr)
         for k in keep:
-            label = self.class_names[class_ids[k]] if class_ids[k] < len(self.class_names) else str(class_ids[k])
-            dets.append({"x1": float(xyxy[k, 0] * ow), "y1": float(xyxy[k, 1] * oh),
-                         "x2": float(xyxy[k, 2] * ow), "y2": float(xyxy[k, 3] * oh),
-                         "label": label, "conf": float(confs[k])})
+            label = (
+                self.class_names[class_ids[k]]
+                if class_ids[k] < len(self.class_names)
+                else str(class_ids[k])
+            )
+            dets.append(
+                {
+                    "x1": float(xyxy[k, 0] * ow),
+                    "y1": float(xyxy[k, 1] * oh),
+                    "x2": float(xyxy[k, 2] * ow),
+                    "y2": float(xyxy[k, 3] * oh),
+                    "label": label,
+                    "conf": float(confs[k]),
+                }
+            )
         return dets

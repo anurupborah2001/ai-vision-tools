@@ -13,7 +13,9 @@ class ParallelPipeline:
         global_config: Config passed to all components.
     """
 
-    def __init__(self, branches: list[list], merge_fn=None, global_config: dict | None = None):
+    def __init__(
+        self, branches: list[list], merge_fn=None, global_config: dict | None = None
+    ):
         self._branches = branches
         self.merge_fn = merge_fn or (lambda results: results)
         self.global_config = global_config or {}
@@ -28,8 +30,10 @@ class ParallelPipeline:
         config = self.global_config
         results = [None] * len(self._branches)
         with ThreadPoolExecutor(max_workers=len(self._branches)) as ex:
-            futures = {ex.submit(self._run_branch, branch, data, config): i
-                       for i, branch in enumerate(self._branches)}
+            futures = {
+                ex.submit(self._run_branch, branch, data, config): i
+                for i, branch in enumerate(self._branches)
+            }
             for fut in as_completed(futures):
                 results[futures[fut]] = fut.result()
         return self.merge_fn(results)
@@ -42,7 +46,9 @@ class ParallelPipeline:
 
     @staticmethod
     def merge_bboxes(results: list) -> dict:
-        merged = dict(results[0]) if isinstance(results[0], dict) else {"result": results[0]}
+        merged = (
+            dict(results[0]) if isinstance(results[0], dict) else {"result": results[0]}
+        )
         all_bboxes = []
         for r in results:
             if isinstance(r, dict):
@@ -76,12 +82,18 @@ class ParallelPipeline:
         if not all_boxes:
             return results[0] if results else {}
         import numpy as np
+
         from ai_vision_tool.detection.object_detector import ObjectDetector
+
         boxes = np.array(all_boxes)
         scores = np.array(all_scores)
         keep = ObjectDetector._nms(boxes, scores, 0.5)
         merged = dict(results[0]) if isinstance(results[0], dict) else {}
-        merged["bboxes"] = [results[0]["bboxes"][k] for k in keep if k < len(results[0].get("bboxes", []))]
+        merged["bboxes"] = [
+            results[0]["bboxes"][k]
+            for k in keep
+            if k < len(results[0].get("bboxes", []))
+        ]
         return merged
 
 
@@ -93,7 +105,9 @@ class FanOutPipeline:
         branches: List of component lists run in parallel after shared.
     """
 
-    def __init__(self, shared: list, branches: list[list], global_config: dict | None = None):
+    def __init__(
+        self, shared: list, branches: list[list], global_config: dict | None = None
+    ):
         self._shared = shared
         self._parallel = ParallelPipeline(branches, global_config=global_config)
 

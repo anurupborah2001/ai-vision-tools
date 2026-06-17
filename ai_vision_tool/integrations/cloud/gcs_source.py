@@ -17,8 +17,14 @@ class GCSSource(AIVisionComponent):
         credentials_path: Path to service account JSON (None = use ADC).
     """
 
-    def __init__(self, bucket: str, prefix: str = "", extensions: tuple = (".jpg", ".png"),
-                 project: str | None = None, credentials_path: str | None = None):
+    def __init__(
+        self,
+        bucket: str,
+        prefix: str = "",
+        extensions: tuple = (".jpg", ".png"),
+        project: str | None = None,
+        credentials_path: str | None = None,
+    ):
         super().__init__()
         self.bucket = bucket
         self.prefix = prefix
@@ -44,10 +50,13 @@ class GCSSource(AIVisionComponent):
             self._client = storage.Client(project=self.project)
         bucket = self._client.bucket(self.bucket)
         self._blobs = [
-            b for b in self._client.list_blobs(bucket, prefix=self.prefix)
+            b
+            for b in self._client.list_blobs(bucket, prefix=self.prefix)
             if any(b.name.lower().endswith(ext) for ext in self.extensions)
         ]
-        print(f"[GCSSource] Found {len(self._blobs)} images in gs://{self.bucket}/{self.prefix}")
+        print(
+            f"[GCSSource] Found {len(self._blobs)} images in gs://{self.bucket}/{self.prefix}"
+        )
         super().setup(config)
 
     def _execute(self, data, config):
@@ -62,7 +71,7 @@ class GCSSource(AIVisionComponent):
         buf = np.frombuffer(blob.download_as_bytes(), dtype=np.uint8)
         frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
         if frame is None:
-            raise IOError(f"GCSSource: could not decode {blob.name!r}")
+            raise OSError(f"GCSSource: could not decode {blob.name!r}")
 
         payload = data if isinstance(data, dict) else {}
         payload["frame"] = frame

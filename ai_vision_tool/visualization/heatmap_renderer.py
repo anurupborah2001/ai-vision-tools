@@ -18,8 +18,14 @@ class HeatmapRenderer(AIVisionComponent):
         decay: Decay factor applied each frame (accumulate mode only).
     """
 
-    def __init__(self, source: str = "detections", colormap: int = cv2.COLORMAP_JET,
-                 alpha: float = 0.5, accumulate: bool = False, decay: float = 0.95):
+    def __init__(
+        self,
+        source: str = "detections",
+        colormap: int = cv2.COLORMAP_JET,
+        alpha: float = 0.5,
+        accumulate: bool = False,
+        decay: float = 0.95,
+    ):
         super().__init__()
         self.source = source
         self.colormap = colormap
@@ -29,12 +35,14 @@ class HeatmapRenderer(AIVisionComponent):
         self._density: np.ndarray | None = None
         self._prev_frame: np.ndarray | None = None
 
-    def _gaussian_blob(self, density: np.ndarray, cx: int, cy: int, sigma: float) -> np.ndarray:
+    def _gaussian_blob(
+        self, density: np.ndarray, cx: int, cy: int, sigma: float
+    ) -> np.ndarray:
         h, w = density.shape
         x = np.arange(w)
         y = np.arange(h)
         xx, yy = np.meshgrid(x, y)
-        blob = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * sigma ** 2))
+        blob = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * sigma**2))
         return density + blob
 
     def _execute(self, data, config):
@@ -62,7 +70,9 @@ class HeatmapRenderer(AIVisionComponent):
             amap = data.get("anomaly_map")
             if amap is not None:
                 amap_rs = cv2.resize(amap.astype(np.float32), (w, h))
-                self._density = amap_rs if not self.accumulate else self._density + amap_rs
+                self._density = (
+                    amap_rs if not self.accumulate else self._density + amap_rs
+                )
 
         elif src == "attention" and isinstance(data, dict):
             atten = data.get("attention_map")
@@ -73,8 +83,9 @@ class HeatmapRenderer(AIVisionComponent):
             if self._prev_frame is not None:
                 prev_gray = cv2.cvtColor(self._prev_frame, cv2.COLOR_BGR2GRAY)
                 curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None,
-                                                     0.5, 3, 15, 3, 5, 1.2, 0)
+                flow = cv2.calcOpticalFlowFarneback(
+                    prev_gray, curr_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0
+                )
                 mag, _ = cv2.cartToPolar(flow[:, :, 0], flow[:, :, 1])
                 self._density = mag.astype(np.float32)
             self._prev_frame = frame.copy()

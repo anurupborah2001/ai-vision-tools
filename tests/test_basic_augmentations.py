@@ -3,7 +3,6 @@ import json
 import numpy as np
 import pytest
 
-from ai_vision_tool.cli.main import load_profile_components
 from ai_vision_tool.augmentation import (
     Blur,
     Brightness,
@@ -14,14 +13,15 @@ from ai_vision_tool.augmentation import (
     Flip,
     Greyscale,
     Hue,
-    MotionBlur,
     Mosaic,
+    MotionBlur,
     Noise,
     Rotate90,
     Rotation,
     Saturation,
     Shear,
 )
+from ai_vision_tool.cli.main import load_profile_components
 
 
 def _frame(width=8, height=6):
@@ -177,4 +177,3 @@ def test_load_profile_components_creates_augmentation_instances(tmp_path):
         "Flip",
         "Brightness",
     ]
-

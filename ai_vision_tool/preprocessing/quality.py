@@ -5,8 +5,8 @@ import hashlib
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame
 
 
 class ImageQualityCheck(AIVisionComponent):
@@ -54,9 +54,11 @@ class ImageQualityCheck(AIVisionComponent):
         result["is_blurry"] = result["blur_score"] < float(
             config.get("blur_threshold", self.blur_threshold)
         )
-        result["brightness_ok"] = float(config.get("min_brightness", self.min_brightness)) <= result[
-            "brightness_mean"
-        ] <= float(config.get("max_brightness", self.max_brightness))
+        result["brightness_ok"] = (
+            float(config.get("min_brightness", self.min_brightness))
+            <= result["brightness_mean"]
+            <= float(config.get("max_brightness", self.max_brightness))
+        )
 
         if isinstance(data, dict):
             data["quality"] = result
@@ -138,8 +140,10 @@ class BrightnessCheck(AIVisionComponent):
         mean_value = float(frame.mean())
         if isinstance(data, dict):
             data["brightness_mean"] = mean_value
-            data["brightness_ok"] = float(config.get("min_brightness", self.min_brightness)) <= mean_value <= float(
-                config.get("max_brightness", self.max_brightness)
+            data["brightness_ok"] = (
+                float(config.get("min_brightness", self.min_brightness))
+                <= mean_value
+                <= float(config.get("max_brightness", self.max_brightness))
             )
             return data
         return frame
@@ -246,8 +250,10 @@ class AspectRatioFilter(AIVisionComponent):
         ratio = width / max(height, 1)
         if isinstance(data, dict):
             data["aspect_ratio"] = ratio
-            data["aspect_ratio_ok"] = float(config.get("min_ratio", self.min_ratio)) <= ratio <= float(
-                config.get("max_ratio", self.max_ratio)
+            data["aspect_ratio_ok"] = (
+                float(config.get("min_ratio", self.min_ratio))
+                <= ratio
+                <= float(config.get("max_ratio", self.max_ratio))
             )
             return data
         return frame
@@ -288,9 +294,9 @@ class MinSizeFilter(AIVisionComponent):
         frame = extract_frame(data)
         height, width = frame.shape[:2]
         if isinstance(data, dict):
-            data["min_size_ok"] = width >= int(config.get("min_width", self.min_width)) and height >= int(
-                config.get("min_height", self.min_height)
-            )
+            data["min_size_ok"] = width >= int(
+                config.get("min_width", self.min_width)
+            ) and height >= int(config.get("min_height", self.min_height))
             return data
         return frame
 
@@ -330,9 +336,9 @@ class MaxSizeFilter(AIVisionComponent):
         frame = extract_frame(data)
         height, width = frame.shape[:2]
         if isinstance(data, dict):
-            data["max_size_ok"] = width <= int(config.get("max_width", self.max_width)) and height <= int(
-                config.get("max_height", self.max_height)
-            )
+            data["max_size_ok"] = width <= int(
+                config.get("max_width", self.max_width)
+            ) and height <= int(config.get("max_height", self.max_height))
             return data
         return frame
 

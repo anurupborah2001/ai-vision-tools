@@ -21,7 +21,9 @@ class PipelineSerializer:
 
     def to_dict(self, pipeline) -> dict:
         steps = []
-        components = getattr(pipeline, "processors", getattr(pipeline, "_components", []))
+        components = getattr(
+            pipeline, "processors", getattr(pipeline, "_components", [])
+        )
         for comp in components:
             name = comp.__class__.__name__
             args = self._get_component_args(comp)
@@ -38,7 +40,7 @@ class PipelineSerializer:
             sig = inspect.signature(component.__class__.__init__)
             params = {k: v for k, v in sig.parameters.items() if k != "self"}
             args = {}
-            for name, param in params.items():
+            for name, _param in params.items():
                 if hasattr(component, name):
                     val = getattr(component, name)
                     try:
@@ -51,8 +53,9 @@ class PipelineSerializer:
             return {}
 
     def from_dict(self, d: dict):
-        from ai_vision_tool.pipelines.vision_pipeline import AIVisionPipeline
         from ai_vision_tool.config.registry import ComponentRegistry
+        from ai_vision_tool.pipelines.vision_pipeline import AIVisionPipeline
+
         registry = ComponentRegistry.instance()
         pipeline = AIVisionPipeline()
         for step in d.get("steps", []):
@@ -72,9 +75,10 @@ class PipelineSerializer:
         if format == "yaml":
             try:
                 import yaml
+
                 p.write_text(yaml.dump(d, default_flow_style=False))
-            except ImportError:
-                raise ImportError("Install with: pip install pyyaml")
+            except ImportError as e:
+                raise ImportError("Install with: pip install pyyaml") from e
         else:
             p.write_text(json.dumps(d, indent=2))
 
@@ -83,9 +87,10 @@ class PipelineSerializer:
         if p.suffix.lower() in (".yaml", ".yml"):
             try:
                 import yaml
+
                 d = yaml.safe_load(p.read_text())
-            except ImportError:
-                raise ImportError("Install with: pip install pyyaml")
+            except ImportError as e:
+                raise ImportError("Install with: pip install pyyaml") from e
         else:
             d = json.loads(p.read_text())
         return self.from_dict(d)

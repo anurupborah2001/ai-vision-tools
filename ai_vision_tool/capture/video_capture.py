@@ -1,6 +1,8 @@
-from ai_vision_tool.core.base import AIVisionComponent
-import cv2
 import os
+
+import cv2
+
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class VideoTaker(AIVisionComponent):
@@ -24,12 +26,12 @@ class VideoTaker(AIVisionComponent):
         Returns:
             list[str]: Paths of all video clips saved during the session.
         """
-        vid_dir = config.get('viddir', 'Videos')
-        resolution = config.get('resolution', '1280x720')
-        camera_id = config.get('camera_id', 0)
-        fps = config.get('fps', 30.0)
+        vid_dir = config.get("viddir", "Videos")
+        resolution = config.get("resolution", "1280x720")
+        camera_id = config.get("camera_id", 0)
+        fps = config.get("fps", 30.0)
 
-        imW, imH = map(int, resolution.split('x'))
+        imW, imH = map(int, resolution.split("x"))
         dirpath = os.path.join(os.getcwd(), vid_dir)
 
         if not os.path.exists(dirpath):
@@ -43,7 +45,7 @@ class VideoTaker(AIVisionComponent):
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, imW)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, imH)
 
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
         out = None
         recording = False
 
@@ -67,9 +69,9 @@ class VideoTaker(AIVisionComponent):
                 cv2.imshow(winname, display_frame)
                 key = cv2.waitKey(1) & 0xFF
 
-                if key == ord('q'):
+                if key == ord("q"):
                     break
-                elif key == ord('r'):
+                elif key == ord("r"):
                     recording = not recording
                     if recording:
                         filename = f"recording-{vidnum}.avi"

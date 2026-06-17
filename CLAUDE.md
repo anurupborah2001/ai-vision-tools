@@ -102,7 +102,8 @@ ai_vision_tool/
 │   ├── time_lapse_capture.py   # TimeLapseCapture
 │   ├── time_lapse.py        # TimeLapse
 │   ├── image_template.py    # image_template()
-│   └── video_template.py    # video_capture_template(), save_screenshot()
+│   └── video_template.py    # video_capture_template(key_manager, state, …), save_screenshot(),
+│                            # KeyEventManager (register/handle), _make_recorder (patchable factory)
 │
 ├── enhancement/             # import: from ai_vision_tool.enhancement import X
 │   ├── denoiser.py          # Denoiser (nlmeans/bilateral/gaussian/DnCNN-ONNX)

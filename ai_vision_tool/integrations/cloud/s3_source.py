@@ -16,8 +16,13 @@ class S3Source(AIVisionComponent):
         region_name: AWS region (None = use default from env/config).
     """
 
-    def __init__(self, bucket: str, prefix: str = "", extensions: tuple = (".jpg", ".png", ".jpeg"),
-                 region_name: str | None = None):
+    def __init__(
+        self,
+        bucket: str,
+        prefix: str = "",
+        extensions: tuple = (".jpg", ".png", ".jpeg"),
+        region_name: str | None = None,
+    ):
         super().__init__()
         self.bucket = bucket
         self.prefix = prefix
@@ -44,7 +49,9 @@ class S3Source(AIVisionComponent):
                 key = obj["Key"]
                 if any(key.lower().endswith(ext) for ext in self.extensions):
                     self._keys.append(key)
-        print(f"[S3Source] Found {len(self._keys)} images in s3://{self.bucket}/{self.prefix}")
+        print(
+            f"[S3Source] Found {len(self._keys)} images in s3://{self.bucket}/{self.prefix}"
+        )
         super().setup(config)
 
     def _execute(self, data, config):
@@ -62,7 +69,7 @@ class S3Source(AIVisionComponent):
         buf = np.frombuffer(obj["Body"].read(), dtype=np.uint8)
         frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
         if frame is None:
-            raise IOError(f"S3Source: could not decode {key!r}")
+            raise OSError(f"S3Source: could not decode {key!r}")
 
         payload = data if isinstance(data, dict) else {}
         payload["frame"] = frame

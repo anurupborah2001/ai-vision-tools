@@ -16,7 +16,8 @@ class ColorPalette:
         saturations = rng.uniform(0.6, 1.0, n_colors)
         values = rng.uniform(0.7, 1.0, n_colors)
         self._colors: list[tuple[int, int, int]] = [
-            self._hsv_to_bgr(h, s, v) for h, s, v in zip(hues, saturations, values)
+            self._hsv_to_bgr(h, s, v)
+            for h, s, v in zip(hues, saturations, values, strict=False)
         ]
 
     @staticmethod

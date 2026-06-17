@@ -1,5 +1,6 @@
-from .image_capture import PictureTaker
 import cv2
+
+from .image_capture import PictureTaker
 
 
 class ROICapture(PictureTaker):
@@ -40,7 +41,7 @@ class ROICapture(PictureTaker):
             numpy.ndarray: Cropped sub-image corresponding to the ROI.
         """
         x, y, w, h = self.roi
-        return frame[y:y + h, x:x + w]
+        return frame[y : y + h, x : x + w]
 
     def process(self, frame, **kwargs):
         """Draws the ROI overlay and optionally saves the cropped region.

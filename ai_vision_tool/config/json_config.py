@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 
 class JSONConfig:
@@ -61,7 +60,9 @@ class JSONConfig:
             if val is None:
                 raise ValueError(f"Missing required config key: {key!r}")
             if not isinstance(val, expected_type):
-                raise TypeError(f"Config key {key!r}: expected {expected_type.__name__}, got {type(val).__name__}")
+                raise TypeError(
+                    f"Config key {key!r}: expected {expected_type.__name__}, got {type(val).__name__}"
+                )
 
     def save(self, path: str | None = None) -> None:
         target = path or self._path

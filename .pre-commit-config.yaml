@@ -3,6 +3,7 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        args: ['--unsafe']
       - id: check-toml
       - id: check-merge-conflict
       - id: end-of-file-fixer
@@ -14,7 +15,7 @@ repos:
     rev: v0.6.9
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --unsafe-fixes]
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2

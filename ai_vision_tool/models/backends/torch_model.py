@@ -11,7 +11,7 @@ except ImportError as exc:
     ) from exc
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
 
 class TorchModel(AIVisionComponent):
@@ -23,7 +23,9 @@ class TorchModel(AIVisionComponent):
         half_precision: Use FP16 inference (CUDA only).
     """
 
-    def __init__(self, model_path: str, device: str = "auto", half_precision: bool = False):
+    def __init__(
+        self, model_path: str, device: str = "auto", half_precision: bool = False
+    ):
         super().__init__()
         self.model_path = model_path
         self.device = device
@@ -34,6 +36,7 @@ class TorchModel(AIVisionComponent):
     def _resolve_device(self):
         try:
             import torch
+
             if self.device == "auto":
                 if torch.cuda.is_available():
                     return torch.device("cuda:0")
@@ -41,14 +44,14 @@ class TorchModel(AIVisionComponent):
                     return torch.device("mps")
                 return torch.device("cpu")
             return torch.device(self.device)
-        except ImportError:
-            raise ImportError("Install with: pip install torch torchvision")
+        except ImportError as e:
+            raise ImportError("Install with: pip install torch torchvision") from e
 
     def setup(self, config: dict):
         try:
             import torch
-        except ImportError:
-            raise ImportError("Install with: pip install torch torchvision")
+        except ImportError as e:
+            raise ImportError("Install with: pip install torch torchvision") from e
         self._device = self._resolve_device()
         try:
             self._model = torch.jit.load(self.model_path, map_location=self._device)
@@ -61,9 +64,12 @@ class TorchModel(AIVisionComponent):
 
     def _execute(self, data, config):
         import torch
+
         frame = extract_frame(data)
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-        tensor = torch.from_numpy(np.transpose(rgb, (2, 0, 1))).unsqueeze(0).to(self._device)
+        tensor = (
+            torch.from_numpy(np.transpose(rgb, (2, 0, 1))).unsqueeze(0).to(self._device)
+        )
         if self.half_precision and str(self._device).startswith("cuda"):
             tensor = tensor.half()
         with torch.no_grad():
@@ -81,6 +87,7 @@ class TorchModel(AIVisionComponent):
         self._model = None
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:

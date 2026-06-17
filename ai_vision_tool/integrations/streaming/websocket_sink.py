@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import base64
 import http.server
-import io
 import threading
 import time
 
@@ -24,7 +23,13 @@ class WebSocketSink(AIVisionComponent):
         format: "jpeg" or "png".
     """
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 8765, quality: int = 80, format: str = "jpeg"):
+    def __init__(
+        self,
+        host: str = "0.0.0.0",
+        port: int = 8765,
+        quality: int = 80,
+        format: str = "jpeg",
+    ):
         super().__init__()
         self.host = host
         self.port = port
@@ -39,21 +44,30 @@ class WebSocketSink(AIVisionComponent):
 
     def setup(self, config: dict):
         try:
-            import websockets
+            import websockets  # noqa: F401
+
             self._loop = asyncio.new_event_loop()
-            self._server_thread = threading.Thread(target=self._run_ws_server, daemon=True)
+            self._server_thread = threading.Thread(
+                target=self._run_ws_server, daemon=True
+            )
             self._server_thread.start()
         except ImportError:
-            print(f"[WebSocketSink] websockets not available, using MJPEG at http://{self.host}:{self.port}/stream")
+            print(
+                f"[WebSocketSink] websockets not available, using MJPEG at http://{self.host}:{self.port}/stream"
+            )
             self._use_mjpeg = True
-            self._server_thread = threading.Thread(target=self._run_mjpeg_server, daemon=True)
+            self._server_thread = threading.Thread(
+                target=self._run_mjpeg_server, daemon=True
+            )
             self._server_thread.start()
         time.sleep(0.2)
         super().setup(config)
 
     def _encode_frame(self, frame: np.ndarray) -> bytes:
         ext = ".jpg" if self.format == "jpeg" else ".png"
-        params = [cv2.IMWRITE_JPEG_QUALITY, self.quality] if self.format == "jpeg" else []
+        params = (
+            [cv2.IMWRITE_JPEG_QUALITY, self.quality] if self.format == "jpeg" else []
+        )
         _, buf = cv2.imencode(ext, frame, params)
         return buf.tobytes()
 
@@ -78,18 +92,23 @@ class WebSocketSink(AIVisionComponent):
         sink = self
 
         class Handler(http.server.BaseHTTPRequestHandler):
-            def log_message(self, *a): pass
+            def log_message(self, *a):
+                pass
 
             def do_GET(self):
                 if self.path == "/stream":
                     self.send_response(200)
-                    self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+                    self.send_header(
+                        "Content-Type", "multipart/x-mixed-replace; boundary=frame"
+                    )
                     self.end_headers()
                     while True:
                         with sink._lock:
                             data = sink._latest_frame
                         if data:
-                            self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\n\r\n")
+                            self.wfile.write(
+                                b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                            )
                             self.wfile.write(data)
                             self.wfile.write(b"\r\n")
                         time.sleep(0.033)
@@ -97,7 +116,7 @@ class WebSocketSink(AIVisionComponent):
                     self.send_response(200)
                     self.send_header("Content-Type", "text/html")
                     self.end_headers()
-                    self.wfile.write(f'<html><body><img src="/stream"/></body></html>'.encode())
+                    self.wfile.write(b'<html><body><img src="/stream"/></body></html>')
 
         srv = http.server.HTTPServer((self.host, self.port), Handler)
         srv.serve_forever()
@@ -142,9 +161,9 @@ class WebSocketSource(AIVisionComponent):
 
     def setup(self, config: dict):
         try:
-            import websockets
-        except ImportError:
-            raise ImportError("Install with: pip install websockets")
+            import websockets  # noqa: F401
+        except ImportError as e:
+            raise ImportError("Install with: pip install websockets") from e
         self._loop = asyncio.new_event_loop()
         super().setup(config)
 
@@ -158,6 +177,7 @@ class WebSocketSource(AIVisionComponent):
         msg = self._loop.run_until_complete(recv())
         if isinstance(msg, str):
             import json
+
             d = json.loads(msg)
             raw = base64.b64decode(d["frame"])
         else:

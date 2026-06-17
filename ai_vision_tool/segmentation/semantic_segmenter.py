@@ -4,12 +4,32 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 from ai_vision_tool.utils.color_palette import ColorPalette
+from ai_vision_tool.utils.image_utils import extract_frame
 
-_VOC21 = ["background","aeroplane","bicycle","bird","boat","bottle","bus","car","cat",
-          "chair","cow","diningtable","dog","horse","motorbike","person","pottedplant",
-          "sheep","sofa","train","tvmonitor"]
+_VOC21 = [
+    "background",
+    "aeroplane",
+    "bicycle",
+    "bird",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "chair",
+    "cow",
+    "diningtable",
+    "dog",
+    "horse",
+    "motorbike",
+    "person",
+    "pottedplant",
+    "sheep",
+    "sofa",
+    "train",
+    "tvmonitor",
+]
 
 
 class SemanticSegmenter(AIVisionComponent):
@@ -23,14 +43,21 @@ class SemanticSegmenter(AIVisionComponent):
         conf_threshold: Confidence threshold for mask inclusion.
     """
 
-    def __init__(self, model_path: str | None = None, backend: str = "onnx",
-                 num_classes: int = 21, class_names: list[str] | None = None,
-                 conf_threshold: float = 0.5):
+    def __init__(
+        self,
+        model_path: str | None = None,
+        backend: str = "onnx",
+        num_classes: int = 21,
+        class_names: list[str] | None = None,
+        conf_threshold: float = 0.5,
+    ):
         super().__init__()
         self.model_path = model_path
         self.backend = backend
         self.num_classes = num_classes
-        self.class_names = class_names or (_VOC21 if num_classes == 21 else [f"class_{i}" for i in range(num_classes)])
+        self.class_names = class_names or (
+            _VOC21 if num_classes == 21 else [f"class_{i}" for i in range(num_classes)]
+        )
         self.conf_threshold = conf_threshold
         self._model = None
         self._palette = ColorPalette(num_classes)
@@ -42,20 +69,25 @@ class SemanticSegmenter(AIVisionComponent):
         if self.backend == "onnx":
             try:
                 import onnxruntime as ort
-                providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                             if p in ort.get_available_providers()]
+
+                providers = [
+                    p
+                    for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                    if p in ort.get_available_providers()
+                ]
                 self._model = ort.InferenceSession(self.model_path, providers=providers)
-            except ImportError:
-                raise ImportError("Install with: pip install onnxruntime")
+            except ImportError as e:
+                raise ImportError("Install with: pip install onnxruntime") from e
         elif self.backend == "opencv_dnn":
             self._model = cv2.dnn.readNetFromONNX(self.model_path)
         elif self.backend == "torchscript":
             try:
                 import torch
+
                 self._model = torch.jit.load(self.model_path)
                 self._model.eval()
-            except ImportError:
-                raise ImportError("Install with: pip install torch")
+            except ImportError as e:
+                raise ImportError("Install with: pip install torch") from e
         super().setup(config)
 
     def _infer(self, frame: np.ndarray) -> np.ndarray:
@@ -74,6 +106,7 @@ class SemanticSegmenter(AIVisionComponent):
             out = self._model.forward()
         elif self.backend == "torchscript" and self._model:
             import torch
+
             with torch.no_grad():
                 t = torch.from_numpy(tensor)
                 out = self._model(t).numpy()
@@ -94,18 +127,27 @@ class SemanticSegmenter(AIVisionComponent):
         color_mask = np.zeros_like(frame)
         for cls_id in np.unique(seg_map):
             color_mask[seg_map == cls_id] = self._palette[int(cls_id)]
-        overlay = cv2.addWeighted(frame, 1 - overlay_alpha, color_mask, overlay_alpha, 0)
+        overlay = cv2.addWeighted(
+            frame, 1 - overlay_alpha, color_mask, overlay_alpha, 0
+        )
 
         # Class pixel counts
-        class_counts = {self.class_names[i]: int((seg_map == i).sum())
-                        for i in np.unique(seg_map) if i < len(self.class_names)}
+        class_counts = {
+            self.class_names[i]: int((seg_map == i).sum())
+            for i in np.unique(seg_map)
+            if i < len(self.class_names)
+        }
 
         # Build mask list
         masks = []
         for cls_id in np.unique(seg_map):
             if cls_id == 0:
                 continue
-            label = self.class_names[cls_id] if cls_id < len(self.class_names) else str(cls_id)
+            label = (
+                self.class_names[cls_id]
+                if cls_id < len(self.class_names)
+                else str(cls_id)
+            )
             masks.append({"mask": (seg_map == cls_id), "label": label, "conf": 1.0})
 
         payload = data if isinstance(data, dict) else {"frame": frame}

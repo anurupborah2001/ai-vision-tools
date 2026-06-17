@@ -3,8 +3,8 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame
 
 
 class RemoveBackground(AIVisionComponent):
@@ -25,7 +25,14 @@ class RemoveBackground(AIVisionComponent):
         background_value (tuple[int, int, int] or int): Replacement color for background pixels. Default is (0, 0, 0).
     """
 
-    def __init__(self, method="threshold", threshold=10, rect=None, keep_mask=False, background_value=(0, 0, 0)):
+    def __init__(
+        self,
+        method="threshold",
+        threshold=10,
+        rect=None,
+        keep_mask=False,
+        background_value=(0, 0, 0),
+    ):
         """Initializes RemoveBackground with segmentation parameters.
 
         Args:
@@ -57,7 +64,9 @@ class RemoveBackground(AIVisionComponent):
             ValueError: If method is not 'threshold' or 'grabcut'.
         """
         frame = extract_frame(data)
-        method = config.get("remove_background_method", config.get("method", self.method)).lower()
+        method = config.get(
+            "remove_background_method", config.get("method", self.method)
+        ).lower()
         background_value = config.get("background_value", self.background_value)
 
         if method == "threshold":
@@ -69,11 +78,17 @@ class RemoveBackground(AIVisionComponent):
                 cv2.THRESH_BINARY,
             )
         elif method == "grabcut":
-            rect = tuple(config.get("rect", self.rect or (1, 1, frame.shape[1] - 2, frame.shape[0] - 2)))
+            rect = tuple(
+                config.get(
+                    "rect", self.rect or (1, 1, frame.shape[1] - 2, frame.shape[0] - 2)
+                )
+            )
             mask = np.zeros(frame.shape[:2], np.uint8)
             bgd_model = np.zeros((1, 65), np.float64)
             fgd_model = np.zeros((1, 65), np.float64)
-            cv2.grabCut(frame, mask, rect, bgd_model, fgd_model, 1, cv2.GC_INIT_WITH_RECT)
+            cv2.grabCut(
+                frame, mask, rect, bgd_model, fgd_model, 1, cv2.GC_INIT_WITH_RECT
+            )
             mask = np.where(
                 (mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0
             ).astype("uint8")

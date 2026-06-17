@@ -6,10 +6,14 @@ import cv2
 import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
+from ai_vision_tool.utils.image_utils import extract_frame
 
-_CODECS = {"mp4v": cv2.VideoWriter_fourcc(*"mp4v"), "avc1": cv2.VideoWriter_fourcc(*"avc1"),
-           "xvid": cv2.VideoWriter_fourcc(*"XVID"), "h264": cv2.VideoWriter_fourcc(*"avc1")}
+_CODECS = {
+    "mp4v": cv2.VideoWriter_fourcc(*"mp4v"),
+    "avc1": cv2.VideoWriter_fourcc(*"avc1"),
+    "xvid": cv2.VideoWriter_fourcc(*"XVID"),
+    "h264": cv2.VideoWriter_fourcc(*"avc1"),
+}
 
 
 class VideoReader(AIVisionComponent):
@@ -22,7 +26,13 @@ class VideoReader(AIVisionComponent):
         step: Read every nth frame.
     """
 
-    def __init__(self, path: str, start_frame: int = 0, end_frame: int | None = None, step: int = 1):
+    def __init__(
+        self,
+        path: str,
+        start_frame: int = 0,
+        end_frame: int | None = None,
+        step: int = 1,
+    ):
         super().__init__()
         self.path = path
         self.start_frame = start_frame
@@ -39,7 +49,7 @@ class VideoReader(AIVisionComponent):
     def setup(self, config: dict):
         self._cap = cv2.VideoCapture(self.path)
         if not self._cap.isOpened():
-            raise IOError(f"VideoReader: cannot open {self.path!r}")
+            raise OSError(f"VideoReader: cannot open {self.path!r}")
         self.fps = self._cap.get(cv2.CAP_PROP_FPS) or 30.0
         self.frame_count = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -65,9 +75,13 @@ class VideoReader(AIVisionComponent):
         ret, frame = self._cap.read()
         eof = not ret or (end is not None and self._frame_id > end)
         ts = self._frame_id / self.fps * 1000.0 if self.fps else 0.0
-        payload = {"frame": frame if ret else np.zeros((self.height, self.width, 3), np.uint8),
-                   "frame_id": self._frame_id, "timestamp_ms": ts,
-                   "fps": self.fps, "eof": eof}
+        payload = {
+            "frame": frame if ret else np.zeros((self.height, self.width, 3), np.uint8),
+            "frame_id": self._frame_id,
+            "timestamp_ms": ts,
+            "fps": self.fps,
+            "eof": eof,
+        }
         self._frame_id += 1
         return payload
 
@@ -97,8 +111,14 @@ class VideoWriter(AIVisionComponent):
         height: Frame height. None = infer from first frame.
     """
 
-    def __init__(self, output_path: str, fps: float = 30.0, codec: str = "mp4v",
-                 width: int | None = None, height: int | None = None):
+    def __init__(
+        self,
+        output_path: str,
+        fps: float = 30.0,
+        codec: str = "mp4v",
+        width: int | None = None,
+        height: int | None = None,
+    ):
         super().__init__()
         self.output_path = output_path
         self.fps = fps

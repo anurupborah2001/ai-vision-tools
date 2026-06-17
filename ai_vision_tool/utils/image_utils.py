@@ -94,7 +94,7 @@ def normalize_color_value(value):
     Returns:
         tuple or scalar: Tuple if value is a sequence, otherwise the original scalar.
     """
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes):
         return tuple(value)
     return value
 

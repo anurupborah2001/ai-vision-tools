@@ -1,8 +1,10 @@
-from ai_vision_tool.core.base import AIVisionComponent
-import cv2
 import json
 import time
 from pathlib import Path
+
+import cv2
+
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class DatasetCollector(AIVisionComponent):
@@ -17,8 +19,8 @@ class DatasetCollector(AIVisionComponent):
                 - 'save_metadata' (bool): If True, appends JSON records to a metadata
                   JSONL file alongside saved images. Default is True.
         """
-        self.output_dir = Path(config.get('output_dir', 'dataset'))
-        self.save_metadata = config.get('save_metadata', True)
+        self.output_dir = Path(config.get("output_dir", "dataset"))
+        self.save_metadata = config.get("save_metadata", True)
         self.metadata_path = self.output_dir / "metadata.jsonl"
         self.is_initialized = True
 

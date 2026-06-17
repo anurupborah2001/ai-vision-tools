@@ -22,9 +22,11 @@ def _wiener_deconv(channel: np.ndarray, kernel_size: int, snr: float) -> np.ndar
     return np.clip(result * 255, 0, 255).astype(np.uint8)
 
 
-def _richardson_lucy(channel: np.ndarray, kernel_size: int, iterations: int = 10) -> np.ndarray:
+def _richardson_lucy(
+    channel: np.ndarray, kernel_size: int, iterations: int = 10
+) -> np.ndarray:
     img = channel.astype(np.float64) / 255.0 + 1e-8
-    psf = np.ones((kernel_size, kernel_size), dtype=np.float64) / (kernel_size ** 2)
+    psf = np.ones((kernel_size, kernel_size), dtype=np.float64) / (kernel_size**2)
     estimate = img.copy()
     for _ in range(iterations):
         conv = cv2.filter2D(estimate, -1, psf)
@@ -43,8 +45,13 @@ class Deblurrer(AIVisionComponent):
         model_path: Path to ONNX NAFNet model (onnx_nafnet method).
     """
 
-    def __init__(self, method: str = "wiener", kernel_size: int = 5,
-                 snr: float = 100.0, model_path: str | None = None):
+    def __init__(
+        self,
+        method: str = "wiener",
+        kernel_size: int = 5,
+        snr: float = 100.0,
+        model_path: str | None = None,
+    ):
         super().__init__()
         self.method = method
         self.kernel_size = kernel_size
@@ -56,11 +63,17 @@ class Deblurrer(AIVisionComponent):
         if self.method == "onnx_nafnet" and self.model_path:
             try:
                 import onnxruntime as ort
-                providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                             if p in ort.get_available_providers()]
-                self._session = ort.InferenceSession(self.model_path, providers=providers)
-            except ImportError:
-                raise ImportError("Install with: pip install onnxruntime")
+
+                providers = [
+                    p
+                    for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                    if p in ort.get_available_providers()
+                ]
+                self._session = ort.InferenceSession(
+                    self.model_path, providers=providers
+                )
+            except ImportError as e:
+                raise ImportError("Install with: pip install onnxruntime") from e
         super().setup(config)
 
     def _execute(self, data, config):
@@ -78,7 +91,9 @@ class Deblurrer(AIVisionComponent):
             result = np.clip(frame.astype(np.float64) - lap, 0, 255).astype(np.uint8)
         elif method == "unsharp_mask":
             blur = cv2.GaussianBlur(frame, (ks, ks), 0)
-            result = np.clip(1.5 * frame.astype(np.float64) - 0.5 * blur.astype(np.float64), 0, 255).astype(np.uint8)
+            result = np.clip(
+                1.5 * frame.astype(np.float64) - 0.5 * blur.astype(np.float64), 0, 255
+            ).astype(np.uint8)
         elif method == "richardson_lucy":
             channels = cv2.split(frame)
             result = cv2.merge([_richardson_lucy(c, ks) for c in channels])
@@ -86,11 +101,16 @@ class Deblurrer(AIVisionComponent):
             inp = self._session.get_inputs()[0]
             ih, iw = inp.shape[2], inp.shape[3]
             resized = cv2.resize(frame, (iw, ih))
-            tensor = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis] / 255.0
+            tensor = (
+                cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis]
+                / 255.0
+            )
             tensor = np.transpose(tensor, (0, 3, 1, 2))
             out = self._session.run(None, {inp.name: tensor})[0]
             out = np.clip(out[0].transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            result = cv2.resize(cv2.cvtColor(out, cv2.COLOR_RGB2BGR), (frame.shape[1], frame.shape[0]))
+            result = cv2.resize(
+                cv2.cvtColor(out, cv2.COLOR_RGB2BGR), (frame.shape[1], frame.shape[0])
+            )
         else:
             result = frame
 

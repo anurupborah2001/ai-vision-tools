@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ai_vision_tool.preprocessing import (
+    CLAHE,
     AdaptiveThreshold,
     AspectRatioFilter,
     AutoAdjustContrast,
@@ -13,7 +14,6 @@ from ai_vision_tool.preprocessing import (
     BoundingBoxNormalize,
     BrightnessCheck,
     CenterCrop,
-    CLAHE,
     ContourExtraction,
     ConvertColorSpace,
     CorruptImageCheck,
@@ -67,7 +67,9 @@ def test_auto_orient_can_use_explicit_rotation_and_flips():
     frame = np.zeros((3, 4, 3), dtype=np.uint8)
     frame[0, 0] = (0, 255, 0)
 
-    result = AutoOrient(rotation=90, flip_horizontal=True, use_exif=False).run(frame.copy(), {})
+    result = AutoOrient(rotation=90, flip_horizontal=True, use_exif=False).run(
+        frame.copy(), {}
+    )
 
     assert result.shape == (4, 3, 3)
     assert result.sum() == frame.sum()
@@ -79,7 +81,9 @@ def test_auto_adjust_contrast_supports_all_methods_and_invalid_mode():
     adaptive = AutoAdjustContrast(method="adaptive_equalization", clip_limit=1.5).run(
         frame.copy(), {}
     )
-    histogram = AutoAdjustContrast(method="histogram_equalization").run(frame.copy(), {})
+    histogram = AutoAdjustContrast(method="histogram_equalization").run(
+        frame.copy(), {}
+    )
     stretched = AutoAdjustContrast(
         method="contrast_stretching",
         lower_percentile=5,
@@ -99,7 +103,9 @@ def test_resize_changes_dimensions(sample_frame):
 
 
 def test_letterbox_resize_preserves_target_canvas(sample_frame):
-    result = LetterboxResize(width=100, height=100, pad_value=(5, 5, 5)).run(sample_frame.copy(), {})
+    result = LetterboxResize(width=100, height=100, pad_value=(5, 5, 5)).run(
+        sample_frame.copy(), {}
+    )
     assert result.shape == (100, 100, 3)
     assert (result[0, 0] == np.array([5, 5, 5])).all()
 
@@ -156,7 +162,9 @@ def test_histogram_equalization_supports_gray_and_rejects_invalid_color_space():
 
     assert gray_equalized.shape == frame.shape
 
-    with pytest.raises(ValueError, match="HistogramEqualization supports ycrcb or gray"):
+    with pytest.raises(
+        ValueError, match="HistogramEqualization supports ycrcb or gray"
+    ):
         HistogramEqualization(color_space="lab").run(frame.copy(), {})
 
 
@@ -182,7 +190,9 @@ def test_white_balance_supports_white_patch_and_rejects_invalid_method():
 
     assert result.shape == frame.shape
 
-    with pytest.raises(ValueError, match="WhiteBalance supports gray_world or white_patch"):
+    with pytest.raises(
+        ValueError, match="WhiteBalance supports gray_world or white_patch"
+    ):
         WhiteBalance(method="invalid").run(frame.copy(), {})
 
 
@@ -196,9 +206,9 @@ def test_denoise_sharpen_and_deblur_keep_shape(sample_frame):
 
 
 def test_denoise_supports_bilateral_and_rejects_invalid_method(sample_frame):
-    bilateral = Denoise(method="bilateral", kernel_size=5, sigma_color=50, sigma_space=50).run(
-        sample_frame.copy(), {}
-    )
+    bilateral = Denoise(
+        method="bilateral", kernel_size=5, sigma_color=50, sigma_space=50
+    ).run(sample_frame.copy(), {})
 
     assert bilateral.shape == sample_frame.shape
 
@@ -219,17 +229,23 @@ def test_remove_background_keeps_mask_and_rejects_invalid_method():
     frame[4:16, 4:16] = 255
     payload = {"frame": frame.copy()}
 
-    result = RemoveBackground(method="threshold", threshold=10, keep_mask=True).run(payload, {})
+    result = RemoveBackground(method="threshold", threshold=10, keep_mask=True).run(
+        payload, {}
+    )
 
     assert "mask" in result
     assert result["mask"].shape == frame.shape[:2]
 
-    with pytest.raises(ValueError, match="RemoveBackground supports threshold or grabcut"):
+    with pytest.raises(
+        ValueError, match="RemoveBackground supports threshold or grabcut"
+    ):
         RemoveBackground(method="invalid").run(frame.copy(), {})
 
 
 def test_threshold_and_adaptive_threshold_produce_masks(sample_frame):
-    thresholded = Threshold(threshold=10, keep_channels=False).run(sample_frame.copy(), {})
+    thresholded = Threshold(threshold=10, keep_channels=False).run(
+        sample_frame.copy(), {}
+    )
     adaptive = AdaptiveThreshold(keep_channels=False).run(sample_frame.copy(), {})
     assert thresholded.ndim == 2
     assert adaptive.ndim == 2
@@ -257,9 +273,9 @@ def test_perspective_correction_warps_to_requested_size(sample_frame):
 
 def test_perspective_correction_rejects_invalid_source_points(sample_frame):
     with pytest.raises(ValueError, match="source_points must contain four"):
-        PerspectiveCorrection(source_points=np.array([[0, 0], [1, 1]], dtype=np.float32)).run(
-            sample_frame.copy(), {}
-        )
+        PerspectiveCorrection(
+            source_points=np.array([[0, 0], [1, 1]], dtype=np.float32)
+        ).run(sample_frame.copy(), {})
 
 
 def test_deskew_returns_image(sample_frame):
@@ -276,7 +292,10 @@ def test_auto_crop_reduces_frame():
 
 
 def test_face_align_uses_eye_coordinates(sample_frame):
-    payload = {"frame": sample_frame.copy(), "metadata": {"left_eye": (15, 15), "right_eye": (35, 15)}}
+    payload = {
+        "frame": sample_frame.copy(),
+        "metadata": {"left_eye": (15, 15), "right_eye": (35, 15)},
+    }
     result = FaceAlign(output_size=(64, 64)).run(payload, {})
     assert result["frame"].shape == (64, 64, 3)
 

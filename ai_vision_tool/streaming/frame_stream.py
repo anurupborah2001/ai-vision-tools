@@ -25,7 +25,7 @@ class FrameStream:
         self._frame_id = 0
 
     def _open(self):
-        if isinstance(self.source, (int, str)):
+        if isinstance(self.source, int | str):
             self._cap = cv2.VideoCapture(self.source)
         elif isinstance(self.source, list):
             self._list_iter = iter(self.source)
@@ -67,14 +67,18 @@ class FrameStream:
             try:
                 item = next(self._list_iter)
                 frame = item["frame"] if isinstance(item, dict) else item
-            except StopIteration:
-                raise StopIteration
+            except StopIteration as e:
+                raise StopIteration from e
         else:
             raise StopIteration
 
         self._frame_id += 1
-        return {"frame": frame, "frame_id": self._frame_id, "timestamp_ms": ts,
-                "source": str(self.source)}
+        return {
+            "frame": frame,
+            "frame_id": self._frame_id,
+            "timestamp_ms": ts,
+            "source": str(self.source),
+        }
 
 
 class DirectoryStream(FrameStream):
@@ -86,10 +90,16 @@ class DirectoryStream(FrameStream):
         max_frames: Maximum frames to yield.
     """
 
-    def __init__(self, path: str, extensions: tuple = (".jpg", ".png", ".jpeg", ".bmp"),
-                 max_frames: int | None = None):
+    def __init__(
+        self,
+        path: str,
+        extensions: tuple = (".jpg", ".png", ".jpeg", ".bmp"),
+        max_frames: int | None = None,
+    ):
         self._dir = Path(path)
-        self._files = sorted(p for p in self._dir.iterdir() if p.suffix.lower() in extensions)
+        self._files = sorted(
+            p for p in self._dir.iterdir() if p.suffix.lower() in extensions
+        )
         super().__init__(source=self._files, max_frames=max_frames)
         self._file_iter = iter(self._files)
         self._list_iter = None
@@ -99,12 +109,16 @@ class DirectoryStream(FrameStream):
             raise StopIteration
         try:
             file_path = next(self._file_iter)
-        except StopIteration:
-            raise StopIteration
+        except StopIteration as e:
+            raise StopIteration from e
         frame = cv2.imread(str(file_path))
         if frame is None:
             return self.__next__()
         self._frame_id += 1
-        return {"frame": frame, "frame_id": self._frame_id,
-                "timestamp_ms": time.time() * 1000.0,
-                "path": str(file_path), "source": str(self._dir)}
+        return {
+            "frame": frame,
+            "frame_id": self._frame_id,
+            "timestamp_ms": time.time() * 1000.0,
+            "path": str(file_path),
+            "source": str(self._dir),
+        }

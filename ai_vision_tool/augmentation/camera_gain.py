@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import extract_frame, replace_frame, to_uint8
 
 
 class CameraGain(AIVisionComponent):

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 
@@ -28,7 +27,9 @@ class ProfileLoader:
                 candidate2 = base / name_or_path
                 if candidate2.exists():
                     return self._read(candidate2)
-        raise FileNotFoundError(f"Profile {name_or_path!r} not found in {[str(p) for p in self._paths]}")
+        raise FileNotFoundError(
+            f"Profile {name_or_path!r} not found in {[str(p) for p in self._paths]}"
+        )
 
     def _read(self, path: Path) -> dict:
         suffix = path.suffix.lower()
@@ -36,13 +37,15 @@ class ProfileLoader:
             if suffix in (".yaml", ".yml"):
                 try:
                     import yaml
+
                     return yaml.safe_load(f) or {}
-                except ImportError:
-                    raise ImportError("Install with: pip install pyyaml")
+                except ImportError as e:
+                    raise ImportError("Install with: pip install pyyaml") from e
             return json.load(f)
 
     def load_pipeline(self, profile: dict):
         from ai_vision_tool.config.registry import ComponentRegistry
+
         registry = ComponentRegistry.instance()
         components = []
         for step in profile.get("steps", []):

@@ -1,5 +1,6 @@
-from ai_vision_tool.core.base import AIVisionComponent
 import cv2
+
+from ai_vision_tool.core.base import AIVisionComponent
 
 
 class FrameAnnotator(AIVisionComponent):
@@ -29,7 +30,11 @@ class FrameAnnotator(AIVisionComponent):
         frame = data["frame"] if isinstance(data, dict) else data
         output = frame.copy()
 
-        annotations = data.get("annotations", []) if isinstance(data, dict) else config.get("annotations", [])
+        annotations = (
+            data.get("annotations", [])
+            if isinstance(data, dict)
+            else config.get("annotations", [])
+        )
 
         for item in annotations:
             ann_type = item.get("type")
@@ -45,7 +50,9 @@ class FrameAnnotator(AIVisionComponent):
             return data
         return output
 
-    def _draw_text(self, frame, text, pos=(30, 30), scale=0.8, color=(255, 255, 255), thickness=2):
+    def _draw_text(
+        self, frame, text, pos=(30, 30), scale=0.8, color=(255, 255, 255), thickness=2
+    ):
         """Renders a text string onto the frame at the given position.
 
         Args:
@@ -56,7 +63,9 @@ class FrameAnnotator(AIVisionComponent):
             color (tuple[int, int, int]): BGR text color. Default is (255, 255, 255).
             thickness (int): Line thickness in pixels. Default is 2.
         """
-        cv2.putText(frame, str(text), pos, cv2.FONT_HERSHEY_SIMPLEX, scale, color, thickness)
+        cv2.putText(
+            frame, str(text), pos, cv2.FONT_HERSHEY_SIMPLEX, scale, color, thickness
+        )
 
     def _draw_box(self, frame, box, color=(0, 255, 0), thickness=2):
         """Draws a rectangle on the frame.

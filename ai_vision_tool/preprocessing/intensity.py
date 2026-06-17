@@ -3,8 +3,13 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from ..utils.image_utils import extract_frame, maybe_grayscale_to_bgr, replace_frame, to_uint8
 from ..core.base import AIVisionComponent
+from ..utils.image_utils import (
+    extract_frame,
+    maybe_grayscale_to_bgr,
+    replace_frame,
+    to_uint8,
+)
 
 
 class Normalize(AIVisionComponent):
@@ -39,7 +44,9 @@ class Normalize(AIVisionComponent):
         frame = extract_frame(data).astype(np.float32)
         output_min = float(config.get("output_min", self.output_min))
         output_max = float(config.get("output_max", self.output_max))
-        normalized = cv2.normalize(frame, None, alpha=output_min, beta=output_max, norm_type=cv2.NORM_MINMAX)
+        normalized = cv2.normalize(
+            frame, None, alpha=output_min, beta=output_max, norm_type=cv2.NORM_MINMAX
+        )
         return replace_frame(data, normalized)
 
 
@@ -84,7 +91,9 @@ class Standardize(AIVisionComponent):
         epsilon = float(config.get("epsilon", self.epsilon))
 
         if self.mean is None:
-            mean = frame.mean(axis=(0, 1), keepdims=True) if per_channel else frame.mean()
+            mean = (
+                frame.mean(axis=(0, 1), keepdims=True) if per_channel else frame.mean()
+            )
         else:
             mean = np.array(config.get("mean", self.mean), dtype=np.float32)
 
@@ -237,7 +246,9 @@ class CLAHE(AIVisionComponent):
             tileGridSize=tuple(config.get("tile_grid_size", self.tile_grid_size)),
         )
         enhanced = clahe.apply(l_channel)
-        output = cv2.cvtColor(cv2.merge((enhanced, a_channel, b_channel)), cv2.COLOR_LAB2BGR)
+        output = cv2.cvtColor(
+            cv2.merge((enhanced, a_channel, b_channel)), cv2.COLOR_LAB2BGR
+        )
         return replace_frame(data, output)
 
 
@@ -313,7 +324,9 @@ class GammaCorrection(AIVisionComponent):
         """
         frame = extract_frame(data)
         gamma = max(float(config.get("gamma", self.gamma)), 1e-6)
-        table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255 for i in range(256)], dtype=np.uint8)
+        table = np.array(
+            [((i / 255.0) ** (1.0 / gamma)) * 255 for i in range(256)], dtype=np.uint8
+        )
         output = cv2.LUT(frame, table)
         return replace_frame(data, output)
 
@@ -352,7 +365,9 @@ class WhiteBalance(AIVisionComponent):
             ValueError: If method is not 'gray_world' or 'white_patch'.
         """
         frame = extract_frame(data).astype(np.float32)
-        method = config.get("white_balance_method", config.get("method", self.method)).lower()
+        method = config.get(
+            "white_balance_method", config.get("method", self.method)
+        ).lower()
         if method == "gray_world":
             channel_means = frame.mean(axis=(0, 1))
             scale = channel_means.mean() / np.maximum(channel_means, 1e-6)
@@ -378,7 +393,9 @@ class Denoise(AIVisionComponent):
         sigma_space (float): Spatial sigma for bilateral filter. Default is 75.
     """
 
-    def __init__(self, method="nlm", strength=10, kernel_size=5, sigma_color=75, sigma_space=75):
+    def __init__(
+        self, method="nlm", strength=10, kernel_size=5, sigma_color=75, sigma_space=75
+    ):
         """Initializes Denoise with denoising method and parameters.
 
         Args:
@@ -421,7 +438,9 @@ class Denoise(AIVisionComponent):
                 21,
             )
         elif method == "median":
-            output = cv2.medianBlur(frame, int(config.get("kernel_size", self.kernel_size)) | 1)
+            output = cv2.medianBlur(
+                frame, int(config.get("kernel_size", self.kernel_size)) | 1
+            )
         elif method == "bilateral":
             output = cv2.bilateralFilter(
                 frame,
@@ -518,7 +537,9 @@ class Threshold(AIVisionComponent):
         keep_channels (bool): If True, expands the single-channel result to 3 channels. Default is False.
     """
 
-    def __init__(self, threshold=127, max_value=255, mode="binary", keep_channels=False):
+    def __init__(
+        self, threshold=127, max_value=255, mode="binary", keep_channels=False
+    ):
         """Initializes Threshold with threshold value and mode.
 
         Args:
@@ -545,15 +566,21 @@ class Threshold(AIVisionComponent):
             NumPy array or dict: Binary mask image in the same format as input.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
-        mode = _resolve_threshold_mode(config.get("threshold_mode", config.get("mode", self.mode)))
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
+        mode = _resolve_threshold_mode(
+            config.get("threshold_mode", config.get("mode", self.mode))
+        )
         _, output = cv2.threshold(
             gray,
             float(config.get("threshold", self.threshold)),
             float(config.get("max_value", self.max_value)),
             mode,
         )
-        output = maybe_grayscale_to_bgr(output, config.get("keep_channels", self.keep_channels))
+        output = maybe_grayscale_to_bgr(
+            output, config.get("keep_channels", self.keep_channels)
+        )
         return replace_frame(data, output)
 
 
@@ -608,7 +635,9 @@ class AdaptiveThreshold(AIVisionComponent):
             NumPy array or dict: Adaptive binary mask in the same format as input.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
         adaptive_method = (
             cv2.ADAPTIVE_THRESH_MEAN_C
             if config.get("method", self.method).lower() == "mean"
@@ -630,7 +659,9 @@ class AdaptiveThreshold(AIVisionComponent):
             block_size,
             float(config.get("c", self.c)),
         )
-        output = maybe_grayscale_to_bgr(output, config.get("keep_channels", self.keep_channels))
+        output = maybe_grayscale_to_bgr(
+            output, config.get("keep_channels", self.keep_channels)
+        )
         return replace_frame(data, output)
 
 
@@ -645,7 +676,14 @@ class EdgeDetection(AIVisionComponent):
         keep_channels (bool): Expand single-channel output to 3 channels. Default is True.
     """
 
-    def __init__(self, method="canny", threshold1=100, threshold2=200, aperture_size=3, keep_channels=True):
+    def __init__(
+        self,
+        method="canny",
+        threshold1=100,
+        threshold2=200,
+        aperture_size=3,
+        keep_channels=True,
+    ):
         """Initializes EdgeDetection with method and parameters.
 
         Args:
@@ -677,7 +715,9 @@ class EdgeDetection(AIVisionComponent):
             ValueError: If method is not 'canny', 'sobel', or 'laplacian'.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
         method = config.get("edge_method", config.get("method", self.method)).lower()
         if method == "canny":
             output = cv2.Canny(
@@ -694,7 +734,9 @@ class EdgeDetection(AIVisionComponent):
             output = cv2.convertScaleAbs(cv2.Laplacian(gray, cv2.CV_64F))
         else:
             raise ValueError("EdgeDetection supports canny, sobel, or laplacian.")
-        output = maybe_grayscale_to_bgr(output, config.get("keep_channels", self.keep_channels))
+        output = maybe_grayscale_to_bgr(
+            output, config.get("keep_channels", self.keep_channels)
+        )
         return replace_frame(data, output)
 
 
@@ -711,7 +753,14 @@ class ContourExtraction(AIVisionComponent):
         thickness (int): Contour line thickness. Default is 2.
     """
 
-    def __init__(self, retrieval_mode="external", approximation="simple", draw=True, color=(0, 255, 0), thickness=2):
+    def __init__(
+        self,
+        retrieval_mode="external",
+        approximation="simple",
+        draw=True,
+        color=(0, 255, 0),
+        thickness=2,
+    ):
         """Initializes ContourExtraction with retrieval and drawing parameters.
 
         Args:
@@ -741,12 +790,16 @@ class ContourExtraction(AIVisionComponent):
             numpy.ndarray: Frame with contours drawn if input was a raw array.
         """
         frame = extract_frame(data)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        gray = (
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame.copy()
+        )
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         contours, hierarchy = cv2.findContours(
             binary,
             _resolve_retrieval_mode(config.get("retrieval_mode", self.retrieval_mode)),
-            _resolve_approximation_mode(config.get("approximation", self.approximation)),
+            _resolve_approximation_mode(
+                config.get("approximation", self.approximation)
+            ),
         )
         output = frame.copy()
         if config.get("draw", self.draw):

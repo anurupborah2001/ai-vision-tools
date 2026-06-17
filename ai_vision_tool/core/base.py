@@ -47,7 +47,9 @@ class AIVisionComponent(ABC):
             self.setup(config)
 
         if isinstance(data, list):
-            print(f"[{self.__class__.__name__}] Processing batch of {len(data)} items...")
+            print(
+                f"[{self.__class__.__name__}] Processing batch of {len(data)} items..."
+            )
             return [self._process_single(item, config) for item in data]
 
         return self._process_single(data, config)
@@ -103,7 +105,7 @@ class AIVisionComponent(ABC):
         """
         return result
 
-    def cleanup(self):
+    def cleanup(self):  # noqa: B027
         """Releases any resources held by the component.
 
         Override to close file handles, release video writers, or free GPU memory.

@@ -1,18 +1,19 @@
+from collections.abc import Callable
+
 import cv2
 import numpy as np
-from typing import Callable, Optional
 import pyautogui
 
 window_centered = False
 
 
 def image_template(
-      image_path: str,
-      custom_logic: Optional[Callable[[cv2.typing.MatLike], cv2.typing.MatLike]] = None,
-      window_name: str = "Demo",
-      center_window: bool = True,
-      show_window: bool = True,
-      resolution: tuple[int, int] = (1280, 720),
+    image_path: str,
+    custom_logic: Callable[[cv2.typing.MatLike], cv2.typing.MatLike] | None = None,
+    window_name: str = "Demo",
+    center_window: bool = True,
+    show_window: bool = True,
+    resolution: tuple[int, int] = (1280, 720),
 ):
     """Displays a still image with optional custom processing in an OpenCV window.
 

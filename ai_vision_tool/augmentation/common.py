@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import random
 from pathlib import Path
 
@@ -47,7 +46,9 @@ def maybe_get_partner_frame(data, config, key):
     return None
 
 
-def apply_affine(frame, matrix, output_size=None, border_mode="constant", border_value=0):
+def apply_affine(
+    frame, matrix, output_size=None, border_mode="constant", border_value=0
+):
     """Applies an affine transformation matrix to a frame.
 
     Args:
@@ -82,10 +83,14 @@ def build_translation_matrix(translate_x, translate_y):
     Returns:
         numpy.ndarray: 2x3 float32 affine translation matrix.
     """
-    return np.array([[1.0, 0.0, translate_x], [0.0, 1.0, translate_y]], dtype=np.float32)
+    return np.array(
+        [[1.0, 0.0, translate_x], [0.0, 1.0, translate_y]], dtype=np.float32
+    )
 
 
-def apply_perspective(frame, src_points, dst_points, border_mode="constant", border_value=0):
+def apply_perspective(
+    frame, src_points, dst_points, border_mode="constant", border_value=0
+):
     """Applies a perspective (homography) transformation to a frame.
 
     Args:
@@ -148,5 +153,5 @@ def parse_component_profile(path):
     Returns:
         dict: Parsed JSON content as a Python dict.
     """
-    with open(Path(path), "r", encoding="utf-8") as handle:
+    with open(Path(path), encoding="utf-8") as handle:
         return json.load(handle)

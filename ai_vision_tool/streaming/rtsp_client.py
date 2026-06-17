@@ -6,7 +6,6 @@ import time
 from urllib.parse import urlparse
 
 import cv2
-import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
 
@@ -23,8 +22,15 @@ class RTSPClient(AIVisionComponent):
         threaded: If True, capture frames in a background thread.
     """
 
-    def __init__(self, url: str, reconnect: bool = True, reconnect_delay: float = 2.0,
-                 buffer_size: int = 1, timeout: float = 10.0, threaded: bool = False):
+    def __init__(
+        self,
+        url: str,
+        reconnect: bool = True,
+        reconnect_delay: float = 2.0,
+        buffer_size: int = 1,
+        timeout: float = 10.0,
+        threaded: bool = False,
+    ):
         super().__init__()
         self.url = url
         self.reconnect = reconnect
@@ -61,7 +67,7 @@ class RTSPClient(AIVisionComponent):
 
     def setup(self, config: dict):
         if not self._open_cap():
-            raise IOError(f"RTSPClient: cannot connect to {self.url!r}")
+            raise OSError(f"RTSPClient: cannot connect to {self.url!r}")
         if self.threaded:
             self._queue = queue.Queue(maxsize=self.buffer_size * 2)
             self._running = True
@@ -76,23 +82,43 @@ class RTSPClient(AIVisionComponent):
         if self.threaded and self._queue:
             try:
                 frame = self._queue.get(timeout=self.timeout)
-                return {"frame": frame, "frame_id": self._frame_id, "timestamp_ms": ts,
-                        "url": self.url, "connected": True}
+                return {
+                    "frame": frame,
+                    "frame_id": self._frame_id,
+                    "timestamp_ms": ts,
+                    "url": self.url,
+                    "connected": True,
+                }
             except queue.Empty:
-                return {"frame": None, "frame_id": self._frame_id, "timestamp_ms": ts,
-                        "url": self.url, "connected": False}
+                return {
+                    "frame": None,
+                    "frame_id": self._frame_id,
+                    "timestamp_ms": ts,
+                    "url": self.url,
+                    "connected": False,
+                }
 
-        for attempt in range(3):
+        for _attempt in range(3):
             if self._cap and self._cap.isOpened():
                 ret, frame = self._cap.read()
                 if ret:
-                    return {"frame": frame, "frame_id": self._frame_id,
-                            "timestamp_ms": ts, "url": self.url, "connected": True}
+                    return {
+                        "frame": frame,
+                        "frame_id": self._frame_id,
+                        "timestamp_ms": ts,
+                        "url": self.url,
+                        "connected": True,
+                    }
             if self.reconnect:
                 time.sleep(self.reconnect_delay)
                 self._open_cap()
-        return {"frame": None, "frame_id": self._frame_id, "timestamp_ms": ts,
-                "url": self.url, "connected": False}
+        return {
+            "frame": None,
+            "frame_id": self._frame_id,
+            "timestamp_ms": ts,
+            "url": self.url,
+            "connected": False,
+        }
 
     def cleanup(self):
         self._running = False
@@ -109,8 +135,14 @@ class RTSPServer:
     @staticmethod
     def parse_url(url: str) -> dict:
         p = urlparse(url)
-        return {"scheme": p.scheme, "host": p.hostname, "port": p.port,
-                "path": p.path, "user": p.username, "password": p.password}
+        return {
+            "scheme": p.scheme,
+            "host": p.hostname,
+            "port": p.port,
+            "path": p.path,
+            "user": p.username,
+            "password": p.password,
+        }
 
     @staticmethod
     def probe(url: str, timeout: float = 5.0) -> dict:

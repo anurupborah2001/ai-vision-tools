@@ -4,7 +4,6 @@ import time
 from collections import deque
 
 import cv2
-import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame
@@ -21,8 +20,14 @@ class FrameViewer(AIVisionComponent):
         show_info: Overlay info dict from payload["info"].
     """
 
-    def __init__(self, window_name: str = "AI Vision Tool", scale: float = 1.0,
-                 wait_ms: int = 1, show_fps: bool = True, show_info: bool = True):
+    def __init__(
+        self,
+        window_name: str = "AI Vision Tool",
+        scale: float = 1.0,
+        wait_ms: int = 1,
+        show_fps: bool = True,
+        show_info: bool = True,
+    ):
         super().__init__()
         self.window_name = window_name
         self.scale = scale
@@ -50,15 +55,31 @@ class FrameViewer(AIVisionComponent):
 
         fps = self._fps()
         if config.get("show_fps", self.show_fps):
-            cv2.putText(display, f"FPS: {fps:.1f}", (10, 25),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(
+                display,
+                f"FPS: {fps:.1f}",
+                (10, 25),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+                cv2.LINE_AA,
+            )
 
         if config.get("show_info", self.show_info) and isinstance(data, dict):
             info = data.get("info", {})
             y = 55
             for k, v in info.items():
-                cv2.putText(display, f"{k}: {v}", (10, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1, cv2.LINE_AA)
+                cv2.putText(
+                    display,
+                    f"{k}: {v}",
+                    (10, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (200, 200, 200),
+                    1,
+                    cv2.LINE_AA,
+                )
                 y += 20
 
         try:
@@ -69,7 +90,7 @@ class FrameViewer(AIVisionComponent):
                     data["stop"] = True
         except cv2.error:
             if not self._headless_warned:
-                print(f"[FrameViewer] No display available (headless environment)")
+                print("[FrameViewer] No display available (headless environment)")
                 self._headless_warned = True
 
         return data

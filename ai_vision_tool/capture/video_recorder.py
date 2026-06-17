@@ -1,11 +1,9 @@
-import cv2
-import numpy as np
 import os
 import time
-import imageio
-from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional
+from datetime import datetime
+
+import cv2
 
 
 @dataclass
@@ -31,8 +29,7 @@ class VideoRecorder:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.file_path = os.path.join(
-            self.output_path,
-            f"record_{timestamp}.{self.output_format}"
+            self.output_path, f"record_{timestamp}.{self.output_format}"
         )
 
         self.writer = None
@@ -118,6 +115,8 @@ class VideoRecorder:
             print(f"MP4 saved → {self.file_path}")
 
         if self.output_format == "gif" and self.frames:
+            import imageio
+
             imageio.mimsave(self.file_path, self.frames, fps=self.fps)
             print(f"GIF saved → {self.file_path}")
 

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import json
-import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import cv2
-import numpy as np
 
 from ai_vision_tool.core.base import AIVisionComponent
 from ai_vision_tool.utils.image_utils import extract_frame
@@ -22,8 +20,13 @@ class DatasetExporter(AIVisionComponent):
         class_names: List of class names (required for YOLO/VOC index mapping).
     """
 
-    def __init__(self, output_dir: str, format: str = "yolo", split: str = "train",
-                 class_names: list[str] | None = None):
+    def __init__(
+        self,
+        output_dir: str,
+        format: str = "yolo",
+        split: str = "train",
+        class_names: list[str] | None = None,
+    ):
         super().__init__()
         self.output_dir = Path(output_dir)
         self.format = format
@@ -78,16 +81,27 @@ class DatasetExporter(AIVisionComponent):
             img_path = self.output_dir / "images" / self.split / f"{stem}.jpg"
             cv2.imwrite(str(img_path), frame)
             img_id = self._counter
-            self._coco_images.append({"id": img_id, "file_name": f"{stem}.jpg", "width": w, "height": h})
+            self._coco_images.append(
+                {"id": img_id, "file_name": f"{stem}.jpg", "width": w, "height": h}
+            )
             for bb in bboxes:
                 self._ann_id += 1
-                self._coco_annotations.append({
-                    "id": self._ann_id, "image_id": img_id,
-                    "category_id": self._class_id(bb.get("label", "object")) + 1,
-                    "bbox": [bb["x1"], bb["y1"], bb["x2"] - bb["x1"], bb["y2"] - bb["y1"]],
-                    "area": (bb["x2"] - bb["x1"]) * (bb["y2"] - bb["y1"]),
-                    "iscrowd": 0, "score": bb.get("conf", 1.0),
-                })
+                self._coco_annotations.append(
+                    {
+                        "id": self._ann_id,
+                        "image_id": img_id,
+                        "category_id": self._class_id(bb.get("label", "object")) + 1,
+                        "bbox": [
+                            bb["x1"],
+                            bb["y1"],
+                            bb["x2"] - bb["x1"],
+                            bb["y2"] - bb["y1"],
+                        ],
+                        "area": (bb["x2"] - bb["x1"]) * (bb["y2"] - bb["y1"]),
+                        "iscrowd": 0,
+                        "score": bb.get("conf", 1.0),
+                    }
+                )
 
         elif self.format == "voc":
             img_path = self.output_dir / "JPEGImages" / f"{stem}.jpg"
@@ -97,23 +111,37 @@ class DatasetExporter(AIVisionComponent):
             size = ET.SubElement(root, "size")
             ET.SubElement(size, "width").text = str(w)
             ET.SubElement(size, "height").text = str(h)
-            ET.SubElement(size, "depth").text = str(frame.shape[2] if frame.ndim == 3 else 1)
+            ET.SubElement(size, "depth").text = str(
+                frame.shape[2] if frame.ndim == 3 else 1
+            )
             for bb in bboxes:
                 obj = ET.SubElement(root, "object")
                 ET.SubElement(obj, "name").text = bb.get("label", "object")
                 ET.SubElement(obj, "difficult").text = "0"
                 bndbox = ET.SubElement(obj, "bndbox")
-                for key, val in [("xmin", bb["x1"]), ("ymin", bb["y1"]),
-                                   ("xmax", bb["x2"]), ("ymax", bb["y2"])]:
+                for key, val in [
+                    ("xmin", bb["x1"]),
+                    ("ymin", bb["y1"]),
+                    ("xmax", bb["x2"]),
+                    ("ymax", bb["y2"]),
+                ]:
                     ET.SubElement(bndbox, key).text = str(int(val))
-            ET.ElementTree(root).write(str(self.output_dir / "Annotations" / f"{stem}.xml"))
+            ET.ElementTree(root).write(
+                str(self.output_dir / "Annotations" / f"{stem}.xml")
+            )
 
         return data
 
     def finalize(self) -> None:
         if self.format == "coco":
-            categories = [{"id": i + 1, "name": n} for i, n in enumerate(self.class_names)]
-            ann = {"images": self._coco_images, "annotations": self._coco_annotations, "categories": categories}
+            categories = [
+                {"id": i + 1, "name": n} for i, n in enumerate(self.class_names)
+            ]
+            ann = {
+                "images": self._coco_images,
+                "annotations": self._coco_annotations,
+                "categories": categories,
+            }
             out = self.output_dir / "annotations" / f"instances_{self.split}.json"
             out.write_text(json.dumps(ann, indent=2))
             print(f"[DatasetExporter] COCO annotations: {out}")

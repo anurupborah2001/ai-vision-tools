@@ -16,7 +16,12 @@ class Denoiser(AIVisionComponent):
         model_path: Path to DnCNN ONNX model (dncnn method only).
     """
 
-    def __init__(self, method: str = "nlmeans", strength: float = 10.0, model_path: str | None = None):
+    def __init__(
+        self,
+        method: str = "nlmeans",
+        strength: float = 10.0,
+        model_path: str | None = None,
+    ):
         super().__init__()
         self.method = method
         self.strength = strength
@@ -30,12 +35,20 @@ class Denoiser(AIVisionComponent):
             if self.model_path:
                 try:
                     import onnxruntime as ort
-                    providers = [p for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                                 if p in ort.get_available_providers()]
-                    self._session = ort.InferenceSession(self.model_path, providers=providers)
+
+                    providers = [
+                        p
+                        for p in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                        if p in ort.get_available_providers()
+                    ]
+                    self._session = ort.InferenceSession(
+                        self.model_path, providers=providers
+                    )
                     self._method_used = "dncnn"
                 except ImportError:
-                    print("[Denoiser] onnxruntime not available, falling back to nlmeans")
+                    print(
+                        "[Denoiser] onnxruntime not available, falling back to nlmeans"
+                    )
                     self._method_used = "nlmeans"
             else:
                 self._method_used = "nlmeans"
@@ -51,7 +64,9 @@ class Denoiser(AIVisionComponent):
         if method == "nlmeans":
             h_param = int(strength)
             if frame.ndim == 3:
-                result = cv2.fastNlMeansDenoisingColored(frame, None, h_param, h_param, 7, 21)
+                result = cv2.fastNlMeansDenoisingColored(
+                    frame, None, h_param, h_param, 7, 21
+                )
             else:
                 result = cv2.fastNlMeansDenoising(frame, None, h_param, 7, 21)
         elif method == "bilateral":
@@ -72,7 +87,9 @@ class Denoiser(AIVisionComponent):
             denoised = np.clip((gray - noise[0, 0]) * 255, 0, 255).astype(np.uint8)
             result = cv2.cvtColor(denoised, cv2.COLOR_GRAY2BGR)
         else:
-            result = cv2.fastNlMeansDenoisingColored(frame, None, int(strength), int(strength), 7, 21)
+            result = cv2.fastNlMeansDenoisingColored(
+                frame, None, int(strength), int(strength), 7, 21
+            )
 
         payload = replace_frame(data, result)
         if isinstance(payload, dict):

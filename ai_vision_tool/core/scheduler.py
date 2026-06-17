@@ -4,7 +4,6 @@ import threading
 import time
 
 from ai_vision_tool.core.base import AIVisionComponent
-from ai_vision_tool.utils.image_utils import extract_frame, replace_frame
 
 
 class RateLimiter:
@@ -59,7 +58,7 @@ class Scheduler(AIVisionComponent):
 
     def _execute(self, data, config):
         policy = config.get("drop_policy", self.drop_policy)
-        block = (policy == "block")
+        block = policy == "block"
         acquired = self._limiter.acquire(block=block, timeout=2.0 / self.target_fps)
 
         payload = data if isinstance(data, dict) else {"frame": data}
